@@ -1,0 +1,11 @@
+{
+  "name": "celorus",
+  "version": "0.1.0",
+  "description": "Connects Claude to the Celorus MCP server (live MCA-filing data) and bundles the report skills: Financial Analysis and free-form Filings Q&A. Every figure is read from the filings and cites its source; missing data is shown as \"not available\", never invented.",
+  "author": {
+    "name": "Celorus Engineering",
+    "email": "engineering@celorus.com"
+  },
+  "homepage": "https://github.com/Celorus/celorus-plugin",
+  "repository": "https://github.com/Celorus/celorus-plugin"
+}
