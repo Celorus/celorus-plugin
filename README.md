@@ -1,21 +1,22 @@
-# Celorus plugin — connect Claude to live MCA-filing data
+# Celorus plugin — decision-ready financial intelligence on companies
 
-Install the **Celorus** plugin to connect Claude to the Celorus service — a live,
-read-only API over Indian MCA company filings — and get grounded financial
-reports and filings answers, every figure cited to its source.
+Install the **Celorus** plugin to get grounded, cited financial intelligence on a
+company inside Claude — a detailed financial-health report, or a straight answer
+to a specific question. Every figure is read from the company's official records
+and cites its source.
 
-**The plugin reads; it never invents.** Every number in a report is read from a
-filing and cites where it came from. When a fact is not in the filings, the
-report says **"not available"** — never an estimate, never model guesswork.
+**The plugin reads; it never invents.** Every number is read from a source record
+and cites where it came from. When a fact isn't on record, the answer says
+**"not available"** — never an estimate, never model guesswork.
 
 ## What you get
 
-- **Financial Analysis** — a structured financial-health report for a company.
-- **Filings Q&A** — ask a specific question about a company's filings and get a
-  grounded, cited answer.
+- **Financial Analysis** — a detailed financial-health report for a company.
+- **Ask about a company** — ask a specific question and get a grounded, cited
+  answer.
 
 Reports are rendered in the Celorus house style, and every figure links back to
-the source filing.
+its source.
 
 ## Install
 
@@ -31,7 +32,7 @@ In an interactive `claude` session (a terminal or your IDE):
 /reload-plugins
 ```
 
-Then run `/mcp`, select the **mca** server, and sign in (see *Authentication*).
+Then run `/mcp`, select the **celorus-data** server, and sign in (see *Authentication*).
 The marketplace and the plugin are both named `celorus`, hence `celorus@celorus`.
 
 ### Cowork (web or desktop) — full plugin
@@ -44,7 +45,7 @@ The marketplace and the plugin are both named `celorus`, hence `celorus@celorus`
    ```
 
 3. Install the **celorus** plugin from the newly added marketplace.
-4. Sign in to the **mca** connector when prompted (see *Authentication*).
+4. Sign in to the **celorus-data** connector when prompted (see *Authentication*).
 
 ### claude.ai (web) and Claude Desktop — chat apps
 
@@ -75,9 +76,9 @@ Don't have an account yet? Contact your Celorus representative for an invite.
 
 ## Verify it connected
 
-After authenticating, run `/mcp` (Claude Code) and confirm the **mca** server is
-connected. Then ask for a **Financial Analysis** report on a company, or ask a
-**specific question** about a company's filings.
+After authenticating, run `/mcp` (Claude Code) and confirm the **celorus-data**
+server is connected. Then ask for a **Financial Analysis** report on a company, or
+ask a **specific question** about one.
 
 ## Read-only by design
 

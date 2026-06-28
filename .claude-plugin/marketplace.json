@@ -1,15 +1,15 @@
 {
   "name": "celorus",
   "owner": {
-    "name": "Celorus Engineering",
-    "email": "engineering@celorus.com"
+    "name": "Celorus",
+    "email": "tech@celorus.com"
   },
-  "description": "The Celorus plugin marketplace \u2014 connect Claude to live MCA-filing data and the report skills.",
+  "description": "Celorus \u2014 decision-ready financial intelligence on companies, every figure cited to its source.",
   "plugins": [
     {
       "name": "celorus",
       "source": ".",
-      "description": "Connects Claude to the Celorus MCP server (live MCA-filing data) and the report skills: Financial Analysis and free-form Filings Q&A."
+      "description": "Get a detailed financial-health report on a company, or ask a specific question about one \u2014 grounded in the company's official records, every figure cited, nothing invented."
     }
   ]
 }

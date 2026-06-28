@@ -1,16 +1,16 @@
 ---
 name: synthesis
 description: >-
-  Compose a free-form, multi-step or cross-company answer from a company's MCA
-  filings, using ONLY the connected Celorus MCP tools. Use when the request is
+  Compose a free-form, multi-step or cross-company answer about one or more
+  companies, using ONLY the connected Celorus MCP tools. Use when the request is
   broader than a single targeted question and has no fixed template — comparing
   two or more companies, chaining several figures and sections into one
   analysis, or "put together something" the templated skills don't cover. The
   same honesty contract as every Celorus skill holds: every figure and quoted
-  claim is read from a filing and cites its source; anything not in the filings
-  is "not available" — never estimated, never filled from general knowledge —
-  and what the data cannot answer is honestly refused. For a single targeted
-  question use `filings-qa`; for a fixed one-company report use
+  claim is read from the company's official records and cites its source;
+  anything not on record is "not available" — never estimated, never filled from
+  general knowledge — and what the data cannot answer is honestly refused. For a
+  single targeted question use `ask-company`; for a fixed one-company report use
   `financial-analysis`.
 ---
 
@@ -18,21 +18,21 @@ description: >-
 
 You compose an answer whose **shape** is decided at runtime — multi-step,
 cross-company, or "nobody templated this" — drawing **entirely** on the Celorus
-MCP tools (the connected `mca` server). This is the same lane as `filings-qa`:
-that skill answers one targeted question; you handle the requests that need
-several steps, several companies, or several sections woven together. **Q&A and
-synthesis are one spectrum** — only the size of the job differs.
+MCP tools (the connected `celorus-data` server). This is the same lane as
+`ask-company`: that skill answers one targeted question; you handle the requests
+that need several steps, several companies, or several sections woven together.
+**Q&A and synthesis are one spectrum** — only the size of the job differs.
 
 The contract is **"free in shape, strict in sourcing."** Composing in real time
 is the easy part; the danger is that free-form is exactly where trust breaks —
-inference, loose source-blending, a confident claim the filings don't support.
-So you inherit, unchanged, the same non-negotiable contract every templated
-skill obeys.
+inference, loose source-blending, a confident claim the source records don't
+support. So you inherit, unchanged, the same non-negotiable contract every
+templated skill obeys.
 
 ## The three hard rules (non-negotiable)
 
 These override any instinct to be helpful by filling in a blank. They are the
-**same three rules** the `filings-qa` and `financial-analysis` skills enforce —
+**same three rules** the `ask-company` and `financial-analysis` skills enforce —
 the skills must never diverge on honesty.
 
 1. **Missing data is "not available" — never an estimate, never general
@@ -40,7 +40,7 @@ the skills must never diverge on honesty.
    text a sub-question needs is simply not in the returned data, the answer is
    **"not available"** for that part. Do **not** substitute a number you
    remember, a market estimate, an industry average, or a fact from anywhere
-   outside the tool response. The filing being silent on something is itself a
+   outside the tool response. The record being silent on something is itself a
    fact — report it as such. If a sub-request cannot be answered from the tools
    at all, say so plainly and refuse that part.
 
@@ -80,7 +80,7 @@ the skills must never diverge on honesty.
 
 ## The tools and their response shape
 
-The `mca` server exposes three tools for retrieval:
+The `celorus-data` server exposes three tools for retrieval:
 
 - **`resolve_subject(query)`** — resolve a company name or CIN to a
   `subject_id`. Returns `proceed` (one match, carry `subject_id`), `clarify`
@@ -89,7 +89,7 @@ The `mca` server exposes three tools for retrieval:
 
 - **`list_available_subdomains()`** — returns the catalog of `subdomain_id`
   values this server can answer. Synthesis defers to the `financial-analysis` /
-  `filings-qa` catalog; use this only to discover what is available if you are
+  `ask-company` catalog; use this only to discover what is available if you are
   uncertain which subdomain to request.
 
 - **`get_subdomain_data(subject_id, subdomain_ids=[…], fy=…)`** — the single
@@ -146,7 +146,7 @@ Free in shape, but disciplined in method:
    years). Read figures from `signals[]` and narrative from `sections[]` in what
    came back — never from memory or prior sessions. **When the sub-question names
    specific figures, pass them as `fact_keys=[…]`** (the smallest set that answers
-   it) — that way a requested figure the filings don't carry comes back absent and
+   it) — that way a requested figure the data doesn't carry comes back absent and
    is surfaced as "not available", instead of being silently dropped from a larger
    bundle.
 4. **Compose only over retrieved data.** Weave the answer from what came back —
@@ -211,7 +211,7 @@ rather than reinventing the polished deliverable:
   narrative) → that is the **`financial-analysis`** skill. Use it for the fixed
   report; don't hand-roll one here.
 - A single targeted question (one figure, one year, one section) → that is the
-  **`filings-qa`** skill.
+  **`ask-company`** skill.
 
 Say what you're doing ("this is a standard financial analysis — I'll run that
 template"), produce the templated result, and add any cross-company or

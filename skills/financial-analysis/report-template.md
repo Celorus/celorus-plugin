@@ -15,10 +15,10 @@ with the `cite_url` permalink as a footnote.
 ## Financial Analysis — {canonical_name}
 
 **Company:** {canonical_name} · **Subject ID:** {subject_id}
-**Filing analysed:** {form_code} for FY {fy} · **SRN:** {srn} · **Format:** {format}
+**Source record:** {form_code} for FY {fy} · **SRN:** {srn} · **Format:** {format}
 **Document:** {cite_url}
 
-> If `list_available_subdomains` returned `fallback`: "No filings are on record
+> If `list_available_subdomains` returned `fallback`: "No data is on record
 > for this company — the financial sections below are not available." Then still
 > render the section headers with "not available".
 

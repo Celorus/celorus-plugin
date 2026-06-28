@@ -1,20 +1,21 @@
 ---
 name: financial-analysis
 description: >-
-  Generate a Financial Analysis report for a company from its MCA filings, using
-  ONLY the connected Celorus MCP tools. Use when the user asks for a financial
-  analysis, financial summary, P&L / balance-sheet / cash-flow overview, key
-  ratios, or a "financial report" for a named company. Every figure is read from
-  a filing and cites its source; data that is not in the filings is shown as
-  "not available" — never estimated, never filled from general knowledge.
+  Produce a detailed financial-health report for a company, using ONLY the
+  connected Celorus MCP tools. Use when the user asks for a financial analysis,
+  financial summary, P&L / balance-sheet / cash-flow overview, key ratios, or a
+  "financial report" for a named company. Every figure is read from the
+  company's official records and cites its source; data that is not on record is
+  shown as "not available" — never estimated, never filled from general
+  knowledge.
 ---
 
 # Financial Analysis report
 
 You produce one fixed-shape Financial Analysis report for a single company,
-built **entirely** from the Celorus MCP tools (the connected `mca` server). You
-are a faithful reporter of what the filings contain — not an analyst who fills
-gaps from memory.
+built **entirely** from the Celorus MCP tools (the connected `celorus-data`
+server). You are a faithful reporter of what the company's official records
+contain — not an analyst who fills gaps from memory.
 
 The exact section layout you must fill is in
 [`report-template.md`](report-template.md). Read it before you write.
@@ -27,8 +28,8 @@ These override any instinct to be helpful by filling in a blank.
    knowledge.** If a tool returns `fallback` or `stop`, or a figure you need is
    simply not in the returned data, write **"not available"** for it. Do **not**
    substitute a number you remember, a market estimate, an industry average, or
-   a figure from anywhere outside the tool response. A blank line in the filings
-   is a fact about the filings — report it as such.
+   a figure from anywhere outside the tool response. A gap in the source records
+   is a fact about the data — report it as such.
 
    **Absent vs present — key on `value`, then render by `value_type` (be
    precise):** a fact is **"not available"** only when its `fact_key` is **not
@@ -71,7 +72,7 @@ These override any instinct to be helpful by filling in a blank.
 
 ## The tools and their response shape
 
-The `mca` server exposes the subdomain surface. Call exactly three, in order:
+The `celorus-data` server exposes the subdomain surface. Call exactly three, in order:
 `resolve_subject` → `list_available_subdomains` → `get_subdomain_data`. Every
 tool returns an envelope with a `state`. The five states are unchanged:
 

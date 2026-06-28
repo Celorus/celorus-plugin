@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "mca": {
+    "celorus-data": {
       "type": "http",
       "url": "https://app.celorus.com/mcp",
       "oauth": {
