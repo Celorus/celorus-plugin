@@ -19,26 +19,46 @@ the source filing.
 
 ## Install
 
-### claude.ai (web) and Claude Desktop
+How you install depends on which Claude surface you use.
 
-1. Open **Customize → Plugins** (web) or the Plugins panel (Desktop).
-2. Add the marketplace and install the plugin:
+### Claude Code (CLI / IDE) — full plugin
 
-   ```text
-   /plugin marketplace add Celorus/celorus-plugin
-   /plugin install celorus
-   ```
-
-3. Connect the **mca** connector and sign in when prompted (see *Authentication*).
-
-### Claude Code (CLI / IDE)
+In an interactive `claude` session (a terminal or your IDE):
 
 ```text
 /plugin marketplace add Celorus/celorus-plugin
-/plugin install celorus
+/plugin install celorus@celorus
+/reload-plugins
 ```
 
-Then run `/mcp`, select the **mca** server, and authenticate.
+Then run `/mcp`, select the **mca** server, and sign in (see *Authentication*).
+The marketplace and the plugin are both named `celorus`, hence `celorus@celorus`.
+
+### Cowork (web or desktop) — full plugin
+
+1. Open **Customize → Plugins** and find the **Personal plugins** section.
+2. Click **+ → Add marketplace**, choose **Add from a repository**, and enter:
+
+   ```text
+   Celorus/celorus-plugin
+   ```
+
+3. Install the **celorus** plugin from the newly added marketplace.
+4. Sign in to the **mca** connector when prompted (see *Authentication*).
+
+### claude.ai (web) and Claude Desktop — chat apps
+
+The chat apps install plugins from the built-in **Customize → Plugins → Browse
+plugins** catalog. Until Celorus is listed there, connect the Celorus
+**connector** directly to start using the tools right away:
+
+1. Open **Customize → Connectors** and click **+ / Add custom connector**.
+2. Enter the URL **`https://app.celorus.com/mcp`** and click **Connect**.
+3. Sign in when prompted (see *Authentication*).
+
+This connects Claude to the live Celorus data and the branded financial summary.
+The full plugin — connector plus the guided report skills — is available today in
+Claude Code and Cowork, and is coming to the chat catalog.
 
 ## Authentication (OAuth)
 
