@@ -174,11 +174,46 @@ time — do not assume a fixed catalog.
    `subdomain_ids`, and `fy`. It re-fetches the data server-side, computes every
    figure and ratio deterministically (each already cited), renders HTML / XLSX /
    PPTX, and returns short-lived download links. You MAY pass an optional
-   `narrative` of **prose only** — a one-line verdict, per-dimension commentary,
-   strengths, watch-items — that is slotted **around** the computed figures: it can
+   `narrative` of **prose only** — slotted **around** the computed figures: it can
    never change a number, must introduce no figure that is not already in the data,
    and must add no general-knowledge claim about the company or its sector. Hand the
    returned download link(s) to the user.
+
+   **The `narrative` shape (pass ALL of it — the report renders every field; omit
+   one and that part of the report falls back to a bare mechanical view).** It is a
+   single JSON object with these keys:
+
+   ```json
+   {
+     "verdict_headline": "One punchy sentence — the overall read.",
+     "verdict_body": "2–4 sentences expanding the headline: what happened this year and the one or two things that matter most. State any data caveat here (e.g. only one year on record).",
+     "strengths": ["Short bullet", "Short bullet", "…"],
+     "watch_items": ["Short bullet", "Short bullet", "…"],
+     "dimensions": {
+       "growth":           {"commentary": "1–2 sentences on this dimension."},
+       "profitability":    {"commentary": "…"},
+       "returns":          {"commentary": "…"},
+       "solvency":         {"commentary": "…"},
+       "liquidity":        {"commentary": "…"},
+       "cash_quality":     {"commentary": "…"},
+       "audit_governance": {"commentary": "…"}
+     }
+   }
+   ```
+
+   - `dimensions` is keyed by these **seven exact ids** — `growth`,
+     `profitability`, `returns`, `solvency`, `liquidity`, `cash_quality`,
+     `audit_governance` — each mapping to an object with a `commentary` string.
+     **This is the most-missed field; without it the per-dimension sections of the
+     report render with no analysis at all.** Write a `commentary` for every
+     dimension you can speak to; for one the data can't support, say so in one
+     honest line ("not available — no prior-year revenue on record") rather than
+     omitting the key.
+   - Keep each `commentary` to what the retrieved figures and sections support — no
+     figure that isn't already in the data, no outside-knowledge claim. The same
+     three hard rules apply to prose as to numbers.
+   - `verdict_label` is optional (defaults to "The health read"); the unknown keys
+     are ignored with a warning, so stick to the keys above.
 
 ## Reading the bundle (rules specific to `get_subdomain_data`)
 
