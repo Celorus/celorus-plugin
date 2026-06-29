@@ -169,15 +169,42 @@ time — do not assume a fixed catalog.
    narrative, with provenance on every figure and claim, and "not available"
    wherever the data was absent.
 
-5. **Render a downloadable deliverable (optional — when the user asks for a file)** —
-   call the `generate_collateral` tool with the same `subject_id`, the chosen
-   `subdomain_ids`, and `fy`. It re-fetches the data server-side, computes every
-   figure and ratio deterministically (each already cited), renders HTML / XLSX /
-   PPTX, and returns short-lived download links. You MAY pass an optional
-   `narrative` of **prose only** — slotted **around** the computed figures: it can
-   never change a number, must introduce no figure that is not already in the data,
-   and must add no general-knowledge claim about the company or its sector. Hand the
-   returned download link(s) to the user.
+5. **Render a downloadable deliverable (when the user asks for a file)** — the user
+   wants any file — an **HTML report, a PPTX deck, an XLSX/spreadsheet, a PDF, a
+   "report", a "deck", a "download"** — you **MUST** produce it by calling the
+   `generate_collateral` tool with the same `subject_id`, the chosen `subdomain_ids`,
+   and `fy`. It re-fetches the data server-side, computes every figure and ratio
+   deterministically (each already cited), renders HTML / XLSX / PPTX in the Celorus
+   house style, and returns short-lived download links. Hand the returned link(s) to
+   the user. You MAY pass an optional `narrative` of **prose only** — slotted
+   **around** the computed figures: it can never change a number, must introduce no
+   figure that is not already in the data, and must add no general-knowledge claim
+   about the company or its sector.
+
+   **NEVER hand-build a Celorus financial deliverable.** This is the single most
+   important rule of this step. Do **not**, under any circumstances:
+   - write HTML/CSS for the report yourself, or
+   - build a workbook or deck with `openpyxl`, `python-pptx`, `pptxgenjs`,
+     `xlsxwriter`, or any code, or
+   - invoke a **generic document skill** (`xlsx`, `pptx`, `docx`, `pdf`,
+     `theme-factory`, `canvas-design`, or any non-Celorus document tool) to make the
+     file.
+
+   Those paths defeat the product in two ways: (1) they **drift the brand** — the
+   real report is rendered server-side in the Celorus house style, which you cannot
+   reproduce by hand; and (2) far worse, they make you **re-derive the figures
+   yourself from the raw retrieved data**, which is exactly how confidently-WRONG
+   reports get produced — a prior-year value used as the current headline, a corrupt
+   line read as a real loss, an invented "turnaround". `generate_collateral` is the
+   *only* path that computes the figures deterministically and keeps every number
+   tied to its cited source. The generic document skills exist for other tasks; for
+   a **company financial report they are off-limits** — there is exactly one tool for
+   this, and it is `generate_collateral`.
+
+   If `generate_collateral` is **not available, errors, or you are unsure it ran**,
+   say so plainly and **stop** — deliver the inline analysis (steps 1–4) and tell the
+   user the downloadable file could not be generated. Do **not** fall back to
+   hand-building a file. A missing file is honest; a hand-built one is not safe.
 
    **The `narrative` shape (pass ALL of it — the report renders every field; omit
    one and that part of the report falls back to a bare mechanical view).** It is a

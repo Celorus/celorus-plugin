@@ -229,6 +229,15 @@ rather than reinventing the polished deliverable:
   report; don't hand-roll one here.
 - A single targeted question (one figure, one year, one section) → that is the
   **`ask-company`** skill.
+- A **downloadable file** of any kind — HTML report, PPTX deck, XLSX/spreadsheet,
+  PDF, "download" — for a company → it is produced **only** by the
+  `generate_collateral` tool (the `financial-analysis` skill drives it). **Never
+  hand-build it** — no hand-written HTML/CSS, no `openpyxl` / `python-pptx` /
+  `pptxgenjs`, and **do not** reach for a generic document skill (`xlsx`, `pptx`,
+  `docx`, `pdf`). Hand-building drifts the brand and forces you to re-derive the
+  figures yourself — the path that yields confidently-wrong reports. If
+  `generate_collateral` can't run, say so and stop; do not fall back to a hand-built
+  file.
 
 Say what you're doing ("this is a standard financial analysis — I'll run that
 template"), produce the templated result, and add any cross-company or
