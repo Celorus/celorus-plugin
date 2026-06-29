@@ -126,12 +126,28 @@ The API is **read-only** — nothing you do can change the data.
    to answer "which years / what was filed / is it covered"; use
    `data.subdomains[]` to see which areas have data and pick the `fy` (default
    latest unless the user named one). `fallback` → known company, no data.
-3. **Fetch** — `get_subdomain_data(subject_id, subdomain_ids=[…], fy=…)`. One
-   call returns every stream for every requested subdomain.
+3. **Fetch — signals-first for a figure question.** For a figure / filed-fact
+   question, call `get_subdomain_data(subject_id, subdomain_ids=[…], fy=…,
+   streams=["signals"])`. The signals stream carries each figure's `display_name`
+   and `value` but **no** `content_markdown`, so a one-number answer ships a
+   few-KB payload instead of the full narrative bundle. Omit `fy` to default to
+   the latest year on record. Match the question to a signal by its `display_name`;
+   render by `value_type` (rule 1).
+
+   **Fall back to `streams=["sections"]` only when the signal is absent.** If the
+   figure you need is not in the signals response, re-fetch that subdomain with
+   `streams=["sections"]` and read `content_markdown` **before** concluding "not
+   available" — a figure that lives only in prose must still be found. A
+   **narrative** question (auditor / directors' / notes / statement faces) goes
+   straight to `streams=["sections"]`; the signals-first default is for figures.
+
+   Do **not** lead with a guessed `fact_keys=[…]`: the match is exact, so a wrong
+   key silently returns nothing → a false "not available". Match by `display_name`
+   and narrow by `fact_keys` only when the canonical key is known.
 
 | The question is about… | Read from the bundle |
 | --- | --- |
-| A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
+| A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` (fetch `streams=["signals"]` — see step 3) — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`) |
 | Events, history/timeline, relationships, "companies that…" | the empty `events[]` / `relationships[]` inside `get_subdomain_data` → "not available" (this phase) |
