@@ -156,9 +156,9 @@ Free in shape, but disciplined in method:
 
 ## The self-audit — before you answer
 
-Celorus codifies these checks as a sourcing audit
-(`celorus.synthesis.sourcing_audit`). That code is the **definition of a sourced
-answer and the test-time oracle** — it is *not* something you run in the chat.
+Celorus codifies these checks as a sourcing audit. That code is the
+**definition of a sourced answer and the test-time oracle** — it is *not*
+something you run in the chat.
 Your job is to hold your own answer to the **same checks** before you send it.
 Lay the answer out as its underlying **claims** and confirm each:
 
