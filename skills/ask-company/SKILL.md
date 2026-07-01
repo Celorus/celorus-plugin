@@ -27,56 +27,38 @@ identical; only the shape of the answer differs (a direct answer, not a report).
 ## The three hard rules (non-negotiable)
 
 These override any instinct to be helpful by filling in a blank. They are the
-**same three rules** the `financial-analysis` skill enforces — the two skills
-must never diverge on honesty.
+**same three rules** the `financial-analysis` skill enforces — the skills must
+never diverge on honesty, so their authoritative wording lives in **one
+server-fed source**, not copied here.
+
+**Fetch them at runtime and follow them verbatim.** Once at the start of your
+work, call **`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")`**;
+it returns the rules as data (`data.semantic[]`), each with a `title` and the
+binding `body`. Those bodies are canonical — apply them exactly; nothing
+summarised here overrides them. The three, in brief:
 
 1. **Missing data is "not available" — never an estimate, never general
-   knowledge.** If a tool returns `fallback` or `stop`, or the specific figure or
-   text the question needs is simply not in the returned data, the answer is
-   **"not available"** for that part. Do **not** substitute a number you
-   remember, a market estimate, an industry average, or a fact from anywhere
-   outside the tool response. The record being silent on something is itself a
-   fact — report it as such. If the *whole* question cannot be answered from the
-   tools, say so plainly and stop (see *Refusing beyond the data*).
-
-   **Absent vs present — key on `value`, then render by `value_type` (be
-   precise):** a `fact_key` is **"not available"** only when it is **not present**
-   in the response, OR is present with a **`null`** `value`. A `fact_key` present
-   with a **non-null `value`** is available — render it by its `value_type`:
-
-   - `value_type` **`numeric`** → answer its `normalized_value` with `unit` (the
-     absolute amount). A real value of **`0`** is the number zero — answer **0**,
-     not "not available". `numeric` is the only kind that uses `normalized_value`.
-   - `value_type` **`boolean`** → answer **Yes** (for `value` `true`) or **No**
-     (for `value` `false`) — not a figure. A filed **No** (`value: false`) is a
-     real answer; never let its `null` `normalized_value` read as "not available".
-   - `value_type` **`enum`** / **`text`** (string, date) → answer `value`
-     verbatim. These carry their answer in `value`, not `normalized_value`.
-
-   If `value_type` is **absent or null**, fall back to value-presence: a non-null
-   `value` is available — render it (`normalized_value` with `unit` if present,
-   else the `value` itself), never "not available". Zero, a filed boolean/enum/
-   text answer, and a true absence mean different things to a reader; never
-   conflate any of them.
-
+   knowledge.** A figure or text absent from the tool response is "not available"
+   for that part; never substitute a remembered or estimated value. If the *whole*
+   question cannot be answered from the tools, say so and stop (see *Refusing
+   beyond the data*). Distinguish a true absence (null/absent `value`) from a real
+   **0** and from a filed boolean/enum/text answer — the fetched body gives the
+   exact `value` / `value_type` test.
 2. **Every figure and quoted claim carries its provenance.** Each number or
-   summarised statement in your answer must cite, from the same tool response
-   that produced it, its source: **SRN + section + page range**, the `doc_id`,
-   and the `/cite/<doc_id>` permalink (`cite_url`). Each figure and each section
-   carries its **own** `provenance`; cite from the row's own provenance and
-   surface a row's `warnings[]` beside that row only — never a blanket caveat.
-   Never give a figure without its citation. (See *Rendering provenance* below.)
-
+   summarised statement cites its source from the same tool response — read the
+   citation off that row, and surface that row's warnings beside it, not as a
+   blanket caveat. Never give a figure without its citation. (See *Rendering
+   provenance* below.)
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
-   `clarify`, stop and ask the user. For `resolve_subject` that means presenting
-   the `candidates[]` and asking which company they mean — **do not pick one for
-   them.** When there is exactly **one** candidate, ask a **yes/no confirmation**
-   (the query was fuzzy, so the match is not certain) — never a one-option
-   question. Any question you put to the user must offer at least two choices.
-   Resume only after the user answers.
+   `clarify`, stop and ask; never pick for the user. Any question you put to them
+   must offer at least two choices (a single fuzzy match → a yes/no confirmation).
 
    - One candidate → *"I found **Acme Manufacturing Private Limited** — did you mean that company? (yes / no)"* Proceed only on **yes**.
    - Two or more → *"I found a few matches — which did you mean? (1) Acme Steel Ltd  (2) Acme Steel Pvt Ltd"*
+
+If `get_semantic_metadata` is unavailable, the three summaries above are your
+floor — apply them; never relax the honesty contract because the definitions
+could not be fetched.
 
 ## While you work — speak to the user, not your plumbing
 

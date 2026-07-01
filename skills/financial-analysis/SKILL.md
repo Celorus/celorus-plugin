@@ -22,59 +22,37 @@ The exact section layout you must fill is in
 
 ## The three hard rules (non-negotiable)
 
-These override any instinct to be helpful by filling in a blank.
+These override any instinct to be helpful by filling in a blank. They are the
+**same three rules** every Celorus skill enforces — the skills must never diverge
+on honesty, so their authoritative wording lives in **one server-fed source**, not
+copied here.
+
+**Fetch them at runtime and follow them verbatim.** Once at the start of your
+work, call **`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")`**;
+it returns the rules as data (`data.semantic[]`), each with a `title` and the
+binding `body`. Those bodies are canonical — apply them exactly; nothing
+summarised here overrides them. The three, in brief:
 
 1. **Missing data is "not available" — never an estimate, never general
-   knowledge.** If a tool returns `fallback` or `stop`, or a figure you need is
-   simply not in the returned data, write **"not available"** for it. Do **not**
-   substitute a number you remember, a market estimate, an industry average, or
-   a figure from anywhere outside the tool response. A gap in the source records
-   is a fact about the data — report it as such.
-
-   **Absent vs present — key on `value`, then render by `value_type` (be
-   precise):** a fact is **"not available"** only when its `fact_key` is **not
-   present** in the response, OR is present with a **`null`** `value`. A fact
-   present with a **non-null `value`** is available — render it by its `value_type`:
-
-   - `value_type` **`numeric`** → render its `normalized_value` with `unit` (the
-     absolute amount). A real value of **`0`** is the number zero — render it as
-     **0**, not "not available". (Booleans carry their answer in `value`, not
-     `normalized_value`, so a `numeric` fact is the only kind that uses
-     `normalized_value`; a `0` here is genuine, never a missing-figure stand-in.)
-   - `value_type` **`boolean`** → render **Yes** (for `value` `true`) or **No**
-     (for `value` `false`) — NOT a figure. A filed **No** (`value: false`) is a
-     real answer; never let its `null` `normalized_value` read as "not available".
-   - `value_type` **`enum`** / **`text`** (string, date) → render `value`
-     verbatim. These also carry their answer in `value`, not `normalized_value`.
-
-   If `value_type` is **absent or null** (it should never be for a real signal),
-   fall back to value-presence: a non-null `value` is available — render it
-   (`normalized_value` with `unit` if present, else the `value` itself) — never
-   treat an unmatched `value_type` as "not available".
-
-   Zero and "not available" mean different things to a reader (and a zero is a
-   valid divisor-or-input for a ratio); a filed boolean/enum/text answer is data,
-   not a blank — never conflate any of them with "not available".
-
-2. **Every figure carries its provenance.** Each number you print must cite,
-   from the same tool response that produced it, its source: **SRN + section +
-   page range**, the `doc_id`, and the `/cite/<doc_id>` permalink (`cite_url`).
-   Each figure and each section carries its own `provenance` (read it off that
-   row). Never print a number
-   without its citation. (See *Rendering provenance* below.)
-
+   knowledge.** A figure absent from the tool response is reported as "not
+   available"; never substitute a remembered or estimated number. Distinguish a
+   true absence (null/absent `value`) from a real **0** and from a filed
+   boolean/enum/text answer — the fetched body gives the exact `value` /
+   `value_type` test.
+2. **Every figure carries its provenance.** Each number and each quoted claim
+   cites its source from the same tool response — read the citation off that row.
+   Never print a number without it. (See *Rendering provenance* below.)
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
-   `clarify`, stop and ask the user. For `resolve_subject` that means presenting
-   the `candidates[]` and asking which company they mean — **do not pick one for
-   them.** When there is exactly **one** candidate, ask a **yes/no confirmation**
-   (the query was fuzzy, so the match is not certain) — never a one-option
-   question; any question you put to the user must offer at least two choices.
-   For `get_subdomain_data` it means the requested year is
-   absent: present `available_years[]` and ask which year. Resume only after the
-   user answers.
+   `clarify`, stop and ask; never pick for the user. Any question you put to them
+   must offer at least two choices (a single fuzzy match → a yes/no confirmation);
+   for a missing year, present the available years and ask which one.
 
    - One candidate → *"I found **Acme Manufacturing Private Limited** — did you mean that company? (yes / no)"* Proceed only on **yes**.
    - Two or more → *"Which did you mean? (1) Acme Steel Ltd  (2) Acme Steel Pvt Ltd"*
+
+If `get_semantic_metadata` is unavailable, the three summaries above are your
+floor — apply them; never relax the honesty contract because the definitions
+could not be fetched.
 
 ## While you work — speak to the user, not your plumbing
 

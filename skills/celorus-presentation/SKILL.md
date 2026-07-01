@@ -40,11 +40,24 @@ honesty-guarded and display-ready; you place it, you don't recompute it.
 
 ## The hard rules (non-negotiable — honesty spine)
 
+This dashboard inherits the **same honesty spine** as every Celorus skill (missing
+is "not available" — never estimated; every figure carries its provenance;
+`clarify` is a question, never a guess). That spine's authoritative wording lives
+in **one server-fed source**, not copied here: once at the start of your work, call
+**`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")`** and follow the
+returned rule bodies (`data.semantic[]`) verbatim. On top of the spine, this
+skill's own display rules are:
+
 1. **Render values and markers EXACTLY as supplied.** Never recompute, never reformat
    a figure, never invent a trend, and never restyle the fragment. The server copies
    the display strings; so do you.
 2. **A growth arrow appears ONLY when the figure's `marker` is ▲ or ▼.** When the
    marker is ⚪ (neutral / not comparable), show ⚪ — never a guessed direction.
-3. **Absent data is "not available", never 0** and never a remembered number.
+3. **Absent data is "not available", never 0** and never a remembered number (this is
+   the spine's first rule, applied to a tile — the fetched body has the full test).
 4. **The downloadable report** (`generate_collateral`) **is the source of truth.**
    The inline dashboard is a compact view, not a replacement.
+
+If `get_semantic_metadata` is unavailable, the spine summary above is your floor —
+apply it; never relax the honesty contract because the definitions could not be
+fetched.
