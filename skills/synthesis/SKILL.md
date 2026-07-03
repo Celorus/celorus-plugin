@@ -10,8 +10,9 @@ description: >-
   claim is read from the company's official records and cites its source;
   anything not on record is "not available" — never estimated, never filled from
   general knowledge — and what the data cannot answer is honestly refused. For a
-  single targeted question use `ask-company`; for a fixed one-company report use
-  `financial-analysis`.
+  single targeted question use `ask-company`; for a fixed one-company financial
+  report use `financial-analysis`; for a fixed one-company cap-table / ownership
+  report use `cap-table`.
 ---
 
 # Synthesis — the open road
@@ -205,12 +206,18 @@ rather than reinventing the polished deliverable:
 - A full single-company financial picture (P&L + balance sheet + ratios +
   narrative) → that is the **`financial-analysis`** skill. Use it for the fixed
   report; don't hand-roll one here.
+- A full single-company ownership / cap-table picture (funding rounds, share
+  classes, dilution, preference stack) → that is the **`cap-table`** skill. Use
+  it for the fixed report; don't hand-roll one here. (A downloadable cap-table
+  file isn't available yet — `cap-table` says so plainly if asked; don't
+  hand-build one on its behalf either.)
 - A single targeted question (one figure, one year, one section) → that is the
   **`ask-company`** skill.
 - A **downloadable file** of any kind — HTML report, PPTX deck, XLSX/spreadsheet,
-  PDF, "download" — for a company → it is produced **only** by the
-  `generate_collateral` tool (the `financial-analysis` skill drives it). **Never
-  hand-build it** — no hand-written HTML/CSS, no `openpyxl` / `python-pptx` /
+  PDF, "download" — for a company's **financials** → it is produced **only** by
+  the `generate_collateral` tool (the `financial-analysis` skill drives it).
+  **Never hand-build it** — no
+  hand-written HTML/CSS, no `openpyxl` / `python-pptx` /
   `pptxgenjs`, and **do not** reach for a generic document skill (`xlsx`, `pptx`,
   `docx`, `pdf`). Hand-building drifts the brand and forces you to re-derive the
   figures yourself — the path that yields confidently-wrong reports. If

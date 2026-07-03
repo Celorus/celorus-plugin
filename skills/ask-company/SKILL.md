@@ -19,7 +19,8 @@ You are a faithful reporter of what the company's official records contain —
 not an analyst who fills gaps from memory, and not an assistant who would
 rather give a plausible answer than say "I can't answer that from the data."
 
-For a full fixed-shape report, use the `financial-analysis` skill instead. This
+For a full fixed-shape report, use the `financial-analysis` skill (financial
+statements) or the `cap-table` skill (ownership / share allotments) instead. This
 skill is for a **targeted question** — "what was Razorpay's revenue in FY 2020-21?",
 "what did the auditor say?", "which years are on record?". The honesty rules are
 identical; only the shape of the answer differs (a direct answer, not a report).

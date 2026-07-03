@@ -12,8 +12,12 @@ and cites where it came from. When a fact isn't on record, the answer says
 ## What you get
 
 - **Financial Analysis** — a detailed financial-health report for a company.
+- **Cap Table** — a company's ownership and capital structure: funding rounds,
+  share classes, dilution, and the latest ownership snapshot.
 - **Ask about a company** — ask a specific question and get a grounded, cited
   answer.
+- **Synthesis** — a free-form, cross-company answer when the question doesn't
+  fit a fixed template.
 
 Reports are rendered in the Celorus house style, and every figure links back to
 its source.
