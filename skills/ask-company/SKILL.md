@@ -113,6 +113,35 @@ The API is **read-only** — nothing you do can change the data.
    Manufacturing Private Limited**? (yes / no)"*), proceed only on yes; **two or
    more** → ask which one. Never ask a single-option question. `stop` → no such
    company on record, stop.
+
+   **Lean path — a known single figure, in ≤2 calls total.** If the question is
+   *nothing more* than one plainly-named, unambiguous filed figure for one
+   company — e.g. "what was {Company}'s revenue?", "{Company}'s total assets",
+   "{Company}'s net worth" — and a routing hint (if one was supplied ahead of
+   this skill) already points at `bypass`/a direct plan, skip step 2 entirely:
+   go straight from `resolve_subject` to **step 3**'s `get_subdomain_data(...,
+   streams=["signals"])` call, guessing the one obviously-relevant subdomain
+   from the figure's plain meaning (a revenue/assets/net-worth ask means the
+   annual financial statements). That is the whole lean path — resolve, then
+   one scoped fetch.
+
+   The lean path is disqualified — fall through to the normal step 2 discovery
+   flow — the moment the question is anything **other than** one bare figure:
+   a comparison ("X vs Y", "higher than"), a trend/time-series ("over the last
+   three years", "how has it changed"), a "why/how" explanation, more than one
+   figure in the same ask, a narrative ask, or anything where the right
+   subdomain isn't obvious from the figure's plain meaning. When in doubt,
+   don't guess the lean path — discover first; a wrong guess here would cost
+   more turns than it saves, and the accuracy contract always outranks the
+   turn count.
+
+   The lean path never weakens honesty: it only **skips discovery**, never a
+   citation or the "not available" test. If the scoped fetch comes back
+   `fallback` or the signal you need isn't in the response, don't conclude
+   "not available" from the guess alone — fall back to `list_available_subdomains`
+   (step 2) before answering, exactly as an honest gap is handled elsewhere in
+   this skill. A guess that misses is a reason to discover, never a reason to
+   improvise a number.
 2. **Discover** — `list_available_subdomains(subject_id)`. Use `data.filings[]`
    to answer "which years / what was filed / is it covered"; use
    `data.subdomains[]` to see which areas have data and pick the `fy` (default

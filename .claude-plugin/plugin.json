@@ -1,6 +1,6 @@
 {
   "name": "celorus",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Decision-ready financial intelligence on companies: a detailed financial-health report, a cap table / ownership report, or a grounded answer to a specific question. Every figure is read from the company's official records and cites its source; data that isn't on record is shown as \"not available\", never invented.",
   "author": {
     "name": "Celorus",
