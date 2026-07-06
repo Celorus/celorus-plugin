@@ -97,9 +97,17 @@ is_canonical, low_confidence, warnings[], provenance }`. `value_type` is one of
 **section** carries
 `{ section_kind, fy, content_markdown, warnings[], provenance }`. `provenance`
 is `{ doc_id, srn, section_kind, section_id, page_start, page_end, cite_url }`.
-`events`/`relationships` are always empty for now (not available) — do not call
-them out as missing. Read each figure's/section's provenance and warnings **from
-its own row** — there is no top-level index-aligned `provenance[]`.
+An **event** (something that happened — an allotment, a charge, an officer
+change) carries `{ event_type, event_date, parties, terms, confidence,
+warnings[], warning_messages[], provenance }`. A **relationship** (a connection
+to another party — a holding, a directorship) carries
+`{ counterparty_subject_id, counterparty_canonical_name, rel_type, role_detail,
+valid_from, valid_to, raw_context, provenance }`. Both cite exactly like a
+signal or a section. **A subdomain with none of either simply carries an empty
+`events[]`/`relationships[]` — that is honest, not a gap, and is never called
+out** (see *Weaving in events and relationships* below). Read each row's
+provenance and warnings **from its own row** — there is no top-level
+index-aligned `provenance[]`.
 
 The API is **read-only** — nothing you do can change the data.
 
@@ -242,6 +250,25 @@ time — do not assume a fixed catalog.
 - **Absent ≠ zero, and a filed boolean/enum/text answer ≠ "not available"** —
   key on `value` presence and render by `value_type` (rule 1); the three hard
   rules apply unchanged.
+
+## Weaving in events and relationships
+
+Two supplementary layers ride alongside the figures and the narrative:
+**events** — something that happened (an allotment, a charge, an officer
+change) — and **relationships** — a connection to another party (a holding, a
+directorship). Both are cited exactly like a figure or a section (rule 2).
+
+- **Restraint, not silence.** When a subdomain's `events[]` or `relationships[]`
+  carry rows, add them as a short supplementary note in that subdomain's
+  section (§7 *Notes & group highlights* is their natural home) — never as the
+  headline. The financial substance (signals, statement tables) always leads.
+- **Silent when absent.** These are not structurally-expected headline lines —
+  an empty `events[]`/`relationships[]` is omitted entirely, with no "not
+  available" line and no mention that the layer was checked. A reader may
+  simply not see this note for a company that has none; that is fine.
+- **Keep it plain-English.** Describe what happened or who is connected in a
+  short sentence with its own citation — never expose the row's internal field
+  names to the reader.
 
 ## Ratios
 

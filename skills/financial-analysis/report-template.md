@@ -127,6 +127,16 @@ provenance:
   ({tag}): {summary, or "not available"}
 - **Significant accounting policies** ({tag}): {summary, or "not available"}
 
+**Notable this year** and **connections** are supplementary layers (SKILL.md
+*Weaving in events and relationships*) — one short line each, only when the
+bundle carries them, each with its own provenance tag. Omit either line
+entirely when its layer is empty; never render "not available" here.
+
+- **Notable this year** ({tag}): {one-line summary of a notable event — e.g. a
+  new charge, an officer change — only if present}
+- **Connections** ({tag}): {one-line summary of a holding or directorship —
+  only if present}
+
 ### 8. Auditor's report & governance
 
 The section that lives only in the attachment. Opinion type, going concern,

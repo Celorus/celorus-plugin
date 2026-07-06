@@ -89,10 +89,18 @@ The `celorus-data` server exposes the subdomain surface. Call exactly three, in 
   signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, display_name, fy, value, normalized_value, value_type, unit,
   is_canonical, low_confidence, warnings[], provenance }`; a **section** carries
-  `{ section_kind, fy, content_markdown, warnings[], provenance }`. Each row's
+  `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
+  (something that happened — an allotment, a charge, an officer change) carries
+  `{ event_type, event_date, parties, terms, confidence, warnings[],
+  warning_messages[], provenance }`; a **relationship** (a connection to
+  another party — a holding, a directorship) carries
+  `{ counterparty_subject_id, counterparty_canonical_name, rel_type,
+  role_detail, valid_from, valid_to, raw_context, provenance }`. Each row's
   `provenance` is `{ doc_id, srn, section_kind, section_id, page_start,
-  page_end, cite_url }`. `events`/`relationships` are always empty this phase.
-  Read each figure's/section's provenance and warnings **from its own row** —
+  page_end, cite_url }`. A subdomain with none of either simply carries an
+  empty `events[]`/`relationships[]` — honest, not a gap; answer from what's
+  there when the question calls for it, and don't call out an empty layer as
+  missing. Read each row's provenance and warnings **from its own row** —
   there is **no** top-level index-aligned `provenance[]`.
 
 The API is **read-only** — nothing you do can change the data.
@@ -133,7 +141,9 @@ The API is **read-only** — nothing you do can change the data.
 | A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` (fetch `streams=["signals"]` — see step 3) — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`) |
-| Events, history/timeline, relationships, "companies that…" | the empty `events[]` / `relationships[]` inside `get_subdomain_data` → "not available" (this phase) |
+| A notable event (an allotment, a charge, an officer change) | the subdomain's `events[]` — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
+| A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` — a plain-language answer, cited; if empty, no such connection is on record |
+| A cross-company screen ("companies that…") or a full relationship graph | not available — refuse plainly, don't improvise from a single subject's `relationships[]` |
 
 If the question names a specific year, pass it as `fy`; otherwise default to the
 latest available (read `list_available_subdomains` to choose).

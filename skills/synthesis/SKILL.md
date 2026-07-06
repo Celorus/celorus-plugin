@@ -101,10 +101,19 @@ The `celorus-data` server exposes three tools for retrieval:
   signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, display_name, fy, value, normalized_value, value_type, unit,
   is_canonical, low_confidence, warnings[], provenance }`; a **section** carries
-  `{ section_kind, fy, content_markdown, warnings[], provenance }`. Each row's
+  `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
+  (something that happened — an allotment, a charge, an officer change) carries
+  `{ event_type, event_date, parties, terms, confidence, warnings[],
+  warning_messages[], provenance }`; a **relationship** (a connection to
+  another party — a holding, a directorship) carries
+  `{ counterparty_subject_id, counterparty_canonical_name, rel_type,
+  role_detail, valid_from, valid_to, raw_context, provenance }`. Each row's
   `provenance` is `{ doc_id, srn, section_kind, section_id, page_start,
-  page_end, cite_url }`. `events`/`relationships` are always empty this phase.
-  Read each figure's/section's provenance and warnings **from its own row** —
+  page_end, cite_url }`. A subdomain with none of either simply carries an
+  empty `events[]`/`relationships[]` — honest, not a gap. Weave in what's
+  present as a short supplementary layer, never the headline over the
+  financial substance, and stay silent (no "not available" line) when a layer
+  is empty. Read each row's provenance and warnings **from its own row** —
   there is **no** top-level index-aligned `provenance[]`.
 
 `state` is one of **`proceed`** (data found, clean), **`constrained_proceed`**
@@ -121,12 +130,14 @@ Discover the available `subdomain_ids` at runtime via `list_available_subdomains
 (each carries a `semantic_description` and `available_years`); request those from
 `get_subdomain_data` and render any figure not in the response as "not available".
 
-**Cross-company screening and relationship queries are not available yet.** You
-can compare named companies you resolve one-by-one (each via `resolve_subject` →
-`get_subdomain_data`) and cite both; you **cannot** rank a company against a peer
-set the store can't enumerate, or return a relationship graph. A peer/sector
-ranking or a "companies that…" screen is **honestly refused**, not improvised —
-say so plainly and refuse that sub-request.
+**Cross-company screening is not available yet.** You can compare named
+companies you resolve one-by-one (each via `resolve_subject` →
+`get_subdomain_data`) and cite both, including each one's own
+`relationships[]` (its holdings, directorships) where present; you **cannot**
+rank a company against a peer set the store can't enumerate, or traverse a
+multi-company relationship graph. A peer/sector ranking or a "companies
+that…" screen is **honestly refused**, not improvised — say so plainly and
+refuse that sub-request.
 
 ## The synthesis method
 
@@ -237,7 +248,12 @@ Compose freely, but always in three honest layers:
    each signal by its `value_type` — `numeric` shows its `normalized_value` +
    `unit`, `boolean` shows Yes/No from `value`, `enum`/`text` show `value`
    verbatim; every narrative claim is a faithful summary. Real zeros are `0`;
-   absences (null/absent `value`) are "not available".
+   absences (null/absent `value`) are "not available". When the request calls
+   for it, weave in a notable event or a connection from `events[]` /
+   `relationships[]` as a brief supplementary aside, cited like any other row —
+   restraint over volume: add it only where it serves the request, never as a
+   list dumped for its own sake, and never mention the layer at all when it's
+   empty.
 2. **Provenance** — a citation on every figure and quoted claim
    (`SRN <srn> · <section_kind> · <pages | no page range>`), with each
    `cite_url` permalink so a reader can open the source. Each figure and each
