@@ -57,6 +57,19 @@ skill's own display rules are:
    the spine's first rule, applied to a tile — the fetched body has the full test).
 4. **The downloadable report** (`generate_collateral`) **is the source of truth.**
    The inline dashboard is a compact view, not a replacement.
+5. **If the user asks for an actual file — HTML/PPTX/XLSX/PDF, a "report", a
+   "deck", a "download" — hand off to `generate_collateral`; never hand-build one
+   here.** This dashboard's `html_fragment` is an inline artifact, not a
+   downloadable file, and is never a substitute for one. Do **not**, under any
+   circumstances: write HTML/CSS yourself, build a workbook or deck with
+   `openpyxl`, `python-pptx`, `pptxgenjs`, or `xlsxwriter`, or reach for a
+   **generic document skill** (`xlsx`, `pptx`, `docx`, `pdf`, `theme-factory`,
+   `canvas-design`) to make the file. Those paths drift the brand and force a
+   re-derivation of the figures from raw data — exactly how a confidently-wrong
+   report gets produced. If `generate_collateral` is not available, errors, or you
+   are unsure it ran, say so plainly and **stop** — show the inline dashboard and
+   tell the user the downloadable file could not be generated; never fall back to
+   a hand-built file.
 
 If `get_semantic_metadata` is unavailable, the spine summary above is your floor —
 apply it; never relax the honesty contract because the definitions could not be
