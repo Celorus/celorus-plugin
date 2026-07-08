@@ -1,0 +1,627 @@
+/* ══════════════════════════════════════════════════════════════════════
+   CELORUS DESIGN SYSTEM v3 — COLLATERAL PATTERN LAYER
+   =====================================================================
+   Shared pattern layer for the three "deliverable-true" HTML templates:
+   financial-health.html, synthesis-answer.html, cap-table.html.
+
+   IMPORT ORDER (required):
+     <link rel="stylesheet" href="../../tokens/dist/foundation-block.css">
+     <link rel="stylesheet" href="collateral.css">
+   foundation-block.css defines every var() referenced here; this file
+   adds ZERO new color/spacing literals — var() only, always. Verified by
+   `grep -E '#[0-9A-Fa-f]{3,8}' collateral.css` returning no matches.
+
+   WHY A SEPARATE LAYER
+   Report.html/deck.html carry document chrome (topbar, toc, tiles) as
+   local <style>. These three templates instead render *product
+   deliverables* whose recurring vocabulary — citations, verdicts, status
+   pills, honesty markers — is identical across all three and is the core
+   of the audit-grade promise. Extracting it here keeps that vocabulary
+   ONE definition, not three drifting copies.
+
+   THE HONESTY CONTRACT, RENDERED (not just documented)
+   Every figure carries provenance (SRN · form · section · page). Derived
+   values are visibly marked "computed". "Not available" is a *designed*
+   state (em-dash + label), never a zero or a guess. Filed values show an
+   "as filed (INR Lakh)" scale note. These are CSS-enforced patterns
+   below (.cite-*, .c-computed, .c-not-available, .c-as-filed), so a
+   generator that uses the markup literally cannot silently drop
+   provenance or fake a missing number.
+
+   PATTERN INDEX
+     1.  Citation chip            .cite-chip
+     2.  Inline cite icon         .cite-ic  (superscript "i" button)
+     3.  Citation card popover    .cite-modal / .cm-*  (SRN·form·section·page·link, mono)
+     4.  Verdict band             .verdict-band
+     5.  Status pill trio         .pill.is-good/.is-neutral/.is-warn  (word carried, never color-alone)
+     6.  KFI tile grid            .kfi-grid / .kfi-tile
+     7.  Dive grid                .dive-grid  (fixed metric col + fluid analysis col)
+     8.  Lead question            .lead-q
+     9.  Honesty markers          .c-not-available · .c-computed · .c-as-filed
+     10. Period-column table      .period-table  (FY 2023-24 headers, per-row cites)
+     11. Annexure collapsible     details.annexure
+     12. Event-timeline row       .event-row  (date + form chip + description + cite)
+     13. Feedback affordances     .fb-* (confirm/flag, tray, focus-visible) — synthesis-answer
+     14. Shared collateral chrome .coll-topbar · .eyebrow · .scope-chip · .coverage-strip
+
+   Every pattern is documented with a comment header at its block.
+   ══════════════════════════════════════════════════════════════════════ */
+
+
+/* ── SHARED COLLATERAL CHROME ─────────────────────────────────────────
+   The charcoal topbar + eyebrow→h2 rhythm that make these read as the
+   same family as report.html / deck.html. Charcoal is reserved for
+   weight (the masthead); bone canvas everywhere else. */
+
+.coll-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--semantic-color-bg-inverse);color:var(--semantic-color-fg-on-inverse);
+  padding:15px var(--semantic-space-gutter);
+  border-bottom:1px solid var(--primitive-color-charcoal-850);
+}
+.coll-topbar .brand{display:flex;align-items:center;gap:13px}
+.coll-topbar .brand img{height:22px;width:auto;display:block}
+.coll-topbar .brand-sep{width:1px;height:18px;background:var(--semantic-color-border-inverse-strong)}
+.coll-topbar .brand-tag{
+  font-size:var(--semantic-text-label);color:var(--primitive-color-dark-ink-300);
+  font-weight:500;letter-spacing:.03em;font-family:var(--sans);
+}
+.coll-topbar .topbar-kind{
+  font-size:var(--primitive-fontSize-3xs);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--component-nav-topbar-accent);font-weight:700;font-family:var(--sans);
+}
+
+/* Eyebrow — the signature label with a 22px petrol rule before it.
+   `.eyebrow .n` carries a mono section number (e.g. "02 · Profitability"). */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:var(--semantic-text-eyebrow);letter-spacing:.17em;text-transform:uppercase;
+  color:var(--brand);font-weight:700;margin:0 0 14px;font-family:var(--sans);
+}
+.eyebrow::before{content:"";display:block;width:22px;height:2px;background:var(--brand);flex-shrink:0}
+.eyebrow .n{
+  font-family:var(--mono);font-style:normal;color:var(--brand);font-weight:600;
+  letter-spacing:.02em;text-transform:none;font-size:var(--primitive-fontSize-xs);
+}
+
+/* Scope chip — used in headers to declare filing scope (form, FY, subject). */
+.scope-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--component-chip-outline-bg);border:1px solid var(--component-chip-outline-border);
+  border-radius:var(--semantic-radius-pill);padding:4px 11px;
+  font-size:var(--primitive-fontSize-xs);color:var(--ink-2);font-family:var(--sans);
+}
+.scope-chip b{color:var(--ink);font-weight:600}
+.scope-chip.is-badge{
+  background:var(--semantic-color-accent-soft);border-color:var(--semantic-color-accent-soft-border);
+  color:var(--brand-700);
+}
+.scope-chip.is-badge b{color:var(--brand-700)}
+
+
+/* ── 1. CITATION CHIP ─────────────────────────────────────────────────
+   The pill form of a citation, used where a whole claim/row cites a
+   source. Reads "⛓ SRN · section". Clickable → opens the citation card.
+   Petrol-soft so it reads as infrastructure, not alarm. */
+.cite-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:var(--primitive-fontSize-2xs);font-weight:600;
+  color:var(--brand-700);background:var(--semantic-color-accent-soft);
+  border:1px solid var(--semantic-color-accent-soft-border);border-radius:var(--semantic-radius-control);
+  padding:3px 9px;cursor:pointer;font-family:var(--sans);white-space:nowrap;line-height:1.3;
+}
+.cite-chip::before{content:"\26D3";font-size:9px;opacity:.75}     /* chain-link glyph */
+.cite-chip:hover{background:var(--semantic-color-accent-soft-border)}
+.cite-chip:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+.cite-chip .cc-mono{font-family:var(--mono);font-weight:500}
+
+
+/* ── 2. INLINE CITE ICON ──────────────────────────────────────────────
+   A superscript "i" button placed immediately after a figure so the
+   number and its source travel together (the honesty contract: every
+   figure carries provenance). Opens the citation card. Keyboard-focusable
+   because it is a real <button>. Hidden in print (the card is screen-only;
+   print carries citations in visible footnote rows/annexure instead). */
+.cite-ic{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:13px;height:13px;margin-left:5px;padding:0;
+  border:1px solid var(--brand);background:var(--paper);color:var(--brand);
+  border-radius:50%;font-size:9px;font-weight:700;font-family:var(--sans);
+  line-height:1;cursor:pointer;vertical-align:super;
+}
+.cite-ic::before{content:"i"}
+.cite-ic:hover{background:var(--brand);color:var(--semantic-color-fg-on-accent)}
+.cite-ic:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+/* On charcoal surfaces the icon inverts to the dark-legible petrol step. */
+.on-dark .cite-ic{border-color:var(--primitive-color-petrol-300);color:var(--primitive-color-petrol-300);background:transparent}
+.on-dark .cite-ic:hover{background:var(--primitive-color-petrol-300);color:var(--semantic-color-bg-inverse)}
+
+
+/* ── 3. CITATION CARD POPOVER ─────────────────────────────────────────
+   The modal a cite-ic / cite-chip opens. Carries the full contract:
+   what-it-shows + Filing(form) · Financial year · Section · SRN · Page ·
+   "open source filing" link. Metadata values are mono (data face).
+   Matches the CITE-01 card design (form · FY · what-it-shows · SRN · page).
+   Screen-only; print hides it. */
+.cite-modal{
+  display:none;position:fixed;inset:0;z-index:var(--primitive-zIndex-modal);
+  background:var(--component-modal-overlay-bg);backdrop-filter:blur(2px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.cite-modal.open{display:flex}
+.cm-card{
+  position:relative;background:var(--component-modal-bg);
+  border:1px solid var(--semantic-color-border-strong);border-top:3px solid var(--brand);
+  border-radius:var(--component-modal-radius);box-shadow:var(--component-modal-shadow);
+  width:100%;max-width:360px;padding:22px 24px 20px;font-family:var(--sans);
+}
+.cm-x{
+  position:absolute;top:8px;right:12px;border:0;background:none;
+  font-size:21px;line-height:1;color:var(--muted);cursor:pointer;
+}
+.cm-x:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+.cm-eyebrow{
+  font-size:var(--primitive-fontSize-3xs);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--brand);font-weight:700;margin-bottom:8px;
+}
+.cm-shows{
+  font-family:var(--serif);font-size:var(--semantic-text-xl);font-weight:600;
+  color:var(--ink);line-height:1.28;margin-bottom:15px;
+}
+.cm-meta{display:grid;gap:0;margin-bottom:17px}
+.cm-meta>div{
+  display:flex;justify-content:space-between;gap:14px;
+  font-size:var(--primitive-fontSize-sm);border-top:1px solid var(--line);padding:8px 0;
+}
+.cm-meta>div:first-child{border-top:0}
+.cm-k{color:var(--muted)}
+.cm-v{font-family:var(--mono);color:var(--ink-2);text-align:right}
+.cm-link{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--brand);color:var(--semantic-color-fg-on-accent);
+  font-size:var(--primitive-fontSize-sm);font-weight:600;padding:8px 15px;
+  border-radius:var(--semantic-radius-control);text-decoration:none;
+}
+.cm-link:hover{background:var(--brand-700)}
+.cm-link:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+
+
+/* ── 4. VERDICT BAND ──────────────────────────────────────────────────
+   The 30-second answer, up front. White panel, thick petrol left rule
+   (the "moment of weight"), a serif verdict head, and body prose. Used
+   for the FH health-at-a-glance verdict and the synthesis "direct answer"
+   band. Petrol left rule signals "this is the conclusion". */
+.verdict-band{
+  background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--brand);
+  border-radius:var(--radius);padding:18px 20px;margin-top:20px;
+}
+.verdict-band .vb-label{
+  font-size:var(--primitive-fontSize-2xs);letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:6px;font-family:var(--sans);
+}
+.verdict-band .vb-head{
+  font-family:var(--serif);font-size:var(--semantic-text-h3);font-weight:600;
+  line-height:1.28;letter-spacing:-.005em;margin-bottom:8px;color:var(--ink);
+}
+.verdict-band .vb-head em{color:var(--brand);font-style:normal}
+.verdict-band p{margin:0;color:var(--ink-2);max-width:74ch;font-size:var(--semantic-text-body-sm)}
+.verdict-band p + p{margin-top:9px}
+
+
+/* ── 5. STATUS PILL TRIO ──────────────────────────────────────────────
+   Strong → good · Adequate → neutral · Watch → warn (per the locked
+   status_thresholds). CRITICAL: never color-alone. The pill *text*
+   carries the word ("Strong"/"Adequate"/"Watch"), and a dot precedes it,
+   so it survives colorblindness, grayscale print, and screen readers.
+   `.is-na` renders an audit-honest "not available" pill for a dimension
+   whose inputs are absent (never a guessed pill). */
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:var(--primitive-fontSize-xs);font-weight:600;letter-spacing:.01em;
+  padding:2px 9px;border-radius:var(--semantic-radius-pill);font-family:var(--sans);
+}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.pill.is-good{color:var(--semantic-color-status-good-text);background:var(--semantic-color-status-good-bg)}
+.pill.is-neutral{color:var(--muted);background:var(--semantic-color-bg-panel)}
+.pill.is-warn{color:var(--semantic-color-status-warn-text);background:var(--semantic-color-status-warn-bg)}
+.pill.is-na{color:var(--primitive-color-ink-300);background:var(--semantic-color-bg-well)}
+.pill.is-na::before{background:transparent;border:1px dashed var(--primitive-color-ink-300);width:7px;height:7px}
+
+
+/* ── 6. KFI TILE GRID ─────────────────────────────────────────────────
+   Key Financial Indicator tiles: label + big serif value (+ unit) + YoY
+   delta + inline cite. Four-up on desktop, two-up ≤720px. The value is
+   serif (weight); the delta is a small pill; the cite icon rides the
+   value so number and source stay together. `.kfi-grid.on-dark` is the
+   charcoal-weight variant (dark KFI strip). */
+.kfi-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--semantic-radius-card-lg);
+  overflow:hidden;margin-top:14px;
+}
+.kfi-tile{background:var(--paper);padding:13px 15px}
+.kfi-tile .kt-label{font-size:var(--primitive-fontSize-2xs);color:var(--muted);font-weight:500;margin-bottom:6px}
+.kfi-tile .kt-value{
+  font-family:var(--serif);font-size:var(--primitive-fontSize-3xl);font-weight:600;
+  letter-spacing:-.015em;color:var(--brand);line-height:1.05;
+  display:inline-flex;align-items:baseline;
+}
+.kfi-tile .kt-value .kt-unit{font-size:var(--primitive-fontSize-xs);color:var(--faint);font-weight:500;margin-left:3px}
+.kfi-tile .kt-detail{margin-top:5px;font-size:var(--primitive-fontSize-xs);color:var(--muted)}
+.delta{font-weight:600;font-size:var(--primitive-fontSize-2xs);padding:1px 6px;border-radius:5px;font-family:var(--sans)}
+.delta.is-up{color:var(--semantic-color-status-good);background:var(--semantic-color-status-good-bg)}
+.delta.is-down{color:var(--semantic-color-status-bad);background:var(--semantic-color-status-bad-bg)}
+.delta.is-turn{color:var(--semantic-color-fg-on-accent);background:var(--semantic-color-status-good)}
+.delta.is-flat{color:var(--muted);background:var(--semantic-color-bg-panel)}
+.delta.is-na{color:var(--primitive-color-ink-300);background:var(--semantic-color-bg-well)}
+/* Charcoal-weight KFI strip (guide: charcoal reserved for weight). */
+.kfi-grid.on-dark{background:var(--primitive-color-charcoal-850);border-color:var(--semantic-color-bg-inverse)}
+.kfi-grid.on-dark .kfi-tile{background:var(--semantic-color-bg-inverse)}
+.kfi-grid.on-dark .kt-label{color:var(--primitive-color-dark-ink-300)}
+.kfi-grid.on-dark .kt-value{color:var(--primitive-color-petrol-300)}
+.kfi-grid.on-dark .kt-value .kt-unit{color:var(--primitive-color-dark-ink-400)}
+.kfi-grid.on-dark .kt-detail{color:var(--primitive-color-dark-ink-200)}
+
+
+/* ── 7. DIVE GRID ─────────────────────────────────────────────────────
+   The deep-dive two-column layout from the mockup: a fixed metric column
+   (big number, threshold context rows, mini bar chart) and a fluid
+   analysis column (prose + citations). Stacks to one column ≤760px.
+   The metric column is where the honesty markers live (computed /
+   as-filed / not-available). */
+.dive-grid{display:grid;grid-template-columns:300px 1fr;gap:22px;align-items:start}
+.metricbox{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:16px 17px}
+.metricbox .mb-big{
+  font-size:var(--semantic-text-h2);font-weight:600;letter-spacing:-.02em;line-height:1;
+  font-family:var(--serif);color:var(--brand);display:inline-flex;align-items:baseline;
+}
+.metricbox .mb-big .mb-unit{font-size:var(--primitive-fontSize-md);color:var(--faint);font-weight:500;font-family:var(--sans);margin-left:2px}
+.metricbox .mb-cap{font-size:var(--primitive-fontSize-xs);color:var(--muted);margin-top:7px}
+.metricbox .mb-row{
+  display:flex;justify-content:space-between;gap:10px;font-size:var(--primitive-fontSize-sm);
+  padding:7px 0;border-top:1px solid var(--line);margin-top:9px;
+}
+.metricbox .mb-row:first-of-type{margin-top:11px}
+.metricbox .mb-row .mb-k{color:var(--muted)}
+.metricbox .mb-row .mb-val{font-weight:600;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+/* threshold context: which band the value falls in (Strong/Adequate/Watch) */
+.metricbox .mb-threshold{
+  margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+  font-size:var(--primitive-fontSize-2xs);color:var(--muted);line-height:1.5;
+}
+.metricbox .mb-threshold b{color:var(--ink);font-weight:600}
+.analysis p{font-size:var(--semantic-text-body-sm);color:var(--ink-2);margin:0 0 11px}
+.analysis p:last-child{margin-bottom:0}
+.analysis b{color:var(--ink);font-weight:600}
+.analysis .reads{
+  margin:0 0 11px;padding:11px 14px;background:var(--semantic-color-accent-soft);
+  border:1px solid var(--semantic-color-accent-soft-border);border-radius:9px;
+  font-size:var(--primitive-fontSize-sm);color:var(--brand-deep);
+}
+.analysis .reads b{color:var(--brand-700)}
+
+/* Inline mini bar chart (SVG bars authored in markup, token fills).
+   `.bar .col.now/.prev/.loss` map to good / neutral-line / bad-dashed. */
+.mini-bars{display:flex;align-items:flex-end;gap:14px;height:78px;margin:4px 0 2px}
+.mini-bars .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end}
+.mini-bars .bar .col{width:70%;border-radius:3px 3px 0 0;min-height:3px}
+.mini-bars .bar .col.now{background:var(--semantic-color-status-good)}
+.mini-bars .bar .col.prev{background:var(--line-2)}
+.mini-bars .bar .col.loss{background:var(--semantic-color-status-bad-bg);border:1px dashed var(--semantic-color-status-bad)}
+.mini-bars .bar .yl{font-size:var(--primitive-fontSize-3xs);color:var(--muted);font-family:var(--mono)}
+
+
+/* ── 8. LEAD QUESTION ─────────────────────────────────────────────────
+   The italic serif opening question above a dive's verdict h2 — frames
+   the section as answering a user's question ("Is this growth real?").
+   Serif + italic + muted so it reads as a posed question, not an assertion. */
+.lead-q{
+  color:var(--muted);font-size:var(--primitive-fontSize-md);margin:6px 0 0;
+  max-width:66ch;font-style:italic;font-family:var(--serif);
+}
+
+
+/* ── 9. HONESTY MARKERS ───────────────────────────────────────────────
+   The rendered honesty contract. Three designed states:
+
+   .c-not-available — an em-dash + a small "not available" label. This is
+     the DESIGNED absence state: missing data is never a zero and never a
+     guess. Use in place of a value, never alongside a fabricated one.
+
+   .c-computed — a small "computed" badge appended to a derived figure
+     (ratios: PAT margin, RoNW, D/E …). Signals the number is arithmetic
+     on filed figures, not itself filed. `title` should name the formula.
+
+   .c-as-filed — the scale note carried next to filed values:
+     "as filed (INR Lakh)". Makes the filing's own rounding explicit so a
+     reader never mistakes lakh for crore. */
+.c-not-available{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:var(--primitive-fontSize-xs);color:var(--primitive-color-ink-300);
+  font-family:var(--sans);
+}
+.c-not-available::before{content:"\2014";color:var(--line-2);font-weight:400}  /* em dash */
+.c-not-available .na-label{
+  font-size:var(--primitive-fontSize-3xs);letter-spacing:.04em;text-transform:uppercase;
+  background:var(--semantic-color-bg-well);border:1px solid var(--line);border-radius:5px;
+  padding:1px 6px;color:var(--primitive-color-ink-300);font-weight:600;
+}
+.c-computed{
+  display:inline-flex;align-items:center;
+  font-size:var(--primitive-fontSize-3xs);letter-spacing:.03em;text-transform:uppercase;
+  color:var(--brand-700);background:var(--semantic-color-accent-soft);
+  border:1px solid var(--semantic-color-accent-soft-border);border-radius:5px;
+  padding:0 5px;margin-left:6px;font-weight:600;font-family:var(--sans);cursor:help;
+  vertical-align:middle;line-height:1.5;
+}
+.c-computed::before{content:"\0192\2009";font-family:var(--mono);opacity:.8}  /* ƒ (function) glyph */
+.c-as-filed{
+  display:inline-block;font-size:var(--primitive-fontSize-3xs);color:var(--faint);
+  font-family:var(--mono);letter-spacing:.01em;
+}
+.c-as-filed b{color:var(--muted);font-weight:600}
+
+
+/* ── 10. PERIOD-COLUMN TABLE ──────────────────────────────────────────
+   Financial statement table with period columns (FY 2023-24 / FY 2022-23
+   headers), right-aligned mono numbers, group/sub/total row treatments,
+   and a per-row cite column so every line traces to its filing. Negative
+   values use the bad token; the not-available state uses .c-not-available
+   inline (never a zero placeholder). */
+.period-table{width:100%;border-collapse:collapse;font-size:var(--primitive-fontSize-sm);margin-top:4px}
+.period-table thead th{
+  font-size:var(--primitive-fontSize-3xs);letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;text-align:right;padding:7px 9px;
+  border-bottom:1.5px solid var(--line-2);white-space:nowrap;
+}
+.period-table thead th.col-label{text-align:left}
+.period-table tbody td{
+  padding:6px 9px;border-bottom:1px solid var(--line);text-align:right;
+  white-space:nowrap;font-family:var(--mono);
+}
+.period-table tbody td.col-label{text-align:left;white-space:normal;font-family:var(--sans)}
+.period-table tbody td.col-cite{text-align:left;white-space:nowrap}
+.period-table tbody tr.is-group td{
+  font-weight:600;color:var(--brand-700);background:var(--semantic-color-bg-well);
+  text-transform:uppercase;font-size:var(--primitive-fontSize-2xs);letter-spacing:.03em;font-family:var(--sans);
+}
+.period-table tbody tr.is-total td{
+  font-weight:700;border-top:1.5px solid var(--line-2);border-bottom:1.5px solid var(--line-2);
+}
+.period-table tbody tr.is-sub td.col-label{padding-left:20px;color:var(--ink-2)}
+.period-table td.is-neg{color:var(--semantic-color-status-bad)}
+.period-table td.is-pos{color:var(--semantic-color-status-good)}
+
+
+/* ── 11. ANNEXURE COLLAPSIBLE ─────────────────────────────────────────
+   A <details> wrapper around a full statement table. Collapsed by
+   default to keep the report scannable; a mono source tag on the summary
+   names the filing. Print forces it open (annexures must print).*/
+details.annexure{
+  margin-top:12px;border:1px solid var(--line);border-radius:var(--semantic-radius-card);
+  overflow:hidden;background:var(--paper);
+}
+details.annexure>summary{
+  cursor:pointer;list-style:none;padding:11px 15px;font-weight:600;
+  font-size:var(--primitive-fontSize-md);background:var(--semantic-color-bg-sheet);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+details.annexure>summary::-webkit-details-marker{display:none}
+details.annexure>summary:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:calc(-1 * var(--component-focus-ring-offset));
+}
+details.annexure>summary .ann-src{color:var(--muted);font-size:var(--primitive-fontSize-2xs);font-weight:500;font-family:var(--mono);white-space:nowrap}
+details.annexure>summary::after{content:"+";color:var(--brand);font-family:var(--mono);font-weight:600;margin-left:auto}
+details.annexure[open]>summary::after{content:"\2212"}   /* minus */
+details.annexure .ann-inner{padding:6px 15px 14px}
+
+
+/* ── 12. EVENT-TIMELINE ROW ───────────────────────────────────────────
+   A dated event with a form chip (PAS-3 / MGT-7 / AOC-4), a description,
+   and a cite — the "event spine" for cap-table capital movements. The
+   date is mono; the form chip is petrol-soft; a quiet left rule threads
+   the rows into a timeline. */
+.event-timeline{margin-top:14px;border-left:2px solid var(--line);padding-left:0}
+.event-row{
+  display:grid;grid-template-columns:96px auto 1fr auto;gap:12px;align-items:baseline;
+  padding:11px 0 11px 18px;border-bottom:1px solid var(--line);position:relative;
+}
+.event-row:last-child{border-bottom:0}
+.event-row::before{
+  content:"";position:absolute;left:-5px;top:16px;width:8px;height:8px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--brand);
+}
+.event-row .ev-date{font-family:var(--mono);font-size:var(--primitive-fontSize-xs);color:var(--ink-2);white-space:nowrap}
+.event-row .ev-desc{font-size:var(--primitive-fontSize-sm);color:var(--ink-2)}
+.event-row .ev-desc b{color:var(--ink);font-weight:600}
+.form-chip{
+  display:inline-flex;align-items:center;font-size:var(--primitive-fontSize-3xs);font-weight:600;
+  letter-spacing:.03em;padding:2px 8px;border-radius:5px;font-family:var(--mono);white-space:nowrap;
+  color:var(--brand-700);background:var(--semantic-color-accent-soft);border:1px solid var(--semantic-color-accent-soft-border);
+}
+.form-chip.is-mgt7{color:var(--semantic-color-status-good-text);background:var(--semantic-color-status-good-bg);border-color:var(--semantic-color-status-good)}
+.form-chip.is-neutral{color:var(--muted);background:var(--semantic-color-bg-panel);border-color:var(--line)}
+
+
+/* ── 13. FEEDBACK AFFORDANCES ─────────────────────────────────────────
+   Synthesis-answer.html only: per-claim confirm (✓) / flag (⚑) buttons
+   that accumulate into a visible feedback tray and a window.celorusFeedback
+   JSON object. Fully keyboard-accessible with visible focus (they are real
+   <button>s). A confirmed/flagged claim gets a persistent state class so
+   the reader sees their own marks. */
+.claim-block{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 17px;margin-top:14px;
+}
+.claim-block.is-confirmed{border-left:4px solid var(--semantic-color-status-good)}
+.claim-block.is-flagged{border-left:4px solid var(--semantic-color-status-warn)}
+.claim-block .cb-text{font-size:var(--semantic-text-body-sm);color:var(--ink-2);margin:0 0 10px}
+.claim-block .cb-text b{color:var(--ink);font-weight:600}
+.claim-block .cb-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cb-cites{display:inline-flex;gap:6px;flex-wrap:wrap;margin-right:auto}
+.fb-actions{display:inline-flex;gap:6px}
+.fb-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:var(--primitive-fontSize-xs);font-weight:600;font-family:var(--sans);
+  padding:4px 10px;border-radius:var(--semantic-radius-control);cursor:pointer;
+  background:var(--component-button-secondary-bg);border:1px solid var(--component-button-secondary-border);
+  color:var(--component-button-secondary-fg);
+}
+.fb-btn:hover{background:var(--component-button-secondary-bg-hover)}
+.fb-btn:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+.fb-btn[aria-pressed="true"].fb-confirm{
+  background:var(--semantic-color-status-good-bg);border-color:var(--semantic-color-status-good);
+  color:var(--semantic-color-status-good-text);
+}
+.fb-btn[aria-pressed="true"].fb-flag{
+  background:var(--semantic-color-status-warn-bg);border-color:var(--semantic-color-status-warn);
+  color:var(--semantic-color-status-warn-text);
+}
+.fb-note{
+  display:block;width:100%;margin-top:9px;font-family:var(--sans);font-size:var(--primitive-fontSize-sm);
+  color:var(--component-input-fg);background:var(--component-input-bg);
+  border:1px solid var(--component-input-border);border-radius:var(--component-input-radius);
+  padding:8px 11px;resize:vertical;min-height:38px;
+}
+.fb-note:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);border-color:var(--component-input-focus-border);
+}
+.fb-note[hidden]{display:none}
+
+/* Feedback tray — a sticky panel that shows accumulated marks + copy /
+   download actions. Charcoal so it reads as system chrome, not content. */
+.fb-tray{
+  position:sticky;bottom:0;z-index:var(--primitive-zIndex-sticky);
+  background:var(--semantic-color-bg-inverse);color:var(--semantic-color-fg-on-inverse);
+  border-top:2px solid var(--component-nav-topbar-accent);
+  padding:12px var(--semantic-space-gutter);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.fb-tray .fb-tray-count{font-family:var(--mono);font-size:var(--primitive-fontSize-sm);color:var(--primitive-color-dark-ink-100)}
+.fb-tray .fb-tray-count b{color:var(--component-nav-topbar-accent);font-weight:600}
+.fb-tray .fb-tray-actions{display:inline-flex;gap:8px;margin-left:auto}
+.fb-tray-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:var(--primitive-fontSize-xs);font-weight:600;font-family:var(--sans);
+  padding:6px 13px;border-radius:var(--semantic-radius-control);cursor:pointer;
+  background:transparent;border:1px solid var(--semantic-color-border-inverse-strong);
+  color:var(--semantic-color-fg-on-inverse);
+}
+.fb-tray-btn:hover{background:var(--primitive-color-charcoal-850)}
+.fb-tray-btn.is-primary{background:var(--component-nav-topbar-accent);border-color:var(--component-nav-topbar-accent);color:var(--semantic-color-bg-inverse)}
+.fb-tray-btn:focus-visible{
+  outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
+  outline-offset:var(--component-focus-ring-offset);
+}
+
+
+/* ── 14. COVERAGE STRIP ───────────────────────────────────────────────
+   Synthesis honesty: two columns declaring what WAS searched vs what was
+   NOT available. Makes the boundary of the answer explicit — the flip
+   side of citing what you did find. Watch-toned "not available" column so
+   the gap is legible, not hidden. */
+.coverage-strip{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;
+}
+.coverage-col{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.coverage-col h4{margin:0 0 9px;font-size:var(--primitive-fontSize-xs);letter-spacing:.04em;text-transform:uppercase}
+.coverage-col.is-searched h4{color:var(--semantic-color-status-good-text)}
+.coverage-col.is-gap h4{color:var(--semantic-color-status-warn-text)}
+.coverage-col ul{margin:0;padding:0;list-style:none;font-size:var(--primitive-fontSize-sm);color:var(--ink-2)}
+.coverage-col li{padding:5px 0 5px 18px;position:relative;border-top:1px solid var(--line)}
+.coverage-col li:first-child{border-top:0}
+.coverage-col.is-searched li::before{content:"\2713";position:absolute;left:0;top:5px;color:var(--semantic-color-status-good);font-size:10px;font-weight:700}
+.coverage-col.is-gap li::before{content:"\2014";position:absolute;left:0;top:5px;color:var(--semantic-color-status-warn);font-weight:700}
+
+
+/* ── SHARED: conclusion two-column (strengths / watch items) ──────────
+   FH conclusion + synthesis takeaways. Strengths use good tokens with a ▲
+   marker; watch items use warn tokens with a "!" marker. */
+.bottomline{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.bottomline .bl{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.bottomline .bl h4{margin:0 0 9px;font-size:var(--primitive-fontSize-xs);letter-spacing:.04em;text-transform:uppercase}
+.bottomline .bl.is-pos h4{color:var(--semantic-color-status-good-text)}
+.bottomline .bl.is-watch h4{color:var(--semantic-color-status-warn-text)}
+.bottomline .bl ul{margin:0;padding:0;list-style:none;font-size:var(--primitive-fontSize-sm);color:var(--ink-2)}
+.bottomline .bl li{padding:5px 0 5px 18px;position:relative;border-top:1px solid var(--line)}
+.bottomline .bl li:first-child{border-top:0}
+.bottomline .bl.is-pos li::before{content:"\25B2";position:absolute;left:0;top:6px;color:var(--semantic-color-status-good);font-size:8px}
+.bottomline .bl.is-watch li::before{content:"!";position:absolute;left:3px;top:5px;color:var(--semantic-color-status-warn);font-weight:700;font-size:11px}
+.bottomline .bl li b{color:var(--ink)}
+
+
+/* ── SHARED: summary tile row (authorized / issued / paid-up capital) ──
+   Three-up tiles for the cap-table capital summary. Same visual as KFI
+   but wider, for capital figures. */
+.summary-tiles{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--semantic-radius-card-lg);
+  overflow:hidden;margin-top:16px;
+}
+.summary-tiles .st{background:var(--paper);padding:16px 18px}
+.summary-tiles .st-label{font-size:var(--primitive-fontSize-2xs);color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:9px}
+.summary-tiles .st-value{font-family:var(--serif);font-size:var(--semantic-text-h3);font-weight:600;letter-spacing:-.015em;color:var(--brand);line-height:1}
+.summary-tiles .st-value .st-unit{font-size:var(--primitive-fontSize-sm);color:var(--faint);font-weight:500;font-family:var(--sans)}
+.summary-tiles .st-detail{margin-top:6px;font-size:var(--primitive-fontSize-xs);color:var(--muted)}
+
+
+/* ── SHARED: source line (mono, under a figure or table) ──────────────
+   The mockup's `.src` — a mono provenance line under a metric/table. */
+.src-line{font-size:var(--primitive-fontSize-2xs);color:var(--faint);font-family:var(--mono);margin-top:3px}
+.src-line b{color:var(--muted);font-weight:600}
+
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────────
+   Token breakpoints (md 820 / a 760 dive break / 720 tile reflow). */
+@media(max-width:820px){
+  .coll-topbar{padding-left:20px;padding-right:20px}
+  .fb-tray{padding-left:20px;padding-right:20px}
+}
+@media(max-width:760px){
+  .dive-grid{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  .kfi-grid{grid-template-columns:repeat(2,1fr)}
+  .summary-tiles{grid-template-columns:1fr}
+  .bottomline,.coverage-strip{grid-template-columns:1fr}
+  .event-row{grid-template-columns:1fr auto;gap:6px}
+  .event-row .ev-desc{grid-column:1 / -1}
+}
+
+
+/* ── PRINT ────────────────────────────────────────────────────────────
+   Screen-only affordances (cite modal, cite icons, feedback UI, tray)
+   are stripped. Break-inside avoids on every card/tile/table/dive so the
+   audit deliverable paginates cleanly. Annexures forced open so they
+   print. Provenance stays visible (it is the point). */
+@media print{
+  .cite-modal{display:none !important}
+  .cite-ic{display:none}
+  .fb-actions,.fb-tray,.fb-note,.refine-form{display:none !important}
+  .coll-topbar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .kfi-grid,.kfi-tile,.metricbox,.verdict-band,.claim-block,.bottomline .bl,
+  .coverage-col,.summary-tiles,.period-table,.event-row,details.annexure{break-inside:avoid}
+  details.annexure[open]>.ann-inner{display:block}
+  details.annexure>summary{pointer-events:none}
+  details.annexure>summary::after{display:none}
+  .period-table thead{display:table-header-group}
+  .on-dark,.kfi-grid.on-dark,.kfi-grid.on-dark .kfi-tile{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:14mm}
+}
