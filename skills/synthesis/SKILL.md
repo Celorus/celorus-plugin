@@ -130,6 +130,15 @@ Discover the available `subdomain_ids` at runtime via `list_available_subdomains
 (each carries a `semantic_description` and `available_years`); request those from
 `get_subdomain_data` and render any figure not in the response as "not available".
 
+**Narrow a pointed sub-question — `select_relevant_sections(subject_id, query_text)`.**
+For a sub-question that targets one area rather than a broad sweep, pass its text
+verbatim to get the relevant `subdomain_id`s server-side and deterministically (in
+`data.sections[]`), then fetch only those — instead of requesting every subdomain.
+`proceed` with a **non-empty** `sections` → fetch only those. `proceed` with an
+**empty** `sections`, OR `stop` (the selector is unavailable — **not** a filing miss)
+→ you **must** fall back to the full `list_available_subdomains` set; never let narrowing
+thin the answer. Selection never decides what *exists*, only where to look first.
+
 **Cross-company screening is not available yet.** You can compare named
 companies you resolve one-by-one (each via `resolve_subject` →
 `get_subdomain_data`) and cite both, including each one's own

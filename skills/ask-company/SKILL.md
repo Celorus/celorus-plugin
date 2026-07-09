@@ -146,6 +146,16 @@ The API is **read-only** — nothing you do can change the data.
    to answer "which years / what was filed / is it covered"; use
    `data.subdomains[]` to see which areas have data and pick the `fy` (default
    latest unless the user named one). `fallback` → known company, no data.
+
+   **Narrow the fetch for a pointed question — `select_relevant_sections(subject_id,
+   query_text)`.** Pass the user's question verbatim. It returns, server-side and
+   deterministically, the `subdomain_id`s relevant to the question (in
+   `data.sections[]`) — sparing you the eyeball over every `subdomains[]` description
+   and keeping the next fetch small. `proceed` with a **non-empty** `sections` → fetch
+   only those `subdomain_id`s in step 3. `proceed` with an **empty** `sections`, OR
+   `stop` (the selector is unavailable — this is **not** a filing miss) → you **must**
+   fall back to the full `list_available_subdomains` set; never let the narrowing step
+   thin the answer. Selection never decides what *exists* — only where to look first.
 3. **Fetch — signals-first for a figure question.** For a figure / filed-fact
    question, call `get_subdomain_data(subject_id, subdomain_ids=[…], fy=…,
    streams=["signals"])`. The signals stream carries each figure's `display_name`
