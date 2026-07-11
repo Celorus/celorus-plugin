@@ -4,12 +4,12 @@
     "name": "Celorus",
     "email": "tech@celorus.com"
   },
-  "description": "Celorus \u2014 decision-ready financial intelligence on companies, every figure cited to its source.",
+  "description": "Decision-ready intelligence on companies, every figure cited to its source.",
   "plugins": [
     {
       "name": "celorus",
       "source": ".",
-      "description": "Get a detailed financial-health report on a company, or ask a specific question about one \u2014 grounded in the company's official records, every figure cited, nothing invented."
+      "description": "Decision-ready intelligence on companies: financial-health reports, cap tables, and straight answers to specific questions, each figure grounded in the company's own records and cited, nothing invented."
     }
   ]
 }
