@@ -1,0 +1,17 @@
+{
+  "$description": "Direction C register rule (D41). Ground per content type; agents apply this deterministically. coverDefault applies to all profile covers and identity surfaces.",
+  "coverDefault": "signal",
+  "registers": {
+    "signal": { "ground": "charcoal-950", "accent": "petrol-300", "atmosphere": true,
+      "cssClass": "signal", "meaning": "when we claim" },
+    "daylight": { "ground": "bone-200", "accent": "petrol-600", "atmosphere": false,
+      "cssClass": "daylight", "meaning": "when we prove" }
+  },
+  "byContent": {
+    "launch": "signal", "milestone": "signal", "manifesto": "signal", "event": "signal",
+    "cover": "signal", "announcement": "signal", "quote": "signal",
+    "explainer": "daylight", "data-story": "daylight", "stat": "daylight",
+    "changelog": "daylight", "hiring": "daylight", "community": "daylight",
+    "education": "daylight"
+  }
+}

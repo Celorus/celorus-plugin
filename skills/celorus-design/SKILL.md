@@ -40,6 +40,7 @@ output that it was built from the skill snapshot.
 | App UI (Next.js/Tailwind) | `tokens/dist/tailwind.preset.js` + `components/celorus-ui.css` + `components/gallery.html` |
 | Plugin / embedded / chat-rendered / hosted-artifact view | Embedded surfaces rules below + `references/PLUGIN_SURFACES.md` |
 | Marketing page / banner / email | `marketing/` (email is the ONE inline-hex surface — regenerate from tokens, never hand-edit) |
+| **Public-profile asset** (social cover/post, avatar, listing, campaign email, OG) | `marketing/public/PUBLIC.md` + `registers.json` + `public-block.css` (bundled: `assets/public-block.css`, `assets/registers.json`, `assets/rings-*.svg`) — see Public register below |
 
 If the live templates are unreachable, reproduce the pattern from this skill's rules; say so in
 the output.
@@ -157,14 +158,40 @@ Operator register (full reference: `references/VOICE.md`): plain, specific, conf
 dashes, no hedges ("might", "perhaps", "we believe"), no marketing superlatives, vary sentence
 length. Headlines state a verdict, not a topic.
 
+## Public register (Direction C, D41)
+
+Surfaces OUTSIDE the login wall (social covers and posts, avatars, listings, campaign
+email, link previews) run TWO registers with one grammar. This is the ONE sanctioned
+exception to "no gradients / charcoal reserved": the tokenized atmosphere applies to
+public-profile surfaces only; collateral and product surfaces keep the lock exactly.
+
+| Register | Ground and accent | Used for |
+|---|---|---|
+| **Signal** | charcoal-950, petrol-300 accent, atmosphere on (`--public-mesh/vignette/grain/glow`) | launches, milestones, manifesto lines, covers, events, announcements, quotes |
+| **Daylight** | bone-200, petrol-600 accent, hairlines only | explainers, data stories, stats, changelogs, hiring, community |
+
+Rules: covers default Signal; register per content type is `assets/registers.json`
+(live: `marketing/public/registers.json`); the shared grammar is mono eyebrow →
+serif statement with ONE accented phrase → mono provenance foot; the rings
+(`assets/rings-daylight.svg` / `assets/rings-signal.svg`) are the only graphic
+device; no photography. Public voice: name the outcome and the record, never the
+machinery (form codes, vendor names, and pipeline vocabulary stay behind the wall);
+the one factual line, listing pages only: "Decision-ready financials and ownership
+on Indian private companies." In the live system start from `marketing/public/`
+templates and export via `node marketing/public/export-public.mjs`; from the
+snapshot, bind `assets/public-block.css` vars and follow this section. The shipped
+website is the SOURCE of this register system and does not change.
+
 ## Snapshot provenance & regeneration
 
-The bundled snapshot was cut from `Celorus/design-system` on **08 Jul 2026**:
+The bundled snapshot was cut from `Celorus/design-system` on **12 Jul 2026** (skill v1.4):
 `assets/foundation-block.css` + `assets/embedded-fonts.css` + `references/TOKENS.md` ← `tokens/dist/`, `assets/collateral.css`
 ← `templates/html/`, `assets/tokens.flat.json` ← `tokens/dist/`, logos ← `brand/logos/`,
 `assets/celorus-charts.js` ← `components/`, `assets/composition-lint.mjs` ← `tools/`, `references/COMPOSITION.md` ← `guides/`, `references/{VOICE,LOCALIZATION,PLUGIN_SURFACES,PRINT_AND_EXPORT}.md`
-← `brand/` + `guides/`. To refresh: re-copy those files (they must diff IDENTICAL to the live
-system), update this date, and rebuild the package:
+← `brand/` + `guides/`, `assets/public-block.css` ← `tokens/dist/` (D41 public layer),
+`assets/registers.json` ← `marketing/public/`, `assets/rings-daylight.svg` +
+`assets/rings-signal.svg` ← `brand/motifs/`. To refresh: re-copy those files (they must diff
+IDENTICAL to the live system), update this date, and rebuild the package:
 `cd design-system/skill && zip -rX ../celorus-design.skill celorus-design`.
 
 ## Self-check before finishing
@@ -184,4 +211,6 @@ system), update this date, and rebuild the package:
   collapsed below; stat values render serif at display scale, never mono-small.
 - Fonts are real wherever the surface allows: Tier-1 hosted artifacts inline
   `assets/embedded-fonts.css`; PDF/office paths use the vendored `brand/fonts/` TTFs.
+- Public-profile assets follow the Public register section: correct register per
+  `registers.json`, the shared grammar, provenance foot, no photography.
 - Would it sit next to another Celorus artifact and read as the same company? If unsure, fix.
