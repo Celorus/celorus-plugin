@@ -44,7 +44,13 @@ Errors fail CI; warnings print and pass. See the matrix in `tools/composition-li
 - **Eyebrow → h2 rhythm** — warn-level heuristic; charcoal close bands are exempt (they
   open with a plain serif h2 by design).
 - **Hex literals** — scanned in CSS scope only (`<style>` + `style=""`), data-URIs
-  excluded, so prose issue-refs can't false-positive.
+  excluded, so prose issue-refs can't false-positive. The inlined GENERATED foundation
+  paste-block is sanctioned (SKILL steps 2/5 mandate inlining it where CSP blocks
+  `<link>`; its hexes are the tokens, gated where they are built): the scan skips from
+  the block's header sentinel to the end of that `<style>` block, and skips explicit
+  `/* lint:allow-token-block */ … /* lint:end-token-block */` fences — closed pairs
+  only, an unclosed fence sanctions nothing. Everything else stays strict
+  (`tools/composition-lint.test.mjs` pins both directions).
 - **Type floor** — literal `font-size` below 9px is an error, 9–10px a warning. The token
   floor is 10px (`fontSize-3xs`); micro-type creep is how dashboards rot.
 - **Embedded fonts** — tier1-artifact must carry `data:font/woff2` (CSP-sandboxed hosts

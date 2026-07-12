@@ -15,7 +15,9 @@
 // by design — cheap, explainable, and good enough to stop the failure classes we
 // have actually shipped (2026-07-08 audit): missing theme bridge, missing provenance,
 // full-page artifacts stripped of the charcoal topbar, hex literals smuggled into
-// <style>, micro-type creep.
+// <style>, micro-type creep. The one sanctioned hex source in CSS is the inlined
+// generated foundation paste-block (plus explicitly fenced token CSS) — see
+// stripSanctioned below; tools/composition-lint.test.mjs pins both directions.
 
 import { readFileSync } from "node:fs";
 
@@ -36,12 +38,31 @@ const RULES = {
 const stripSvg      = (s) => s.replace(/<svg[\s\S]*?<\/svg>/gi, "");
 const stripComments = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
 
+// Sanctioned token CSS. SKILL.md steps 2/5 REQUIRE inlining the generated
+// foundation paste-block (tokens/dist/foundation-block.css) into <style> on
+// CSP-sandboxed hosts, where <link> is impossible — its hex values ARE the
+// tokens, already gated where they are built (tokens/build.mjs). The literal
+// scans therefore skip:
+//   1. everything from the paste-block's header sentinel to the end of its
+//      <style> block (the block is pasted verbatim, sentinel first — CSS
+//      before the sentinel in the same block stays scanned);
+//   2. explicit /* lint:allow-token-block */ ... /* lint:end-token-block */
+//      fences — CLOSED pairs only; an unclosed fence sanctions nothing.
+// Every other <style> block and style="" attribute stays strict.
+const FOUNDATION_SENTINEL = /\/\*\s*Celorus Design System v3 — foundation paste-block \(GENERATED\)/;
+const ALLOW_FENCE = /\/\*\s*lint:allow-token-block\s*\*\/[\s\S]*?\/\*\s*lint:end-token-block\s*\*\//g;
+function stripSanctioned(css) {
+  const m = css.match(FOUNDATION_SENTINEL);
+  if (m) css = css.slice(0, m.index);
+  return css.replace(ALLOW_FENCE, "");
+}
+
 function styleText(html) {
   // hex + type checks scan CSS only: <style> blocks and style="" attributes.
   // Prose (#946-style issue refs, href anchors) is out of scope by construction.
   const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]);
   const attrs  = [...html.matchAll(/style="([^"]*)"/gi)].map((m) => m[1]);
-  return blocks.concat(attrs).join("\n");
+  return blocks.concat(attrs).map(stripSanctioned).join("\n");
 }
 
 function lintFile(path) {
