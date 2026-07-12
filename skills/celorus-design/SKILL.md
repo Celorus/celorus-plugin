@@ -192,7 +192,10 @@ The bundled snapshot was cut from `Celorus/design-system` on **12 Jul 2026** (sk
 `assets/registers.json` ← `marketing/public/`, `assets/rings-daylight.svg` +
 `assets/rings-signal.svg` ← `brand/motifs/`. To refresh: re-copy those files (they must diff
 IDENTICAL to the live system), update this date, and rebuild the package:
-`cd design-system/skill && zip -rX ../celorus-design.skill celorus-design`.
+`cd design-system/.claude/skills && zip -rX ../../celorus-design.skill celorus-design`.
+The skill's single source home is `design-system/.claude/skills/celorus-design/`; the
+`.skill` bundle and the `celorus` plugin copy are generated from it — never edit those
+directly. Full single-source sync law: `kit/README.md`.
 
 ## Self-check before finishing
 
