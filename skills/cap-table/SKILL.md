@@ -6,7 +6,7 @@ description: >-
   ownership breakdown, funding rounds, share allotments, share classes / share
   capital, dilution, as-converted / fully-diluted ownership, or a preference
   / liquidation stack. Every figure is read from the company's official
-  filings and cites its source; data that is not on record is shown as "not
+  record and cites its source; data that is not on record is shown as "not
   available" — never estimated, never filled from general knowledge.
 ---
 
@@ -52,7 +52,7 @@ summarised here overrides them. In brief:
    primary issuance only (never infer a seller); a debenture is never counted
    as paid-up equity; exact security-class names are preserved verbatim. A
    round name, an unfiled liquidation-preference multiple, or ESOP overhang
-   not present in the filings is "unknown" pending the user — never inferred.
+   not on record is "unknown" pending the user — never inferred.
 5. **A valuation with populated valuer figures but no rendered checkbox is
    still "obtained".** Never report a round as "valuation not obtained", and
    never filter it out, just because the source checkbox didn't render.
@@ -171,7 +171,9 @@ The API is **read-only** — nothing you do can change the data.
    generic document skill (`xlsx`, `pptx`, `docx`, `pdf`, `theme-factory`,
    `canvas-design`) to fake it. Hand-building drifts the brand and forces you
    to re-derive figures yourself — exactly how a confidently-wrong cap table
-   gets produced.
+   gets produced. For a **combination** deliverable (cap table together with
+   a financial-health report in one artifact), defer to the
+   **financial-analysis** skill — it owns combined report generation.
 
 ## Reading the bundle
 
