@@ -117,9 +117,10 @@ objects**, one per view, each self-describing its own `view` id and `status`
   (share price, pre-money, post-money, dilution % — each labelled
   `"derived"` with a `formula_id` and `model_version`), a shared
   `provenance` (the same citation covers both blocks — the derived layer
-  carries no citation of its own), and `holders[]` (each holder: name, PAN
-  if on record, share class, shares held, consideration paid, its own
-  provenance, and a `grain` of `"subject"` or `"name"` — see rule 7). A
+  carries no citation of its own), and `holders[]` (each holder: name,
+  share class, shares held, consideration paid, its own provenance, and a
+  `grain` of `"subject"` or `"name"` — see rule 7; holder identifiers such
+  as PAN/DIN are never served — do not ask for or render them). A
   round with no parseable roster carries `roster_missing: true` (rule 6); a
   filing with more than one round in it adds a filing-grain warning to each
   of its rounds (rule 7: the holders can't be split across that filing's

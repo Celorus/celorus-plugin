@@ -61,9 +61,9 @@ detail not available for this filing" instead of an empty table (rule 6). If
 the round carries a filing-grain warning, note that this list is shared
 across every round in the same filing.
 
-| Holder | PAN | Share class | Shares held | Consideration paid | Grain | Provenance |
-| --- | --- | --- | --- | --- | --- | --- |
-| {holder_name} | {pan or "not available"} | {share_class} | {shares_held} | {amount_paid or "not available"} | {"resolved" if grain=="subject" else "name only — not an identity claim"} | {tag} |
+| Holder | Share class | Shares held | Consideration paid | Grain | Provenance |
+| --- | --- | --- | --- | --- | --- |
+| {holder_name} | {share_class} | {shares_held} | {amount_paid or "not available"} | {"resolved" if grain=="subject" else "name only — not an identity claim"} | {tag} |
 
 ### 2. Latest ownership snapshot (share capital by class)
 
