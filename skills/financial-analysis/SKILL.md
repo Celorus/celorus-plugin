@@ -109,6 +109,32 @@ out** (see *Weaving in events and relationships* below). Read each row's
 provenance and warnings **from its own row** — there is no top-level
 index-aligned `provenance[]`.
 
+**Two kinds of row share `events[]` — filed and reported.** Everything above
+describes a **filed** event, taken from a document on record. The same array can
+also carry **reported news** events, told apart by an `event_type` that begins
+`news.` and by a `status` field a filed event never carries. A news row has a
+different shape: `{ event_type, status, confidence_score, corroboration_count,
+sources }`, plus `summary` (our own short description of the event) when one
+exists. It has **no** `event_date`, **no** `parties`, **no** `terms`, **no**
+`warnings[]`, **no** `warning_messages[]` and **no** `provenance` — those keys
+are absent, not empty, and supplying one from anywhere else is fabrication.
+Confidence is `confidence_score`, a number between 0 and 1; the filed rows'
+`confidence` is a different field and the two are never mixed or compared.
+Citations are the article links in `sources`, each `{ url, title, trust_tier }`
+and `published_on` when the source carried one; `corroboration_count` is how
+many independent articles back the event.
+
+**Never present a news event as established fact.** `status` is an honesty flag
+and it must reach the reader. When it reads `"rumored"`, say so in the sentence
+itself — *"{Company} is **reported** to have…"*, never *"{Company} did…"* — name
+how many sources back it (`corroboration_count`), and cite the links from
+`sources`. A reported event never enters a figure, a ratio, a trend or a
+verdict — this is a report of the filed record, so a rumored event is context
+beside it, never evidence inside it. Never quietly fold a rumored event in among
+filed facts, and never drop the flag for a cleaner sentence. A news row is
+undated by design: don't substitute an article's publication date for an event
+date it does not have.
+
 The API is **read-only** — nothing you do can change the data.
 
 ## The report's coverage
@@ -339,6 +365,13 @@ directorship). Both are cited exactly like a figure or a section (rule 2).
 - **Keep it plain-English.** Describe what happened or who is connected in a
   short sentence with its own citation — never expose the row's internal field
   names to the reader.
+- **Reported news carries its flag into the sentence.** An `events[]` row with a
+  `status` is reported news, not a filed fact. Write it as reported —
+  *"Reported (unconfirmed, 3 sources): …"* — cite the article links from
+  `sources`, and keep it out of every figure, ratio and verdict in the report. A
+  `status` of `"rumored"` is never presented as established fact, and never
+  dropped to make the note read more cleanly. Its own paragraph, never mixed
+  into the same sentence as a filed fact.
 
 ## Ratios
 

@@ -103,6 +103,30 @@ The `celorus-data` server exposes the subdomain surface. Call exactly three, in 
   missing. Read each row's provenance and warnings **from its own row** —
   there is **no** top-level index-aligned `provenance[]`.
 
+**Two kinds of row share `events[]` — filed and reported.** Everything above
+describes a **filed** event, taken from a document on record. The same array can
+also carry **reported news** events, told apart by an `event_type` that begins
+`news.` and by a `status` field a filed event never carries. A news row has a
+different shape: `{ event_type, status, confidence_score, corroboration_count,
+sources }`, plus `summary` (our own short description of the event) when one
+exists. It has **no** `event_date`, **no** `parties`, **no** `terms`, **no**
+`warnings[]`, **no** `warning_messages[]` and **no** `provenance` — those keys
+are absent, not empty, and supplying one from anywhere else is fabrication.
+Confidence is `confidence_score`, a number between 0 and 1; the filed rows'
+`confidence` is a different field and the two are never mixed or compared.
+Citations are the article links in `sources`, each `{ url, title, trust_tier }`
+and `published_on` when the source carried one; `corroboration_count` is how
+many independent articles back the event.
+
+**Never present a news event as established fact.** `status` is an honesty flag
+and it must reach the reader. When it reads `"rumored"`, say so in the sentence
+itself — *"{Company} is **reported** to have…"*, never *"{Company} did…"* — name
+how many sources back it (`corroboration_count`), and cite the links from
+`sources`. Never quietly fold a rumored event in among filed facts, never drop
+the flag for a cleaner sentence, and never let one stand as the answer to a
+question the user asked of the record. A news row is undated by design: don't
+substitute an article's publication date for an event date it does not have.
+
 The API is **read-only** — nothing you do can change the data.
 
 ## How to answer a question
@@ -181,6 +205,7 @@ The API is **read-only** — nothing you do can change the data.
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`) |
 | A notable event (an allotment, a charge, an officer change) | the subdomain's `events[]` — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
+| Something reported in the news | the same `events[]`, the rows carrying `status` — always labelled as reported, never as fact; give the `corroboration_count` and cite `sources` |
 | A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` — a plain-language answer, cited; if empty, no such connection is on record |
 | A cross-company screen ("companies that…") or a full relationship graph | not available — refuse plainly, don't improvise from a single subject's `relationships[]` |
 

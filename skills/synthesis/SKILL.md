@@ -116,6 +116,33 @@ The `celorus-data` server exposes three tools for retrieval:
   is empty. Read each row's provenance and warnings **from its own row** —
   there is **no** top-level index-aligned `provenance[]`.
 
+**Two kinds of row share `events[]` — filed and reported.** Everything above
+describes a **filed** event, taken from a document on record. The same array can
+also carry **reported news** events, told apart by an `event_type` that begins
+`news.` and by a `status` field a filed event never carries. A news row has a
+different shape: `{ event_type, status, confidence_score, corroboration_count,
+sources }`, plus `summary` (our own short description of the event) when one
+exists. It has **no** `event_date`, **no** `parties`, **no** `terms`, **no**
+`warnings[]`, **no** `warning_messages[]` and **no** `provenance` — those keys
+are absent, not empty, and supplying one from anywhere else is fabrication.
+Confidence is `confidence_score`, a number between 0 and 1; the filed rows'
+`confidence` is a different field and the two are never mixed or compared.
+Citations are the article links in `sources`, each `{ url, title, trust_tier }`
+and `published_on` when the source carried one; `corroboration_count` is how
+many independent articles back the event.
+
+**Never present a news event as established fact.** `status` is an honesty flag
+and it must reach the reader. When it reads `"rumored"`, say so in the sentence
+itself — *"{Company} is **reported** to have…"*, never *"{Company} did…"* — name
+how many sources back it (`corroboration_count`), and cite the links from
+`sources`. In a comparison or a multi-company synthesis this matters more, not
+less: a rumored event on one side and filed facts on the other are not
+comparable evidence, and the difference must be visible in the sentence that
+carries them. Never quietly fold a rumored event in among filed facts, never
+drop the flag for a cleaner line, and never let one carry a conclusion. A news
+row is undated by design: don't substitute an article's publication date for an
+event date it does not have.
+
 `state` is one of **`proceed`** (data found, clean), **`constrained_proceed`**
 (data found, but one or more rows carry `warnings` — surface them),
 **`clarify`** (resolved but you must ask — see rule 3), **`fallback`** (no data
