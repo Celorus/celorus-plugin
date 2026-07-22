@@ -12,6 +12,9 @@ When a fact is not on record, the answer says **"not available"**. Never an
 estimate, never model guesswork. That honesty is the whole point: you can act on
 what comes back because you can trace every number to where it came from.
 
+Built for the people who carry the deal: the rooms where the margin of error is
+near zero and the year gets decided.
+
 ## What you get
 
 - **Financial Analysis.** A detailed financial-health report for a company:
