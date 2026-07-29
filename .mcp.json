@@ -5,9 +5,7 @@
       "url": "https://app.celorus.com/mcp",
       "oauth": {
         "clientId": "3c77g9j943h4bn7js75e4nga6u",
-        "authServerMetadataUrl": "https://cognito-idp.ap-south-1.amazonaws.com/ap-south-1_r0c51cbkJ/.well-known/openid-configuration",
-        "callbackPort": 8484,
-        "scopes": "openid email celorus-mcp/invoke"
+        "callbackPort": 8484
       }
     }
   }
