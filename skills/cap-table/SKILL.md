@@ -29,7 +29,7 @@ the `financial-analysis` skill instead — this skill covers ownership only.
 These override any instinct to be helpful by filling in a blank. The first
 three are the **same rules** every Celorus skill enforces — the skills must
 never diverge on honesty, so their authoritative wording lives in **one
-server-fed source**, not copied here. Cap tables carry five more, specific to
+server-fed source**, not copied here. Cap tables carry six more, specific to
 how ownership data is filed.
 
 **Fetch them at runtime and follow them verbatim.** Once at the start of your
@@ -68,8 +68,16 @@ summarised here overrides them. In brief:
    *cumulative* position needs the annual ownership spine, which is not yet
    extracted. Never sum a holder's positions across filings as if it were a
    running total — say cumulative history is "not available".
+9. **A roster marked `roster_partially_read` is incomplete, not short.** The
+   register was filed and we hold it; some pages of that document could not
+   be read, so holders printed on them are missing from the list you were
+   given. Serve every holder returned **and** say the list is incomplete —
+   never present it as the whole register, never describe the missing
+   holders as "not filed" or "not on record", and never reason from the
+   totals (counts, percentages, "the largest holder is…") as though the
+   list were complete.
 
-If `get_semantic_metadata` is unavailable, the eight summaries above are your
+If `get_semantic_metadata` is unavailable, the nine summaries above are your
 floor — apply them; never relax the honesty contract because the definitions
 could not be fetched.
 
@@ -96,6 +104,11 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
 `state`.
 
 - **`proceed`** (live cap-table content found),
+- **`constrained_proceed`** (live cap-table content, served in full, but
+  something about it is known to be incomplete — the envelope's `message`
+  says what, in plain language). Render the whole report **and** carry that
+  sentence into it, near the affected section; never drop it and never
+  downgrade the report to "not available" because of it,
 - **`fallback`** (known company, but no live cap-table content — e.g. no
   share-allotment filings ingested yet, or only stub views apply),
 - **`clarify`** (resolved but you must ask — rule 3),
@@ -124,7 +137,10 @@ objects**, one per view, each self-describing its own `view` id and `status`
   round with no parseable roster carries `roster_missing: true` (rule 6); a
   filing with more than one round in it adds a filing-grain warning to each
   of its rounds (rule 7: the holders can't be split across that filing's
-  rounds).
+  rounds); and a round whose register could not be read in full carries
+  `roster_partially_read` in its `warnings` (rule 9: the holders shown are
+  real, but the list is missing whoever was printed on an unreadable page —
+  caveat that table and never treat its totals as complete).
 - **Latest ownership snapshot** — the most recent post-allotment capital
   structure: one row per security class (equity + preference, each with
   authorised/issued/subscribed/paid-up shares and amounts) and debt kept
@@ -157,7 +173,10 @@ The API is **read-only** — nothing you do can change the data.
    company, no live cap-table content — render the header and "not
    available" for every section. `proceed` → every view's own `status` tells
    you whether it has content; render "not available" (with its `reason`)
-   for any view that is a stub.
+   for any view that is a stub. `constrained_proceed` → the same full report
+   as `proceed`, plus the envelope's `message` reproduced in the report as a
+   caveat — the data is served, and the reader has to be told what is known
+   to be incomplete about it.
 3. **Synthesize** — fill `report-template.md` from the returned views: filed
    terms + labelled derived figures + holders for the round table, the
    latest snapshot, the as-converted and preference views, with provenance

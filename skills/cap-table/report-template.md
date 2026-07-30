@@ -59,7 +59,17 @@ valuer's price.
 **Holders in this round** — if `roster_missing` is true, write "holder
 detail not available for this filing" instead of an empty table (rule 6). If
 the round carries a filing-grain warning, note that this list is shared
-across every round in the same filing.
+across every round in the same filing. If the round carries a
+`roster_partially_read` warning, still render every holder returned, and put
+this line immediately above the table (rule 9):
+
+> **This holder list is incomplete.** Part of the shareholder register filed
+> with this round could not be read — some pages of the source document are
+> unreadable, so any holders listed on those pages are missing here. Read the
+> register in full in the cited source filing.
+
+Never write or imply that the company filed nothing further, that the missing
+holders are "not on record", or that this is the whole register.
 
 | Holder | Share class | Shares held | Consideration paid | Grain | Provenance |
 | --- | --- | --- | --- | --- | --- |
