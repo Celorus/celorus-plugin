@@ -68,6 +68,17 @@ this line immediately above the table (rule 9):
 > unreadable, so any holders listed on those pages are missing here. Read the
 > register in full in the cited source filing.
 
+If the round instead carries a `roster_sheets_unread` warning (a spreadsheet
+register with sheets that were not read), still render every holder returned,
+and put this line immediately above the table (rule 9 applies the same way):
+
+> **This holder list is incomplete.** The shareholder register filed with this
+> round is a workbook with sheets that could not be read, so any holders listed
+> on those sheets are missing here. Read the register in full in the cited
+> source filing.
+
+A round can carry both warnings; show both lines, pages first.
+
 Never write or imply that the company filed nothing further, that the missing
 holders are "not on record", or that this is the whole register.
 

@@ -68,14 +68,14 @@ summarised here overrides them. In brief:
    *cumulative* position needs the annual ownership spine, which is not yet
    extracted. Never sum a holder's positions across filings as if it were a
    running total — say cumulative history is "not available".
-9. **A roster marked `roster_partially_read` is incomplete, not short.** The
-   register was filed and we hold it; some pages of that document could not
-   be read, so holders printed on them are missing from the list you were
-   given. Serve every holder returned **and** say the list is incomplete —
-   never present it as the whole register, never describe the missing
-   holders as "not filed" or "not on record", and never reason from the
-   totals (counts, percentages, "the largest holder is…") as though the
-   list were complete.
+9. **A roster marked `roster_partially_read` or `roster_sheets_unread` is
+   incomplete, not short.** The register was filed and we hold it; pages of
+   that document (or sheets of that workbook) could not be read, so holders
+   printed on them are missing from the list you were given. Serve every
+   holder returned **and** say the list is incomplete — never present it as
+   the whole register, never describe the missing holders as "not filed" or
+   "not on record", and never reason from the totals (counts, percentages,
+   "the largest holder is…") as though the list were complete.
 
 If `get_semantic_metadata` is unavailable, the nine summaries above are your
 floor — apply them; never relax the honesty contract because the definitions
