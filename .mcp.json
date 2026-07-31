@@ -2,11 +2,7 @@
   "mcpServers": {
     "celorus-data": {
       "type": "http",
-      "url": "https://app.celorus.com/mcp",
-      "oauth": {
-        "clientId": "3c77g9j943h4bn7js75e4nga6u",
-        "callbackPort": 8484
-      }
+      "url": "https://app.celorus.com/mcp"
     }
   }
 }

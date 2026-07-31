@@ -104,8 +104,8 @@ your token, and your credentials never touch this repository.
 
 - **Endpoint:** `https://app.celorus.com/mcp`
 - **Transport:** streamable HTTP, OAuth 2.0
-- The OAuth **client ID** shipped in `.mcp.json` is a public client identifier. It
-  is not a secret.
+- **Nothing to paste.** If a client asks for an OAuth **client ID**, leave it blank —
+  Celorus supports dynamic client registration, so your client registers itself.
 
 Don't have an account yet? Write to **tech@celorus.com** for an invite.
 
