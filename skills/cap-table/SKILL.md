@@ -76,8 +76,29 @@ summarised here overrides them. In brief:
    the whole register, never describe the missing holders as "not filed" or
    "not on record", and never reason from the totals (counts, percentages,
    "the largest holder is…") as though the list were complete.
+10. **Registers never sum across filings.** Each MGT-7/MGT-7A annual register
+   is a snapshot of the whole shareholder register at its own date; two
+   filings' rosters are never added, averaged, or treated as one list.
+   Top-holder and category-breakdown answers come from the latest-FILED
+   register available to serve only. When `holder_register_superseded_snapshots`
+   is present, superseded (or undatable) register filings exist and are
+   deliberately excluded — say the figures describe the latest-filed register
+   available to serve, name its filing date from the envelope message, and
+   never present the excluded filings' holders as current ownership or
+   recompute totals across filings. Latest-
+   filed is a filing-date claim, not a financial-year claim; and "available to
+   serve" is part of the claim — a newer filing whose register could not be
+   read is not represented, so never upgrade the wording to "the company's
+   latest register".
+11. **`constrained_proceed` is real data plus a caveat — serve both.** The
+   data in a `constrained_proceed` envelope is real and is to be used, and the
+   qualification in `warnings` (plus per-row warnings where present) and
+   `message` must reach any narration, table, or artifact built from it.
+   Never treat it as an error, never drop or hide the data, never present it
+   as clean, and never downgrade it to "not available" — suppressing the
+   caveat and suppressing the data are both honesty failures.
 
-If `get_semantic_metadata` is unavailable, the nine summaries above are your
+If `get_semantic_metadata` is unavailable, the eleven summaries above are your
 floor — apply them; never relax the honesty contract because the definitions
 could not be fetched.
 
