@@ -68,9 +68,13 @@ the finished report.
 
 ## The tools and their response shape
 
-The `celorus-data` server exposes the subdomain surface. Call exactly three, in order:
-`resolve_subject` → `list_available_subdomains` → `get_subdomain_data`. Every
-tool returns an envelope with a `state`. The five states are unchanged:
+The `celorus-data` server exposes two reading paths. The default is the
+subdomain surface — call exactly three, in order: `resolve_subject` →
+`list_available_subdomains` → `get_subdomain_data`. When `resolve_subject`'s
+envelope carries a `compiled_knowledge` offer (below), the shorter path is
+`resolve_subject` → `get_knowledge_units` — two calls, the multi-year
+narrative pre-compiled and pre-cited. Every tool returns an envelope with a
+`state`. The five states are unchanged:
 
 - **`proceed`** (data found, clean),
 - **`constrained_proceed`** (data found, but rows carry `warnings` — surface
@@ -81,6 +85,14 @@ tool returns an envelope with a `state`. The five states are unchanged:
 
 `resolve_subject`'s `data` is a **dict** (one object: `subject_id`,
 `canonical_name`, plus `candidates[]` on `clarify`). Read its fields directly.
+
+`resolve_subject`'s envelope may also carry a **top-level** `compiled_knowledge`
+field (beside `data`, never inside it):
+`{ "inventory": {…}, "rung": { "K4": { "rung": 1, "unit_types": ["period_dossier"] } } }`.
+`rung.K4.rung: 1` means the server's compiled-knowledge layer covers this
+company's multi-year financial narrative — take the shorter path in step 2.
+The field **absent**, or `rung: 2`, means "not offered": take the classic
+path. Absence is never an error, and a class you don't recognize is ignored.
 
 `list_available_subdomains`'s `data` carries `filings[]` (each filing's `srn`,
 `form_code`, `fy`, `format`, `doc_id`, `cite_url`) and `subdomains[]` (which
@@ -157,14 +169,39 @@ time — do not assume a fixed catalog.
    the user answers. `stop` → no such company is on record, stop — do not proceed
    with a guessed identity.
 
-2. **Discover** — `list_available_subdomains(subject_id)`. Use `data.filings[]`
+2. **Check the compiled-knowledge offer** — if the resolve envelope carries
+   `compiled_knowledge` with `rung.K4.rung: 1`, call
+   `get_knowledge_units(subject_id, unit_types=["period_dossier"])` and go
+   straight to step 5: build the report from `data.units[]` — each unit's
+   `content_md` is one year's compiled figures + narrative — citing from the
+   envelope's `provenance` (every ref carries `cite_url`). Read its `state`
+   like any other tool: `constrained_proceed` with a `unit_building` warning
+   means **nothing is compiled yet** (a compile is pending) — answer from the
+   record path (steps 3–4) meanwhile, never wait. A `units_truncated` warning
+   carries per-type served-vs-total counts in `data.units_truncated` (more
+   years exist than the serving cap serves); an
+   `uncompiled_periods_on_record` warning names the actual years in
+   `data.uncompiled_periods` that are on record with no compiled unit —
+   surface those years by name in the coverage note, so a partial layer never
+   reads as the whole record.
+   `fallback` → the offer did not hold; continue to step 3 as usual.
+
+   **Precision asks always take the record path, offer or not.** Exact or
+   verbatim wording, "every"/"all" occurrences, or proof of a specific line
+   (*"the exact auditor qualification"*, *"every mention of…"*, *"prove this
+   figure"*) is the wrong grain for a compiled narrative: follow the dossier's
+   citation with `get_cited_sections` (the source's exact wording, ≤3 sections
+   a call), or take the classic steps 3–4. A compiled answer to a precision
+   ask is a thinner answer — never trade the record for the summary.
+
+3. **Discover** — `list_available_subdomains(subject_id)`. Use `data.filings[]`
    for the header (form, FY, SRN, `doc_id`, `cite_url`) — **default to the
    latest `fy`** unless the user named one. Use `data.subdomains[]`
    to see which report areas have data and their `available_years`. `fallback` →
    known company, no data → render the header and "not available" sections.
    `stop` → as rule 3 / rule 1.
 
-3. **Fetch** — `get_subdomain_data(subject_id, subdomain_ids=<the ids from
+4. **Fetch** — `get_subdomain_data(subject_id, subdomain_ids=<the ids from
    list_available_subdomains>, fy=<chosen year>)`. One call returns every stream
    for every subdomain. `proceed` / `constrained_proceed` → each subdomain's `signals[]`
    and `sections[]` carry their figures and `content_markdown`; **render each
@@ -176,15 +213,16 @@ time — do not assume a fixed catalog.
    warnings beside the affected lines — do not hide them and do not drop the
    figure. `fallback` → every figure line is "not available".
 
-4. **Synthesize** — fill `report-template.md` from the bundle: signals → the
+5. **Synthesize** — fill `report-template.md` from the bundle (or, on the
+   compiled-knowledge path, from the served units): signals → the
    numbers tables, `content_markdown` → the statements / notes / auditor
    narrative, with provenance on every figure and claim, and "not available"
    wherever the data was absent.
 
-5. **Decide inline question vs. picker — never guess a report_type, FY, sections,
+6. **Decide inline question vs. picker — never guess a report_type, FY, sections,
    or format from chat text.** This applies whenever the user asks for a
-   downloadable file (step 6) or for a **combined report covering more than one
-   report type** (step 7 — e.g. "financial health and cap table together," "give
+   downloadable file (step 7) or for a **combined report covering more than one
+   report type** (step 8 — e.g. "financial health and cap table together," "give
    me everything on this company in one deck"). Count the **open dimensions** the
    ask leaves unresolved after you bind whatever the user's message already fixed
    — `report_type` (single vs. combined), `fy`, `sections`, `format` (and, for a
@@ -197,7 +235,7 @@ time — do not assume a fixed catalog.
      already know (the available years from `list_available_subdomains`, or a
      yes/no on format) — never a picker for a single open axis.
    - **2 or more open** — call **`get_input_request(subject_id)`** and hand the
-     user its returned choice-set to pick from (step 6/7 explain the render).
+     user its returned choice-set to pick from (step 7/8 explain the render).
      This is the **only** source of truth for which report types, years,
      sections, and formats exist for this subject — never propose one from
      memory or from what the chat mentioned. A `not_filed`/`not_applicable`
@@ -211,8 +249,8 @@ time — do not assume a fixed catalog.
    auto-binds silently and does not count as "open" — do not ask a question with
    only one possible answer.
 
-6. **The custom single-report config flow — render the picker, parse what comes
-   back.** When step 5 calls for the picker on a single `report_type` ask (a
+7. **The custom single-report config flow — render the picker, parse what comes
+   back.** When step 6 calls for the picker on a single `report_type` ask (a
    custom financial-health report — a non-default FY, a bespoke section list, a
    specific format, or any combination of those left open), take
    `get_input_request`'s response and present its picker surface to the user
@@ -230,11 +268,11 @@ time — do not assume a fixed catalog.
    offending value — relay that plainly and offer to regenerate the picker; never
    guess a substitute.
 
-7. **The combination-deck flow — financial health + cap table in one artifact.**
+8. **The combination-deck flow — financial health + cap table in one artifact.**
    When the user wants **more than one report type in a single downloadable
    artifact** ("financial health and cap table together," "combine everything
    into one deck"), this is always ≥2 open dimensions (which types, and usually
-   FY/sections/format too) — always route through the picker (step 5), never
+   FY/sections/format too) — always route through the picker (step 6), never
    assemble a combined request from chat text alone. `get_input_request`'s
    `data.combination` block tells you whether a combination is even possible for
    this subject (`eligible: true` only when ≥2 report types are actually
@@ -250,11 +288,11 @@ time — do not assume a fixed catalog.
    isn't available yet and offer the HTML combination or separate single-type
    files instead; never fabricate a combined format that wasn't offered.
 
-8. **Render a downloadable deliverable (when the user asks for a file)** — the user
+9. **Render a downloadable deliverable (when the user asks for a file)** — the user
    wants any file — an **HTML report, a PPTX deck, an XLSX/spreadsheet, a PDF, a
    "report", a "deck", a "download"** — you **MUST** produce it by calling the
    `generate_collateral` tool with the same `subject_id`, the chosen `subdomain_ids`,
-   and `fy` (or, for a combination, the `combine=[…]` parts from step 7). It
+   and `fy` (or, for a combination, the `combine=[…]` parts from step 8). It
    re-fetches the data server-side, computes every figure and ratio
    deterministically (each already cited), renders HTML / XLSX / PPTX in the Celorus
    house style, and returns short-lived download links. Hand the returned link(s) to
@@ -284,7 +322,7 @@ time — do not assume a fixed catalog.
    this, and it is `generate_collateral`.
 
    If `generate_collateral` is **not available, errors, or you are unsure it ran**,
-   say so plainly and **stop** — deliver the inline analysis (steps 1–4) and tell the
+   say so plainly and **stop** — deliver the inline analysis (steps 1–5) and tell the
    user the downloadable file could not be generated. Do **not** fall back to
    hand-building a file. A missing file is honest; a hand-built one is not safe.
 

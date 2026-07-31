@@ -192,6 +192,24 @@ Free in shape, but disciplined in method:
    it) — that way a requested figure the data doesn't carry comes back absent and
    is surfaced as "not available", instead of being silently dropped from a larger
    bundle.
+
+   **Compiled-knowledge path — when the server offers it.** A resolve envelope
+   may carry a top-level `compiled_knowledge` field whose `rung` maps a question
+   class (`"K2"` profile, `"K3"` event notes, `"K4"` the multi-year financial
+   narrative, `"K5"` the full composite) to `{ "rung": 1|2, "unit_types": […] }`.
+   When a sub-question is one of those classes and the envelope shows
+   `"rung": 1` for it, retrieve with
+   `get_knowledge_units(subject_id, unit_types=<the offered list>)` instead —
+   pre-compiled, pre-cited. Both paths are honest answers; a misjudged class
+   costs a second fetch, never a wrong fact. Absent field or `rung: 2` means
+   "not offered" — take the bundle path, and ignore any class you don't
+   recognize. Precision sub-questions (exact/verbatim wording, "every"/"all",
+   "prove") stay on the bundle/section path even when offered —
+   `get_cited_sections` on a unit's citation gives the source's exact wording —
+   and a units payload that doesn't contain the answer is **not** a
+   "not available": fall through to the bundle before concluding. Disclose any
+   `unit_building` / `units_truncated` / `uncompiled_periods_on_record` warning
+   the units envelope carries.
 4. **Compose only over retrieved data.** Weave the answer from what came back —
    never from memory. A cross-company comparison is a statement about two
    figures you both retrieved and cited.

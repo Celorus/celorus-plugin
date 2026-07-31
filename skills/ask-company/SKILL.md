@@ -76,7 +76,9 @@ the finished answer.
 ## The tools and their response shape
 
 The `celorus-data` server exposes the subdomain surface. Call exactly three, in order:
-`resolve_subject` → `list_available_subdomains` → `get_subdomain_data`.
+`resolve_subject` → `list_available_subdomains` → `get_subdomain_data` — unless
+the resolve envelope offers the compiled-knowledge path (step 1), in which case
+`resolve_subject` → `get_knowledge_units` is the whole trip.
 
 - `resolve_subject`'s `data` is a **dict** (`subject_id`, `canonical_name`, plus
   `candidates[]` on `clarify`).
@@ -166,6 +168,30 @@ The API is **read-only** — nothing you do can change the data.
    (step 2) before answering, exactly as an honest gap is handled elsewhere in
    this skill. A guess that misses is a reason to discover, never a reason to
    improvise a number.
+
+   **Compiled-knowledge path — when the server offers it.** `resolve_subject`'s
+   envelope may carry a top-level `compiled_knowledge` field (beside `data`,
+   never inside it): its `rung` maps a question class to
+   `{ "rung": 1|2, "unit_types": […] }` — `"K2"` who the company is now (the
+   profile), `"K3"` what happened (event notes), `"K4"` the multi-year
+   financial narrative (per-year dossiers), `"K5"` the full composite. Judge
+   the question's class yourself; when that class shows `"rung": 1`, answer
+   from `get_knowledge_units(subject_id, unit_types=<the offered list>)` —
+   pre-compiled, pre-cited, two calls total. Both paths are honest answers:
+   a misjudged class costs a second fetch, never a wrong fact. The field
+   **absent**, or `rung: 2`, means "not offered" — take the normal flow, and
+   ignore any class you don't recognize.
+
+   The compiled path never weakens honesty either: a `constrained_proceed`
+   naming `unit_building` (nothing compiled yet — answer from the record
+   path, never wait), `units_truncated` (per-type served-vs-total counts), or
+   `uncompiled_periods_on_record` (the actual years on record but uncompiled)
+   is disclosed in the answer, and a units payload that doesn't contain the
+   answer is **not** a "not available" — fall through to steps 2–3 before
+   concluding, exactly as with the lean path. Precision and completeness asks
+   stay on the record path even when a class is offered — exact/verbatim
+   wording, "every"/"all", "prove" → the normal steps (or `get_cited_sections`
+   on a unit's citation for the source's exact wording).
 2. **Discover** — `list_available_subdomains(subject_id)`. Use `data.filings[]`
    to answer "which years / what was filed / is it covered"; use
    `data.subdomains[]` to see which areas have data and pick the `fy` (default
