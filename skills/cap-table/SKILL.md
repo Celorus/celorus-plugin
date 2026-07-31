@@ -97,10 +97,23 @@ summarised here overrides them. In brief:
    Never treat it as an error, never drop or hide the data, never present it
    as clean, and never downgrade it to "not available" — suppressing the
    caveat and suppressing the data are both honesty failures.
+12. **Names on record, holdings not stated — an unstated holding is never
+   zero.** Some registers list holders by name with no quantity anywhere; the
+   envelope flags them with `holder_register_holdings_not_stated` and each
+   such row serves `holdings_not_stated: true`. Render each such holding as
+   "not stated" (the filing states no figure — distinct from "not
+   available"), keep them out of every total, average, percentage and
+   "largest holder" claim, and introduce them with the envelope's words.
+13. **Unread holdings are "not available" — the filing states them, the
+   reader did not.** Rows served with `holdings_unread: true` (envelope code
+   `holder_register_holdings_unread`) have figures printed in the filing
+   under column headings that could not be mapped. Render them "not
+   available" and point at the cited source; never "not stated", never zero,
+   never in a total. The two classes must never swap words.
 
-If `get_semantic_metadata` is unavailable, the eleven summaries above are your
-floor — apply them; never relax the honesty contract because the definitions
-could not be fetched.
+If `get_semantic_metadata` is unavailable, the thirteen summaries above are
+your floor — apply them; never relax the honesty contract because the
+definitions could not be fetched.
 
 ## While you work — speak to the user, not your plumbing
 
@@ -236,7 +249,9 @@ The API is **read-only** — nothing you do can change the data.
   this is a known, structural limit (rule 8), not a data-quality problem to
   flag as a gap.
 - **Absent ≠ zero**: key on `value`/`rank`/`as_converted_shares` presence, not
-  on the field simply existing (rule 1).
+  on the field simply existing (rule 1). The same discipline holds for holder
+  rows' `shares_held`/`shares_held_pct`: a `null` there is an unstated or
+  unfiled figure, never a zero holding (rule 12).
 
 ## Rendering provenance
 
@@ -260,3 +275,11 @@ Write the literal phrase **"not available"** in the cell/line. Add the
 honest reason in parentheses where useful, e.g. "not available (terms not
 yet extracted)" or "not available (needs the annual ownership spine)". Never
 leave a number-shaped blank a reader could mistake for zero.
+
+Three absences, three words (rules 12–13): **"not stated"** — the filed
+register itself gives no figure for that holder (rows served
+`holdings_not_stated: true`); **"not available"** — the figure exists but
+Celorus could not produce it (including rows served `holdings_unread: true`,
+whose printed column headings could not be mapped); a plain dash — a column
+this filing's layout does not carry. Never swap one for another: each makes a
+different claim about the source.
