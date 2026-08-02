@@ -110,8 +110,17 @@ summarised here overrides them. In brief:
    under column headings that could not be mapped. Render them "not
    available" and point at the cited source; never "not stated", never zero,
    never in a total. The two classes must never swap words.
+14. **Debenture holdings serve in their own fields — never in share
+   totals.** Holder rows can carry `debentures_held` (a count) and
+   `debentures_amount` (a rupee total), served as filed. A debenture count
+   is not equity: never add it into `shares_held`, share totals, ownership
+   percentages, or a "largest holder" claim, and never narrate it as a
+   shareholding. A row whose only figures are debenture fields has been
+   read — render its share fields as absent ("—"), never 0, never "not
+   stated", never "not available". The two field families never merge in
+   either direction.
 
-If `get_semantic_metadata` is unavailable, the thirteen summaries above are
+If `get_semantic_metadata` is unavailable, the fourteen summaries above are
 your floor — apply them; never relax the honesty contract because the
 definitions could not be fetched.
 
@@ -251,7 +260,9 @@ The API is **read-only** — nothing you do can change the data.
 - **Absent ≠ zero**: key on `value`/`rank`/`as_converted_shares` presence, not
   on the field simply existing (rule 1). The same discipline holds for holder
   rows' `shares_held`/`shares_held_pct`: a `null` there is an unstated or
-  unfiled figure, never a zero holding (rule 12).
+  unfiled figure, never a zero holding (rule 12). Debenture figures are their
+  own fields (`debentures_held`/`debentures_amount`), never part of share
+  math (rule 14).
 
 ## Rendering provenance
 
