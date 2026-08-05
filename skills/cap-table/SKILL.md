@@ -79,8 +79,10 @@ summarised here overrides them. In brief:
 10. **Registers never sum across filings.** Each MGT-7/MGT-7A annual register
    is a snapshot of the whole shareholder register at its own date; two
    filings' rosters are never added, averaged, or treated as one list.
-   Top-holder and category-breakdown answers come from the latest-FILED
-   register available to serve only. When `holder_register_superseded_snapshots`
+   Top-holder answers come from the latest-FILED register available to serve
+   only; category-breakdown answers come from the filed shareholding pattern,
+   with the register as the fallback (the envelope's `served_from` says which).
+   When `holder_register_superseded_snapshots`
    is present, superseded (or undatable) register filings exist and are
    deliberately excluded — say the figures describe the latest-filed register
    available to serve, name its filing date from the envelope message, and
