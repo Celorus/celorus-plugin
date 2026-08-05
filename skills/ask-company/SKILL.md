@@ -117,7 +117,11 @@ are absent, not empty, and supplying one from anywhere else is fabrication.
 Confidence is `confidence_score`, a number between 0 and 1; the filed rows'
 `confidence` is a different field and the two are never mixed or compared.
 Citations are the article links in `sources`, each `{ url, title, trust_tier }`
-and `published_on` when the source carried one; `corroboration_count` is how
+and `published_on` when the source carried one, plus `snapshot` — `{ ref }` —
+when the source carries a page-screenshot and isn't link-only: it opens a
+page-snapshot image of the source via `GET /news/snapshot/{ref}`, never
+inline, only on request; its absence means no capture exists or the source
+is link-only, never that there is no evidence. `corroboration_count` is how
 many independent articles back the event.
 
 **Never present a news event as established fact.** `status` is an honesty flag
