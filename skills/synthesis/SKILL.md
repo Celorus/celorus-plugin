@@ -91,16 +91,17 @@ The `celorus-data` server exposes three tools for retrieval:
 - **`get_subdomain_data(subject_id, subdomain_ids=[…], fy=…)`** — the single
   retrieval call. Returns a bundle whose `signals[]` list carries numeric,
   boolean, enum, and text facts; its `sections[]` list carries narrative prose
-  blocks. Each row in `signals[]` and `sections[]` carries its **own**
-  `provenance` (SRN, section, page range, `doc_id`, `cite_url`) and its own
-  `warnings`. There is no top-level index-aligned `provenance[i]` — cite from
-  the row's own provenance.
+  blocks. A `sections[]` row embeds its **own** `provenance` (SRN, section,
+  page range, `doc_id`, `cite_url`); a `signals[]` row cites through
+  `provenance_ref` — an index into the SAME response's TOP-LEVEL `provenance[]`
+  pool (never another call's; resolve
+  `provenance[row.provenance_ref]`). Every row's `warnings` are its own.
 
 - `get_subdomain_data`'s `data` is a **list of subdomains**, each
   `{ subdomain_id, display_name, semantic_description, available_years,
   signals[], sections[], events[], relationships[] }`. A **signal** carries
-  `{ fact_key, display_name, fy, value, normalized_value, value_type, unit,
-  is_canonical, low_confidence, warnings[], provenance }`; a **section** carries
+  `{ fact_key, fy, value, normalized_value, value_type, unit,
+  is_canonical, low_confidence, warnings[], provenance_ref }`; a **section** carries
   `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
   (something that happened — an allotment, a charge, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
@@ -113,8 +114,11 @@ The `celorus-data` server exposes three tools for retrieval:
   empty `events[]`/`relationships[]` — honest, not a gap. Weave in what's
   present as a short supplementary layer, never the headline over the
   financial substance, and stay silent (no "not available" line) when a layer
-  is empty. Read each row's provenance and warnings **from its own row** —
-  there is **no** top-level index-aligned `provenance[]`.
+  is empty. A **signal** cites through the response-level pool: its `provenance_ref` is an
+  integer index into the top-level `provenance[]` list (each distinct source
+  block once), and its display name lives in the top-level `fact_key_labels`
+  map, not on the row. Sections, events and relationships keep their
+  `provenance` embedded on the row.
 
 **Two kinds of row share `events[]` — filed and reported.** Everything above
 describes a **filed** event, taken from a document on record. The same array can
@@ -235,7 +239,8 @@ Lay the answer out as its underlying **claims** and confirm each:
 - **Every figure / quoted claim cites a source you actually retrieved** this
   session (right company, right filing) — no figure without its citation, no
   citation to a source you didn't pull. Each figure and each section cites from
-  its **own row's provenance** in the `get_subdomain_data` bundle.
+  its **own row's resolved provenance** in the `get_subdomain_data` bundle
+  (a signal's = `provenance[row.provenance_ref]`).
 - **Every figure carries the number the filing carries** — the right source
   *and* the right digits; a correct citation on a wrong number is still wrong.
 - **Every figure — and every summarised section — names its financial year** —
@@ -314,9 +319,9 @@ Compose freely, but always in three honest layers:
    empty.
 2. **Provenance** — a citation on every figure and quoted claim
    (`SRN <srn> · <section_kind> · <pages | no page range>`), with each
-   `cite_url` permalink so a reader can open the source. Each figure and each
-   section cites from its own row's provenance; there is no top-level
-   index-aligned provenance list.
+   `cite_url` permalink so a reader can open the source. Each figure cites
+   from its resolved pool entry (`provenance[row.provenance_ref]`), each
+   section from its own embedded provenance.
 3. **What the data couldn't cover** — an honest closing note of every gap marked
    "not available" and every sub-request refused, with the reason. Omit this
    only when the answer is complete and unqualified.

@@ -21,15 +21,23 @@ honesty-guarded and display-ready; you place it, you don't recompute it.
 
 1. Resolve the subject with `resolve_subject` (use `list_available_subdomains` if you
    need to pick which areas to show).
-2. Call **`get_presentation(subject_id, subdomain_ids, fy)`**. It returns, server-side:
+2. Call **`get_presentation(subject_id, subdomain_ids, fy, include_html: true)`**
+   on artifact-capable surfaces — the fragment is render-path opt-in (the server
+   default is data-only: without the parameter `html_fragment` comes back null and
+   no brand marks ship). On a floor-only surface (artifacts don't render), OMIT
+   `include_html` — you will build the markdown floor from `presentation` anyway,
+   and the ~20 KB of brand SVG would be paid and discarded. It returns, server-side:
    - `html_fragment` — a ready-made, **brand-locked** dashboard (petrol header, bone
      surface, Source Serif / IBM Plex, KFI tiles, ▲▼ markers, status pills, cited
      sources).
    - `presentation` — the same content as structured data: each KFI figure with its
      `display` string, `available`, `cite_url`, and `marker`, plus `ratios`,
      `dimensions`, and `sources`.
-   - `state` — `presentation` and `html_fragment` are null for non-renderable states
-     (`fallback` / `stop`); show "not available".
+   - `state` — `presentation` and `html_fragment` are both null for non-renderable
+     states (`fallback` / `stop`); show "not available". A null `html_fragment`
+     with a NON-null `presentation` just means the call was data-only (no
+     `include_html: true`) — not a failure; render the floor or re-call with the
+     parameter.
 3. Render:
    - **Artifact-capable surfaces (claude.ai, Claude Code, cowork):** embed
      `html_fragment` **verbatim** as the artifact. It is already branded — do not add

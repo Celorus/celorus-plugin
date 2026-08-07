@@ -164,9 +164,10 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
 
 `get_captable(subject_id, view="all")` returns `data` as a **list of view
 objects**, one per view, each self-describing its own `view` id and `status`
-(`"live"` or `"not_available"`). There is no top-level provenance array —
-**every citation lives inside its own row**, exactly like
-`get_subdomain_data`. The views:
+(`"live"` or `"not_available"`). In THIS bundle there is no top-level
+provenance array — **every citation lives inside its own row**. (That is
+`get_captable`'s shape; `get_subdomain_data`'s SIGNALS differ — they cite
+through `provenance_ref` into that response's top-level pool.) The views:
 
 - **Round-wise cap table** (`rounds`) — every allotment event, in filing
   order. Each round carries a `filed` block (the as-filed terms: security

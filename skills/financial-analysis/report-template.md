@@ -27,7 +27,7 @@ with the `cite_url` permalink as a footnote.
 > shown with this caveat." — and repeat the caveat beside the affected row.
 
 Fill each block from the matching section in the `get_subdomain_data` response —
-match by the section's own `display_name` / `section_kind`, not a remembered
+match by the section's own `section_kind` (and for FIGURES, the name in the response-level `fact_key_labels` map), not a remembered
 catalog. Render "not available" only for structurally-expected headline lines
 (revenue / PAT / total assets); silently omit empty optional layers.
 

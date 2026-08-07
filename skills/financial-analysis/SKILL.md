@@ -101,8 +101,15 @@ report areas have data and their `available_years`).
 `get_subdomain_data`'s `data` is a **list of subdomains**, each:
 `{ subdomain_id, display_name, semantic_description, available_years, signals[],
 sections[], events[], relationships[] }`. A **signal** carries
-`{ fact_key, display_name, fy, value, normalized_value, value_type, unit,
-is_canonical, low_confidence, warnings[], provenance }`. `value_type` is one of
+`{ fact_key, fy, value, normalized_value, value_type, unit,
+is_canonical, low_confidence, warnings[], provenance_ref }`. A signal cites
+through the response-level pool (scoped to the SAME response — never resolve a
+ref against another call's pool): `provenance_ref` is an integer index into the
+top-level `provenance[]` list, where each distinct source block appears once —
+resolve `provenance[row.provenance_ref]` for the row's `{ doc_id, srn,
+section_kind, section_id, page_start, page_end, cite_url }`. A signal's display
+name lives once per fact in the top-level `fact_key_labels` map
+(`{fact_key: display_name}`), not on the row. `value_type` is one of
 `numeric` / `boolean` / `enum` / `text` and tells you how to render the signal
 (see the absent-vs-present rule above): only `numeric` uses `normalized_value`;
 `boolean` renders Yes/No from `value`; `enum`/`text` render `value` verbatim. A
@@ -117,9 +124,10 @@ to another party — a holding, a directorship) carries
 valid_from, valid_to, raw_context, provenance }`. Both cite exactly like a
 signal or a section. **A subdomain with none of either simply carries an empty
 `events[]`/`relationships[]` — that is honest, not a gap, and is never called
-out** (see *Weaving in events and relationships* below). Read each row's
-provenance and warnings **from its own row** — there is no top-level
-index-aligned `provenance[]`.
+out** (see *Weaving in events and relationships* below). Sections, events and
+relationships carry their `provenance` embedded on the row; SIGNALS cite
+through `provenance_ref` into the top-level `provenance[]` pool. Warnings are
+always the row's own.
 
 **Two kinds of row share `events[]` — filed and reported.** Everything above
 describes a **filed** event, taken from a document on record. The same array can
@@ -368,10 +376,11 @@ time — do not assume a fixed catalog.
 
 ## Reading the bundle (rules specific to `get_subdomain_data`)
 
-- **Per-row provenance & warnings:** each figure and each section carries its
-  *own* `provenance` (with `cite_url`) and `warnings`. Cite from the row's own
-  provenance; surface a row's warnings beside that row only — never hoist them
-  into one blanket caveat.
+- **Per-row provenance & warnings:** a section carries its *own* embedded
+  `provenance`; a figure cites through its `provenance_ref` into the top-level
+  `provenance[]` pool (each entry carries `cite_url`). Either way the citation
+  is THAT row's — resolve it per row; surface a row's warnings beside that row
+  only — never hoist them into one blanket caveat.
 - **Dedup multi-mapped figures:** the same figure can appear under more than one
   subdomain. **Match figures by `fact_key` and render each once**, in its template
   line. Do not double-count or list a figure twice.
@@ -426,7 +435,8 @@ infer one when the underlying figures are incomplete.
 
 ## Rendering provenance
 
-Cite every figure compactly from its own row's `provenance`. Print the
+Cite every figure compactly from its resolved provenance — a signal's is
+`provenance[row.provenance_ref]`, a section's rides the row. Print the
 **literal** field values from the response — `srn`, the literal `section_kind`,
 and the page range — never a relabelled or invented version. The `section_kind`
 is whatever the response carries (e.g. `aoc4.balance_sheet`,

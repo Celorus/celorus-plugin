@@ -89,8 +89,8 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
 - `get_subdomain_data`'s `data` is a **list of subdomains**, each
   `{ subdomain_id, display_name, semantic_description, available_years,
   signals[], sections[], events[], relationships[] }`. A **signal** carries
-  `{ fact_key, display_name, fy, value, normalized_value, value_type, unit,
-  is_canonical, low_confidence, warnings[], provenance }`; a **section** carries
+  `{ fact_key, fy, value, normalized_value, value_type, unit,
+  is_canonical, low_confidence, warnings[], provenance_ref }`; a **section** carries
   `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
   (something that happened — an allotment, a charge, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
@@ -102,8 +102,12 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
   page_end, cite_url }`. A subdomain with none of either simply carries an
   empty `events[]`/`relationships[]` — honest, not a gap; answer from what's
   there when the question calls for it, and don't call out an empty layer as
-  missing. Read each row's provenance and warnings **from its own row** —
-  there is **no** top-level index-aligned `provenance[]`.
+  missing. A **signal** row carries `provenance_ref` — an index into the SAME
+  response's
+  TOP-LEVEL `provenance[]` pool (resolve `provenance[row.provenance_ref]`; its
+  display name is in the top-level `fact_key_labels` map). Sections, events
+  and relationships keep their `provenance` embedded on the row; warnings are
+  always the row's own.
 
 **Two kinds of row share `events[]` — filed and reported.** Everything above
 describes a **filed** event, taken from a document on record. The same array can
@@ -212,10 +216,10 @@ The API is **read-only** — nothing you do can change the data.
    thin the answer. Selection never decides what *exists* — only where to look first.
 3. **Fetch — signals-first for a figure question.** For a figure / filed-fact
    question, call `get_subdomain_data(subject_id, subdomain_ids=[…], fy=…,
-   streams=["signals"])`. The signals stream carries each figure's `display_name`
+   streams=["signals"])`. The signals stream carries each figure (names live in the top-level `fact_key_labels` map)
    and `value` but **no** `content_markdown`, so a one-number answer ships a
    few-KB payload instead of the full narrative bundle. Omit `fy` to default to
-   the latest year on record. Match the question to a signal by its `display_name`;
+   the latest year on record. Match the question to a signal by its name in `fact_key_labels`;
    render by `value_type` (rule 1).
 
    **Fall back to `streams=["sections"]` only when the signal is absent.** If the
@@ -226,7 +230,7 @@ The API is **read-only** — nothing you do can change the data.
    straight to `streams=["sections"]`; the signals-first default is for figures.
 
    Do **not** lead with a guessed `fact_keys=[…]`: the match is exact, so a wrong
-   key silently returns nothing → a false "not available". Match by `display_name`
+   key silently returns nothing → a false "not available". Match by the `fact_key_labels` name
    and narrow by `fact_keys` only when the canonical key is known.
 
 | The question is about… | Read from the bundle |
@@ -248,7 +252,7 @@ Don't assume a fixed catalog. Call `list_available_subdomains(subject_id)` to se
 which report areas have data — each with a `semantic_description` (what it covers)
 and its `available_years` — then request those `subdomain_ids` from
 `get_subdomain_data`. For a figure, fetch the relevant subdomain and read the signal
-whose `display_name` matches the question; a figure the filing doesn't carry simply
+whose `fact_key_labels` name matches the question; a figure the filing doesn't carry simply
 isn't in the response → answer "not available" for it. Never invent a key or assume
 a figure exists.
 
@@ -262,7 +266,7 @@ When the tools don't carry what a question asks for, answer **"not available"** 
 the reason the response itself gives — don't refuse to engage, and never invent a
 figure. The signals to read off the live response:
 
-- `get_subdomain_data` returns `fallback`, or the figure's `display_name` simply
+- `get_subdomain_data` returns `fallback`, or the figure's name simply
   isn't in the response → that figure is not available for this company.
 - a section's `content_markdown` is empty → that narrative isn't available for this
   company (state the reason plainly if the response carries one in `warnings`).
@@ -290,7 +294,8 @@ version. Use an inline tag or a footnote:
 
 When `page_start` / `page_end` are `null`, render "no page range" — never
 fabricate a page number. When you summarise several sections, **each distinct
-claim keeps its own row's provenance tag** — do not merge several rows under one
+claim keeps its own row's resolved provenance tag** (a signal's =
+`provenance[row.provenance_ref]`) — do not merge several rows under one
 citation.
 
 ## Refusing beyond the data
