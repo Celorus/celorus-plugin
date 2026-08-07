@@ -56,10 +56,16 @@ summarised here overrides them. In brief:
 5. **A valuation with populated valuer figures but no rendered checkbox is
    still "obtained".** Never report a round as "valuation not obtained", and
    never filter it out, just because the source checkbox didn't render.
-6. **A roster marked `roster_missing` is not "no allottees"** — it means the
-   allottee list for that filing wasn't parseable (a pre-2023 PDF, or an
-   unreadable sheet). Report the round; say the holder detail is unavailable
-   for that filing.
+6. **A roster marked `roster_missing` is not "no allottees" — and not missing
+   data.** It means no holder list is *attributable to that specific filing*:
+   most filings carry no reference linking holder records to individual
+   rounds, so per-round lists serve empty even when holder records are on
+   record (the envelope discloses this as
+   `roster_present_but_unattributable`). Report the round, say per-round
+   holder detail is not attributable to it, and answer "who owns" from the
+   **ownership view** (the latest-filed annual register + filed shareholding
+   pattern) — never say the holder data is missing or unparseable when the
+   ownership view serves it.
 7. **A holder without a resolved identity is served at name-grain.** Don't
    imply two similarly-named holders across filings are the same entity, and
    don't treat a name-grain listing as an entity-resolution claim.
@@ -180,14 +186,27 @@ through `provenance_ref` into that response's top-level pool.) The views:
   share class, shares held, consideration paid, its own provenance, and a
   `grain` of `"subject"` or `"name"` — see rule 7; holder identifiers such
   as PAN/DIN are never served — do not ask for or render them). A
-  round with no parseable roster carries `roster_missing: true` (rule 6); a
-  filing with more than one round in it adds a filing-grain warning to each
+  round with no *attributable* roster carries `roster_missing: true` (rule
+  6 — answer "who owns" from the ownership view, never from an empty round);
+  a filing with more than one round in it adds a filing-grain warning to each
   of its rounds (rule 7: the holders can't be split across that filing's
   rounds); and a round whose register could not be read in full carries
   `roster_partially_read` in its `warnings` (rule 9: the holders shown are
   real, but the list is missing whoever was printed on an unreadable page —
   caveat that table and never treat its totals as complete).
-- **Latest ownership snapshot** — the most recent post-allotment capital
+- **Register-grain ownership** (`view: "ownership"`) — **the view that answers
+  "who owns this company."** Two blocks, each self-describing (`status`,
+  `rows`, `warnings`, `message`): `top_holders` — the largest holders on the
+  **latest-FILED** annual register (name, share class, shares held, any filed
+  percentage, category, per-row provenance; `limit` states the display bound —
+  it is a glance, not the whole register) — and `breakdown` — the ownership
+  split by category, served from the filed shareholding pattern first with the
+  register aggregation as its explicit fallback (`served_from` says which,
+  rule 10). A block whose `status` is `"not_available"` carries the honest
+  reason in its `message` (e.g. no register on record, or registers that
+  could not be dated) — render that reason, never an empty table presented
+  as "no owners".
+- **Latest capital snapshot** — the most recent post-allotment capital
   structure: one row per security class (equity + preference, each with
   authorised/issued/subscribed/paid-up shares and amounts) and debt kept
   **separate** from equity (a debenture is never paid-up equity — rule 4),
@@ -223,11 +242,12 @@ The API is **read-only** — nothing you do can change the data.
    as `proceed`, plus the envelope's `message` reproduced in the report as a
    caveat — the data is served, and the reader has to be told what is known
    to be incomplete about it.
-3. **Synthesize** — fill `report-template.md` from the returned views: filed
-   terms + labelled derived figures + holders for the round table, the
-   latest snapshot, the as-converted and preference views, with provenance
-   on every figure and "not available" wherever a view is a stub or a field
-   is null.
+3. **Synthesize** — fill `report-template.md` from the returned views: the
+   ownership section (top holders + category breakdown from the `ownership`
+   view), filed terms + labelled derived figures + holders for the round
+   table, the latest snapshot, the as-converted and preference views, with
+   provenance on every figure and "not available" wherever a view is a stub
+   or a field is null.
 4. **If the user asks for a downloadable file** — a cap-table deliverable
    (HTML/XLSX/PPTX/"download"/"deck") is **not yet available** through this
    skill. Say so plainly — "I can give you the cap table inline, but a

@@ -31,9 +31,51 @@ content.
 
 Identity + subject ID. Note that this report covers share-allotment events
 and the latest post-allotment capital structure; year-end annual positions
-are a separate, not-yet-available layer (see §5).
+are a separate, not-yet-available layer (see §6).
 
-### 1. Round-wise cap table (share allotments)
+### 1. Ownership — who holds the company (latest annual register)
+
+From the `ownership` view — **this section, not §2's per-round lists, answers
+"who owns this company"** (rule 6). If the view's `status` is
+`"not_available"`, render its `reason` here and move on; if a single block's
+`status` is `"not_available"`, render that block's `message` in its place —
+never an empty table presented as "no owners".
+
+**Top holders** (`top_holders.rows` — the largest holders on the latest-FILED
+annual register; `limit` is a display bound, not the whole register —
+rule 10):
+
+| Holder | Share class | Shares held | Holding % | Category | Provenance |
+| --- | --- | --- | --- | --- | --- |
+| {holder_name} | {share_class} | {shares_held — "not stated" if holdings_not_stated, "not available" if holdings_unread} | {shares_held_pct or "not available"} | {holder_category or "not available"} | {tag} |
+
+**Ownership by category** (`breakdown.rows`; state which source served, from
+`served_from` — rule 10). **The two sources have different row shapes — pick
+the matching table, never force one into the other:**
+
+If `served_from.basis` is `"filed"` (the shareholding pattern — rows carry
+`holder_group` + `capital_kind`, and per-category holder counts are NOT
+stated in the pattern, so there is no Holders column to render):
+
+| Group | Category | Capital kind | Shares held | Holding % |
+| --- | --- | --- | --- | --- |
+| {holder_group} | {holder_category} | {capital_kind} | {total_shares_held or "not available"} | {total_shares_held_pct or "not available"} |
+
+Note under the table: "Holder counts are stated in the filing only at the
+promoter/public group level, not per category." Percentages are per capital
+kind and group — do not sum them across rows into one total.
+
+If `served_from.basis` is `"aggregated_from_register"`:
+
+| Category | Holders | Shares held | Holding % |
+| --- | --- | --- | --- | 
+| {holder_category} | {holder_count or "not available"} | {total_shares_held or "not available"} | {total_shares_held_pct or "not available"} |
+
+Carry every warning `message` on the view or its blocks into this section
+(rules 9–11): superseded snapshots, unreadable pages/sheets, holdings not
+stated/unread.
+
+### 2. Round-wise cap table (share allotments)
 
 Every filed allotment round, earliest first, each with its filed terms, its
 labelled derived figures, and its holders.
@@ -57,7 +99,9 @@ method, per-share value, date, and whether the issue price was below the
 valuer's price.
 
 **Holders in this round** — if `roster_missing` is true, write "holder
-detail not available for this filing" instead of an empty table (rule 6). If
+detail is not attributable to this specific filing — see §1 Ownership for who
+holds the company" instead of an empty table (rule 6; never "not available"
+or "unparseable" — the holder records are on record and §1 serves them). If
 the round carries a filing-grain warning, note that this list is shared
 across every round in the same filing. If the round carries a
 `roster_partially_read` warning, still render every holder returned, and put
@@ -86,7 +130,7 @@ holders are "not on record", or that this is the whole register.
 | --- | --- | --- | --- | --- | --- |
 | {holder_name} | {share_class} | {shares_held} | {amount_paid or "not available"} | {"resolved" if grain=="subject" else "name only — not an identity claim"} | {tag} |
 
-### 2. Latest ownership snapshot (share capital by class)
+### 3. Latest capital snapshot (share capital by class)
 
 The most recent post-allotment capital structure, as of {as_of_srn}.
 
@@ -104,9 +148,9 @@ The most recent post-allotment capital structure, as of {as_of_srn}.
 price, latest post-money valuation — each with its `formula_id` or "not
 available".
 
-### 3. As-converted / fully-diluted view
+### 4. As-converted / fully-diluted view
 
-Each class from §2, expressed on an as-converted basis. Render "not
+Each class from §3, expressed on an as-converted basis. Render "not
 available (terms not yet extracted)" for any class whose as-converted share
 count is null — never estimate a conversion ratio.
 
@@ -114,7 +158,7 @@ count is null — never estimate a conversion ratio.
 | --- | --- | --- |
 | {security_class} | {as_converted_shares or "not available"} | {"terms not yet extracted" if null} |
 
-### 4. Preference stack
+### 5. Preference stack
 
 The same classes in the filed snapshot order. Render "not available
 (seniority not yet extracted)" for any class whose rank is null — never
@@ -124,21 +168,21 @@ guess an order.
 | --- | --- | --- |
 | {rank or "not available"} | {security_class} | {"seniority not yet extracted" if null} |
 
-### 5. Year-end ownership (annual spine) — not yet available
+### 6. Year-end ownership (annual spine) — not yet available
 
 Three views need the annual ownership spine, which is not yet extracted:
 year-end shareholding by category, year-end per-holder dilution, and
 structure movement between snapshots (already visible between consecutive
-rounds in §1). Render:
+rounds in §2). Render:
 
 > Not available — {reason from the view}. Expected when: {available_when}.
 
-Do not sum a holder's §1 positions across filings into a running total
+Do not sum a holder's §2 positions across filings into a running total
 (rule 8) — that is exactly what this section will serve once available.
 
 ---
 
-### 6. Sources
+### 7. Sources
 
 List each distinct `cite_url` permalink seen, with its SRN — so every figure
 traces back to its source filing (never a raw `s3://` path).
