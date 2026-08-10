@@ -47,6 +47,58 @@
    Every pattern is documented with a comment header at its block.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════════════════
+   CONSUMER CONTRACT — selectors outside builders inline and depend on
+   =====================================================================
+   This file is not only <link>ed. Builders in OTHER REPOS read it at
+   build time and PASTE it into generated HTML, then ship their own
+   markup against it: celorus-app's room-brief skill and the four L1
+   Experiments briefs — five build-time consumers at last count. CI here
+   cannot see any of them, and their CI does not run when this repo
+   changes. The larger file this one sits on top of,
+   `tokens/dist/foundation-block.css`, is inlined the same way at wider
+   scale — 23 files across three repos read its contents at build time
+   (2026-08-10 census; 12 of them behind one shared helper in
+   celorus-os; the census with its unit lives in
+   tokens/consumer-contract.json) — and is where the dark-mode token
+   flip that caused the original bug actually originated. Its
+   custom-property names are pinned there and gated by
+   tools/check-token-contract.mjs.
+
+   So a selector removed or renamed here does not fail anything here. It
+   surfaces as a broken page in another repo, later, found by hand. PR #24
+   replaced `.coll-topbar .brand img` with `.wm` — correct for the eight
+   templates in this repo, all of which were updated in the same commit —
+   and the Room Brief's wordmark rendered at intrinsic SVG size and filled
+   the viewport. #25 restored it.
+
+   Every selector below is depended on by markup this repo cannot see.
+   Changing one means finding those consumers FIRST — `rg -l collateral.css`
+   across the workspace. Gated by tools/check-consumer-contract.mjs, which
+   parses this file's real selectors rather than substring-matching, so a
+   rename cannot hide inside a longer name. That gate pins that a promised
+   selector still EXISTS, never what it declares — changing
+   `.wm,.coll-topbar .brand img{height:22px;…}` to `height:220px`
+   reproduces the original incident (wordmark filling the viewport) with
+   the gate green throughout.
+   ─────────────────────────────────────────────────────────────────────
+   contract:begin
+   .coll-topbar
+   .coll-topbar .brand
+   .coll-topbar .brand-sep
+   .coll-topbar .brand-tag
+   .coll-topbar .topbar-kind
+   .wm
+   .coll-topbar .brand img
+   .wm-dark
+   .coll-topbar .brand img.wm-dark
+   [data-theme="dark"] .wm-light
+   [data-theme="dark"] .coll-topbar .brand img.wm-light
+   [data-theme="dark"] .wm-dark
+   [data-theme="dark"] .coll-topbar .brand img.wm-dark
+   contract:end
+   ══════════════════════════════════════════════════════════════════════ */
+
 
 /* ── SHARED COLLATERAL CHROME ─────────────────────────────────────────
    The charcoal topbar + eyebrow→h2 rhythm that make these read as the

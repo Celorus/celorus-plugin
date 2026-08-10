@@ -211,15 +211,19 @@ website is the SOURCE of this register system and does not change.
 
 ## Snapshot provenance & regeneration
 
-The bundled snapshot was cut from `Celorus/design-system` on **10 Aug 2026** (skill v1.5 —
-on-inverse token family + two-asset wordmark rule; see step 7/7a):
+The bundled snapshot was cut from `Celorus/design-system` on **10 Aug 2026** (skill v1.6 —
+consumer-contract gates on both collateral selectors and foundation tokens, corrected
+23-reader census; v1.5 added the on-inverse token family + two-asset wordmark rule; see step 7/7a):
 `assets/foundation-block.css` + `assets/embedded-fonts.css` + `references/TOKENS.md` ← `tokens/dist/`, `assets/collateral.css`
 ← `templates/html/`, `assets/tokens.flat.json` ← `tokens/dist/`, logos ← `brand/logos/`,
 `assets/celorus-charts.js` ← `components/`, `assets/composition-lint.mjs` ← `tools/`, `references/COMPOSITION.md` ← `guides/`, `references/{VOICE,LOCALIZATION,PLUGIN_SURFACES,PRINT_AND_EXPORT}.md`
 ← `brand/` + `guides/`, `assets/public-block.css` ← `tokens/dist/` (D41 public layer),
 `assets/registers.json` ← `marketing/public/`, `assets/rings-daylight.svg` +
-`assets/rings-signal.svg` ← `brand/motifs/`. To refresh: re-copy those files (they must diff
-IDENTICAL to the live system), update this date, and rebuild the package:
+`assets/rings-signal.svg` ← `brand/motifs/`. To refresh: re-copy those files (IN THIS REPO
+they must diff IDENTICAL to the live system; a downstream mirror — the plugin copy — is a
+dated PINNED copy of whatever was last mirrored, and its SYNC.md records the source commit
+it was cut from; nothing machine-gates cross-repo identity), update this date, and rebuild
+the package:
 `cd design-system/.claude/skills && zip -rX ../../celorus-design.skill celorus-design`.
 The skill's single source home is `design-system/.claude/skills/celorus-design/`; the
 `.skill` bundle and the `celorus` plugin copy are generated from it — never edit those
