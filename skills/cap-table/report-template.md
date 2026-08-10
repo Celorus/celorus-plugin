@@ -75,6 +75,17 @@ Carry every warning `message` on the view or its blocks into this section
 (rules 9–11): superseded snapshots, unreadable pages/sheets, holdings not
 stated/unread.
 
+**Wording a caveat — anywhere in this report, not just here.** Write the
+supplied `message` sentence whenever one is present, never the raw `warnings`
+code (rule 11). **Do not assume a `message` is there**: a block or view can
+serve `warnings` with `message` empty, and the round-wise, capital,
+as-converted and preference views (§§2–5) routinely serve codes with no
+`message` at all. When there is no supplied sentence, say the caveat in your
+own plain words — the skill's rules describe what these caveats mean — and
+never print the token: several carry a parametrized tail that is meaningless
+to a reader and exposes internals. Never drop one either: a caveat that
+silently vanishes is an honesty failure.
+
 ### 2. Round-wise cap table (share allotments)
 
 Every filed allotment round, earliest first, each with its filed terms, its

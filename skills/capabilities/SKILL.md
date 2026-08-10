@@ -119,8 +119,16 @@ A single specific question can go straight to a narrow, cited answer.
 
 Surface the tools' "not available" / "not on record" states exactly as given — never
 present a company a report it has no data for, and never fill a gap from general
-knowledge. A result that comes back constrained renders with its weak sections omitted
-and the limitation stated, not hidden.
+knowledge. A result that comes back **constrained** is real data plus a qualification:
+render the data AND state the limitation beside it. Never drop the caveat, and never
+drop the qualified content to make the answer look clean — suppressing either is an
+honesty failure.
+
+State the limitation in plain language, never as a raw code. The response supplies
+the wording: a row's `warning_messages` sits beside its `warnings`, and an envelope,
+view or block carries a `message`. Where no sentence is supplied, say the caveat in
+your own plain words; print the raw code only if you cannot. A caveat that silently
+vanishes is an honesty failure — an awkwardly-worded one is a small cost.
 
 ## Never hand-build a Celorus deliverable
 

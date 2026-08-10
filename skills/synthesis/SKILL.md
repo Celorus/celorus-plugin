@@ -101,8 +101,12 @@ The `celorus-data` server exposes three tools for retrieval:
   `{ subdomain_id, display_name, semantic_description, available_years,
   signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, fy, value, normalized_value, value_type, unit,
-  is_canonical, low_confidence, warnings[], provenance_ref }`; a **section** carries
-  `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
+  is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`;
+  a **section** carries
+  `{ section_kind, fy, content_markdown, warnings[], warning_messages[],
+  provenance }`. `warning_messages[]` is the plain-language sentence for each
+  code, index-aligned with the sorted `warnings[]` beside it — it is what the
+  reader sees (*Wording a caveat* below). An **event**
   (something that happened — an allotment, a charge, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
   warning_messages[], provenance }`; a **relationship** (a connection to
@@ -152,7 +156,9 @@ row is undated by design: don't substitute an article's publication date for an
 event date it does not have.
 
 `state` is one of **`proceed`** (data found, clean), **`constrained_proceed`**
-(data found, but one or more rows carry `warnings` — surface them),
+(data found, but one or more rows carry `warnings` — surface every one of them,
+worded as the row's supplied `warning_messages` sentence, never as the raw code;
+see *Wording a caveat* below),
 **`clarify`** (resolved but you must ask — see rule 3), **`fallback`** (no data
 for this subject → "not available"), **`stop`** (no such subject — do not
 invent one). `value_type` tells you how to render a signal (see rule 1): only
@@ -249,10 +255,22 @@ Lay the answer out as its underlying **claims** and confirm each:
   own year and cite that year's filing. Never carry one year's number, summary or
   citation onto another year; an item left unpinned when you hold more than one
   year of it is not uniquely sourced.
-- **Every caveat on a source is surfaced** — a `constrained_proceed` warning
-  (e.g. `unit_undetermined`) or a `low_confidence` flag is PER-ROW; it travels
-  with what it qualifies, whether a figure or a summarised section; state it
-  beside the number or the summary, never drop it.
+- **Every caveat on a source is surfaced** — a `constrained_proceed` caveat or a
+  `low_confidence` flag is PER-ROW; it travels with what it qualifies, whether a
+  figure or a summarised section; state it beside the number or the summary,
+  never drop it.
+- **Wording a caveat — the sentence, never the code.** Every row that carries
+  `warnings[]` carries `warning_messages[]` beside it: the same caveats, written
+  as plain-language sentences, index-aligned with the row's sorted `warnings[]`.
+  **Render the sentence. Never print the raw code.** A code is internal
+  machinery, and a bare token printed beside a named company's figure reads to
+  that company as a fault in its own filing even when it is not one. Never re-word a sentence the response DID
+  supply — that wording is what the product stands behind. When NO sentence is
+  supplied, put the caveat in your own plain words; the raw code is the last
+  resort, not the second one. If a code arrives with no sentence beside it, show the
+  code: an ugly token is a small cost, a caveat that silently vanishes is an
+  honesty failure. Humanizing is a re-wording, never a filter — the number of
+  caveats the reader sees is the number the response carried.
 - **Every derived number** (ratio, comparison) is computed only from retrieved,
   cited figures — never from an empty or remembered input.
 - **Every gap is "not available"** — key on `value` presence: a `null`/absent

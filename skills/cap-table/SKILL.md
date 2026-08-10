@@ -102,6 +102,21 @@ summarised here overrides them. In brief:
    data in a `constrained_proceed` envelope is real and is to be used, and the
    qualification in `warnings` (plus per-row warnings where present) and
    `message` must reach any narration, table, or artifact built from it.
+   **Word it in plain language, never as the raw `warnings` code.** A code is
+   internal machinery, and a bare token printed beside a named company's
+   holdings reads to that company as a fault in its own filing even when it is
+   not one. Several cap-table codes also carry a parametrized tail (a section
+   id, or filed-vs-issued figures) that is meaningless to a reader.
+   **Where a `message` is supplied, write that sentence.** Do not assume one is
+   there: the envelope usually carries a `message`, an ownership block sometimes
+   does, and the round-wise, capital, as-converted and preference views commonly
+   serve their codes with none. Where there is no supplied sentence, say the
+   caveat in your own plain words — several of the rules above describe what
+   these caveats mean, and where none does, say plainly that the figure carries
+   a qualification and point the reader to the cited filing. What you must never
+   do is print the token, and what you must never do is stay silent: an
+   awkwardly-worded caveat is a small cost, a caveat that silently vanishes is
+   an honesty failure.
    Never treat it as an error, never drop or hide the data, never present it
    as clean, and never downgrade it to "not available" — suppressing the
    caveat and suppressing the data are both honesty failures.

@@ -78,7 +78,8 @@ narrative pre-compiled and pre-cited. Every tool returns an envelope with a
 
 - **`proceed`** (data found, clean),
 - **`constrained_proceed`** (data found, but rows carry `warnings` — surface
-  them),
+  every one of them, worded as the row's supplied `warning_messages` sentence,
+  never as the raw code; see *Wording a caveat* below),
 - **`clarify`** (resolved but you must ask — see rule 3),
 - **`fallback`** (no data for this subject → "not available"),
 - **`stop`** (no such subject — do not invent one).
@@ -102,7 +103,10 @@ report areas have data and their `available_years`).
 `{ subdomain_id, display_name, semantic_description, available_years, signals[],
 sections[], events[], relationships[] }`. A **signal** carries
 `{ fact_key, fy, value, normalized_value, value_type, unit,
-is_canonical, low_confidence, warnings[], provenance_ref }`. A signal cites
+is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`.
+`warning_messages[]` is the plain-language sentence for each code, index-aligned
+with the sorted `warnings[]` beside it — it is what the reader sees (*Wording a
+caveat* below). A signal cites
 through the response-level pool (scoped to the SAME response — never resolve a
 ref against another call's pool): `provenance_ref` is an integer index into the
 top-level `provenance[]` list, where each distinct source block appears once —
@@ -114,7 +118,8 @@ name lives once per fact in the top-level `fact_key_labels` map
 (see the absent-vs-present rule above): only `numeric` uses `normalized_value`;
 `boolean` renders Yes/No from `value`; `enum`/`text` render `value` verbatim. A
 **section** carries
-`{ section_kind, fy, content_markdown, warnings[], provenance }`. `provenance`
+`{ section_kind, fy, content_markdown, warnings[], warning_messages[],
+provenance }` — same index-aligned pairing as a signal. `provenance`
 is `{ doc_id, srn, section_kind, section_id, page_start, page_end, cite_url }`.
 An **event** (something that happened — an allotment, a charge, an officer
 change) carries `{ event_type, event_date, parties, terms, confidence,
@@ -222,7 +227,8 @@ time — do not assume a fixed catalog.
    `value` verbatim (per the absent-vs-present rule). `clarify` (the
    requested year is absent) → present `available_years[]` and ask which year
    (rule 3). `constrained_proceed` → render the figures AND surface the per-row
-   warnings beside the affected lines — do not hide them and do not drop the
+   caveats beside the affected lines, worded from `warning_messages` (*Wording a
+   caveat* below) — do not hide them and do not drop the
    figure. `fallback` → every figure line is "not available".
 
 5. **Synthesize** — fill `report-template.md` from the bundle (or, on the
@@ -379,8 +385,22 @@ time — do not assume a fixed catalog.
 - **Per-row provenance & warnings:** a section carries its *own* embedded
   `provenance`; a figure cites through its `provenance_ref` into the top-level
   `provenance[]` pool (each entry carries `cite_url`). Either way the citation
-  is THAT row's — resolve it per row; surface a row's warnings beside that row
+  is THAT row's — resolve it per row; surface a row's caveats beside that row
   only — never hoist them into one blanket caveat.
+- **Wording a caveat — the sentence, never the code.** Every row that carries
+  `warnings[]` carries `warning_messages[]` beside it: the same caveats, written
+  as plain-language sentences, index-aligned with the row's sorted `warnings[]`.
+  **Render the sentence. Never print the raw code.** A code is internal
+  machinery, and a bare token printed beside a named company's figure reads to
+  that company as a fault in its own filing even when it is not one. Never re-word a sentence the response DID
+  supply — that wording is what the product stands behind. When NO sentence is
+  supplied, put the caveat in your own plain words; the raw code is the last
+  resort, not the second one.
+- **A caveat is never dropped.** If a code arrives with no sentence beside it,
+  show the code — an ugly token is a small cost, a caveat that silently vanishes
+  is an honesty failure. Never suppress, merge away, or "tidy up" a caveat you
+  cannot phrase nicely, and never let humanizing turn into filtering: the number
+  of caveats the reader sees is the number the response carried.
 - **Dedup multi-mapped figures:** the same figure can appear under more than one
   subdomain. **Match figures by `fact_key` and render each once**, in its template
   line. Do not double-count or list a figure twice.

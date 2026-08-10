@@ -22,9 +22,41 @@ with the `cite_url` permalink as a footnote.
 > for this company — the financial sections below are not available." Then still
 > render the section headers with "not available".
 
-> If `get_subdomain_data` returned `constrained_proceed`: add a line here — "⚠
-> Data caveat: rows below carry warnings: {warnings}. The affected figures are
-> shown with this caveat." — and repeat the caveat beside the affected row.
+> If `get_subdomain_data` returned `constrained_proceed`: add a line here —
+> "⚠ Data caveat: " followed by each DISTINCT caveat carried by the rows below,
+> then "The affected figures are shown with these caveats." Repeat the relevant
+> caveat beside the affected row too, so a reader who reads only that line still
+> sees it.
+>
+> Write every caveat as the plain-language sentence the response supplies in
+> that row's `warning_messages` (index-aligned with the row's sorted
+> `warnings`) — **never the raw `warnings` code**. A raw code is internal
+> machinery, and a bare token printed beside a named company's figure reads to
+> that company as a fault in its own filing even when it is not one. Most
+> caveats are per-row, so gather them from the rows and render each distinct
+> one once.
+>
+> **If the state is `constrained_proceed` but no row carries a caveat, the
+> qualification is somewhere else — find it, never print an empty caveat
+> line.** This happens when the qualification is about the FILING rather than a
+> figure: part of a document was not ingested, a filing's ingest never
+> finished, or a section was withheld. Read the envelope's own `message` and
+> its `diagnostics[]` entries (each carries a plain-language `message`) and say
+> plainly what is missing. "Some of this company's filed material is not
+> included" is a caveat a reader needs; a caveat line with nothing after it is
+> the silent absence this whole instruction exists to prevent.
+>
+> **Join caveats with `  ·  ` (space-middot-space), and add no full stop of your
+> own.** Each supplied sentence already ends in its own period and runs to a
+> couple of lines, so joining with ", " prints "…cited source., The balance
+> sheet's…" — the house separator is what the downloadable report uses, for this
+> exact reason.
+>
+> **A caveat is never dropped.** If a code arrives with no sentence beside it,
+> put the caveat in your own plain words; show the raw code only if you cannot.
+> An ugly token is a small cost, a caveat that silently vanishes is an honesty
+> failure. Never suppress, merge away, or "tidy up" a caveat you cannot phrase
+> nicely.
 
 Fill each block from the matching section in the `get_subdomain_data` response —
 match by the section's own `section_kind` (and for FIGURES, the name in the response-level `fact_key_labels` map), not a remembered

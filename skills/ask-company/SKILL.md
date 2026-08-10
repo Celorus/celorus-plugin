@@ -47,9 +47,10 @@ summarised here overrides them. The three, in brief:
    exact `value` / `value_type` test.
 2. **Every figure and quoted claim carries its provenance.** Each number or
    summarised statement cites its source from the same tool response — read the
-   citation off that row, and surface that row's warnings beside it, not as a
-   blanket caveat. Never give a figure without its citation. (See *Rendering
-   provenance* below.)
+   citation off that row, and surface that row's caveats beside it, not as a
+   blanket caveat — worded from `warning_messages`, never as the raw code (see
+   *Wording a caveat* below). Never give a figure without its citation. (See
+   *Rendering provenance* below.)
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation).
@@ -90,8 +91,12 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
   `{ subdomain_id, display_name, semantic_description, available_years,
   signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, fy, value, normalized_value, value_type, unit,
-  is_canonical, low_confidence, warnings[], provenance_ref }`; a **section** carries
-  `{ section_kind, fy, content_markdown, warnings[], provenance }`. An **event**
+  is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`;
+  a **section** carries
+  `{ section_kind, fy, content_markdown, warnings[], warning_messages[],
+  provenance }`. `warning_messages[]` is the plain-language sentence for each
+  code, index-aligned with the sorted `warnings[]` beside it — it is what the
+  reader sees (rule 2). An **event**
   (something that happened — an allotment, a charge, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
   warning_messages[], provenance }`; a **relationship** (a connection to
@@ -297,6 +302,26 @@ fabricate a page number. When you summarise several sections, **each distinct
 claim keeps its own row's resolved provenance tag** (a signal's =
 `provenance[row.provenance_ref]`) — do not merge several rows under one
 citation.
+
+## Wording a caveat
+
+A row's caveats are rendered beside it, exactly like its citation — and with the
+same discipline about what the reader is shown.
+
+Every row that carries `warnings[]` carries `warning_messages[]` beside it: the
+same caveats, written as plain-language sentences, index-aligned with the row's
+sorted `warnings[]`. **Render the sentence. Never print the raw code.** A code is
+internal machinery, and a bare token printed beside a named company's figure
+reads to that company as a fault in its own filing even when it is not one.
+Never re-word a sentence the response DID
+   supply — that wording is what the product stands behind. When NO sentence is
+   supplied, put the caveat in your own plain words; the raw code is the last
+   resort, not the second one.
+
+**A caveat is never dropped.** If a code arrives with no sentence beside it, show
+the code: an ugly token is a small cost, a caveat that silently vanishes is an
+honesty failure. Humanizing is a re-wording, never a filter — the number of
+caveats the reader sees is the number the response carried.
 
 ## Refusing beyond the data
 
