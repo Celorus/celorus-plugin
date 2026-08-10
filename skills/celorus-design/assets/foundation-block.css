@@ -8,6 +8,7 @@
 
 :root {
   /* primitive · color */
+  --primitive-color-petrol-200: #5FBACD;
   --primitive-color-petrol-300: #3FA6BB;
   --primitive-color-petrol-400: #1A728A;
   --primitive-color-petrol-600: #155A6B;
@@ -168,6 +169,8 @@
   --semantic-color-fg-faint: #868379;
   --semantic-color-fg-on-accent: #FFFFFF;
   --semantic-color-fg-on-inverse: #F2F2F0;
+  --semantic-color-fg-on-inverse-muted: #D4D4D8;
+  --semantic-color-fg-on-inverse-faint: #888885;
   --semantic-color-border-default: #E2E0D8;
   --semantic-color-border-strong: #C9C6BB;
   --semantic-color-border-inverse: rgba(255,255,255,0.08);
@@ -179,6 +182,7 @@
   --semantic-color-accent-fg-on-tint: #155A6B;
   --semantic-color-accent-soft: #ECF6F8;
   --semantic-color-accent-soft-border: #D9ECF1;
+  --semantic-color-accent-on-inverse: #3FA6BB;
   --semantic-color-status-good: #2E7D5C;
   --semantic-color-status-good-text: #2A7355;
   --semantic-color-status-good-bg: #DCEFE6;
@@ -391,17 +395,20 @@
   --semantic-color-fg-faint: #888885;
   --semantic-color-fg-on-accent: #0B0B0D;
   --semantic-color-fg-on-inverse: #111111;
+  --semantic-color-fg-on-inverse-muted: #4A4A48;
+  --semantic-color-fg-on-inverse-faint: #686866;
   --semantic-color-border-default: rgba(255,255,255,0.08);
   --semantic-color-border-strong: rgba(255,255,255,0.16);
   --semantic-color-border-inverse: #E2E0D8;
   --semantic-color-border-inverse-strong: #C9C6BB;
   --semantic-color-accent-default: #3FA6BB;
-  --semantic-color-accent-hover: #1A728A;
+  --semantic-color-accent-hover: #5FBACD;
   --semantic-color-accent-deep: #155A6B;
   --semantic-color-accent-on-tint: #3FA6BB;
   --semantic-color-accent-fg-on-tint: #3FA6BB;
   --semantic-color-accent-soft: rgba(63,166,187,0.12);
   --semantic-color-accent-soft-border: rgba(63,166,187,0.32);
+  --semantic-color-accent-on-inverse: #155A6B;
   --semantic-color-status-good-text: #7FD1AE;
   --semantic-color-status-good-bg: rgba(46,125,92,0.18);
   --semantic-color-status-warn-text: #E3B463;
@@ -410,7 +417,7 @@
   --semantic-color-status-bad-bg: rgba(184,58,46,0.20);
   --semantic-color-focus-ring: #3FA6BB;
   --component-button-primary-bg: #3FA6BB;
-  --component-button-primary-bg-hover: #1A728A;
+  --component-button-primary-bg-hover: #5FBACD;
   --component-button-primary-bg-active: #155A6B;
   --component-button-primary-fg: #0B0B0D;
   --component-button-secondary-bg: #1A1A1E;
@@ -420,7 +427,6 @@
   --component-button-ghost-fg: #A8A8AC;
   --component-button-ghost-fg-hover: #F2F2F0;
   --component-button-ghost-bg-hover: rgba(255,255,255,0.04);
-  --component-button-danger-fg: #0B0B0D;
   --component-input-bg: #1A1A1E;
   --component-input-fg: #F2F2F0;
   --component-input-border: rgba(255,255,255,0.16);
@@ -452,6 +458,7 @@
   --component-nav-link-fg-active: #3FA6BB;
   --component-nav-topbar-bg: #E9E7E0;
   --component-nav-topbar-fg: #111111;
+  --component-nav-topbar-accent: #155A6B;
   --component-tab-fg: #A8A8AC;
   --component-tab-fg-active: #3FA6BB;
   --component-tab-fg-hover: #F2F2F0;
@@ -460,6 +467,7 @@
   --component-toast-bg: #E9E7E0;
   --component-toast-fg: #111111;
   --component-toast-border: #E2E0D8;
+  --component-toast-accent: #155A6B;
   --component-chip-solid-bg: #3FA6BB;
   --component-chip-solid-fg: #0B0B0D;
   --component-chip-soft-bg: rgba(63,166,187,0.12);

@@ -55,6 +55,37 @@ Errors fail CI; warnings print and pass. See the matrix in `tools/composition-li
   floor is 10px (`fontSize-3xs`); micro-type creep is how dashboards rot.
 - **Embedded fonts** — tier1-artifact must carry `data:font/woff2` (CSP-sandboxed hosts
   block font CDNs; inline `tokens/dist/embedded-fonts.css`).
+- **Wordmark vs theme** — a file that can flip (declares the theme bridge) and ships
+  `celorus-mono-white.svg` must also ship a light-surface counterpart
+  (`celorus-primary.svg` / `celorus-mono-black.svg`) and swap them on `[data-theme]`.
+  The topbar rides `bg.inverse`, which is charcoal in light and **bone in dark**; the
+  wordmark is a fixed-colour asset, so a lone white mark falls to **1.13:1** there.
+  Banners/email are exempt (no bridge, they cannot flip). Added 2026-08-10 after all
+  eight templates shipped this while passing every other check.
+
+## The inverse surface — the trap this system actually fell into
+
+`--semantic-color-bg-inverse` is charcoal in light and **bone in dark**. That flip is
+deliberate: "inverse" means the opposite of the page. But **only tokens flip with it.**
+Two things do not, and both shipped broken:
+
+1. **Raw primitives.** `--primitive-color-petrol-300` reads on charcoal (6.91:1) and dies
+   on bone (2.30:1); `--primitive-color-dark-ink-*` is worse (1.19:1). Anything on the
+   inverse surface takes `--semantic-color-fg-on-inverse{,-muted,-faint}` or
+   `--semantic-color-accent-on-inverse`. A **component** token bound to a primitive has
+   the same defect and cannot be fixed downstream — `component.nav.topbar-accent` was
+   bound to `{primitive.color.petrol.300}` and so was frozen in dark by construction.
+2. **Fixed-colour assets.** The wordmark SVGs — see the lint rule above.
+
+The mirror-image mistake is treating an *always-charcoal* surface as if it flipped. The
+`.kfi-grid.on-dark` weight strip is deliberately fixed; it takes primitives, and mixing
+`bg.inverse` into it turned its tiles bone inside a charcoal frame. **A surface that
+flips takes semantics; a surface that is fixed takes primitives. Never mix them on one
+component.**
+
+`tokens/build.mjs` now also refuses any contrast pair declared in one theme only — the
+original hole was a `PAIRS` table with 34 light rows against 17 dark ones, with the two
+topbar rows in the missing half, reporting "51 pairs passed" the whole time.
 
 ## What the lint cannot check — still binding
 

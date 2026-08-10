@@ -60,10 +60,30 @@
   border-bottom:1px solid var(--primitive-color-charcoal-850);
 }
 .coll-topbar .brand{display:flex;align-items:center;gap:13px}
+/* WORDMARK — bg.inverse FLIPS (charcoal in light, bone in dark), so the mark
+   has to flip with it. Ship both sanctioned assets and swap on the theme:
+   mono-white on charcoal (18.0:1), primary/petrol on bone (6.3:1). A single
+   white mark scored 1.13:1 in dark, i.e. invisible.
+   Sizing MUST live in a class and never inline on the <img> — an inline
+   display:block outranks the display:none below and renders BOTH marks.
+
+   BACK-COMPAT: `.coll-topbar .brand img` is kept alongside `.wm` because this
+   file is INLINED by external consumers whose markup predates .wm and ships an
+   unclassed <img> (the room-brief skill in celorus-app does exactly this).
+   Dropping it rendered their wordmark at intrinsic SVG size — full-viewport.
+   Because that selector is (0,2,1), the display rules below carry the
+   `img.wm-*` forms so they still outrank it. */
+.wm,
 .coll-topbar .brand img{height:22px;width:auto;display:block}
+.wm-dark,
+.coll-topbar .brand img.wm-dark{display:none}
+[data-theme="dark"] .wm-light,
+[data-theme="dark"] .coll-topbar .brand img.wm-light{display:none}
+[data-theme="dark"] .wm-dark,
+[data-theme="dark"] .coll-topbar .brand img.wm-dark{display:block}
 .coll-topbar .brand-sep{width:1px;height:18px;background:var(--semantic-color-border-inverse-strong)}
 .coll-topbar .brand-tag{
-  font-size:var(--semantic-text-label);color:var(--primitive-color-dark-ink-300);
+  font-size:var(--semantic-text-label);color:var(--semantic-color-fg-on-inverse-faint);
   font-weight:500;letter-spacing:.03em;font-family:var(--sans);
 }
 .coll-topbar .topbar-kind{
@@ -138,9 +158,11 @@
   outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
   outline-offset:var(--component-focus-ring-offset);
 }
-/* On charcoal surfaces the icon inverts to the dark-legible petrol step. */
-.on-dark .cite-ic{border-color:var(--primitive-color-petrol-300);color:var(--primitive-color-petrol-300);background:transparent}
-.on-dark .cite-ic:hover{background:var(--primitive-color-petrol-300);color:var(--semantic-color-bg-inverse)}
+/* On the inverse surface the icon takes the on-inverse accent, which flips
+   with the surface (petrol.300 on charcoal, petrol.600 on bone). Binding this
+   to the petrol.300 primitive froze it at 2.30:1 once the surface went bone. */
+.on-dark .cite-ic{border-color:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-accent-on-inverse);background:transparent}
+.on-dark .cite-ic:hover{background:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-bg-inverse)}
 
 
 /* ── 3. CITATION CARD POPOVER ─────────────────────────────────────────
@@ -266,9 +288,16 @@
 .delta.is-turn{color:var(--semantic-color-fg-on-accent);background:var(--semantic-color-status-good)}
 .delta.is-flat{color:var(--muted);background:var(--semantic-color-bg-panel)}
 .delta.is-na{color:var(--primitive-color-ink-300);background:var(--semantic-color-bg-well)}
-/* Charcoal-weight KFI strip (guide: charcoal reserved for weight). */
-.kfi-grid.on-dark{background:var(--primitive-color-charcoal-850);border-color:var(--semantic-color-bg-inverse)}
-.kfi-grid.on-dark .kfi-tile{background:var(--semantic-color-bg-inverse)}
+/* Charcoal-weight KFI strip (guide: charcoal reserved for weight).
+   This band is deliberately ALWAYS charcoal — unlike .coll-topbar, it is not a
+   contrast band, so it does not flip. That makes the dark-ink primitives below
+   correct in both themes. It previously mixed the two models: a fixed charcoal
+   grid holding tiles bound to bg.inverse, so in dark the tiles turned BONE
+   inside a charcoal frame and every label on them fell to ~1.2:1.
+   Rule of thumb: a surface that flips takes semantics, a surface that is
+   fixed takes primitives. Never mix them on one component. */
+.kfi-grid.on-dark{background:var(--primitive-color-charcoal-850);border-color:var(--primitive-color-charcoal-950)}
+.kfi-grid.on-dark .kfi-tile{background:var(--primitive-color-charcoal-950)}
 .kfi-grid.on-dark .kt-label{color:var(--primitive-color-dark-ink-300)}
 .kfi-grid.on-dark .kt-value{color:var(--primitive-color-petrol-300)}
 .kfi-grid.on-dark .kt-value .kt-unit{color:var(--primitive-color-dark-ink-400)}
@@ -510,12 +539,12 @@ details.annexure .ann-inner{padding:6px 15px 14px}
 .fb-tray{
   position:sticky;bottom:0;z-index:var(--primitive-zIndex-sticky);
   background:var(--semantic-color-bg-inverse);color:var(--semantic-color-fg-on-inverse);
-  border-top:2px solid var(--component-nav-topbar-accent);
+  border-top:2px solid var(--semantic-color-accent-on-inverse);
   padding:12px var(--semantic-space-gutter);
   display:flex;align-items:center;gap:16px;flex-wrap:wrap;
 }
-.fb-tray .fb-tray-count{font-family:var(--mono);font-size:var(--primitive-fontSize-sm);color:var(--primitive-color-dark-ink-100)}
-.fb-tray .fb-tray-count b{color:var(--component-nav-topbar-accent);font-weight:600}
+.fb-tray .fb-tray-count{font-family:var(--mono);font-size:var(--primitive-fontSize-sm);color:var(--semantic-color-fg-on-inverse-muted)}
+.fb-tray .fb-tray-count b{color:var(--semantic-color-accent-on-inverse);font-weight:600}
 .fb-tray .fb-tray-actions{display:inline-flex;gap:8px;margin-left:auto}
 .fb-tray-btn{
   display:inline-flex;align-items:center;gap:6px;
@@ -524,8 +553,10 @@ details.annexure .ann-inner{padding:6px 15px 14px}
   background:transparent;border:1px solid var(--semantic-color-border-inverse-strong);
   color:var(--semantic-color-fg-on-inverse);
 }
-.fb-tray-btn:hover{background:var(--primitive-color-charcoal-850)}
-.fb-tray-btn.is-primary{background:var(--component-nav-topbar-accent);border-color:var(--component-nav-topbar-accent);color:var(--semantic-color-bg-inverse)}
+/* Hover must lift off whichever surface the tray currently is: charcoal in
+   light, bone in dark. A fixed charcoal here went dark-on-bone in dark. */
+.fb-tray-btn:hover{background:var(--semantic-color-bg-inverse-raised)}
+.fb-tray-btn.is-primary{background:var(--semantic-color-accent-on-inverse);border-color:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-bg-inverse)}
 .fb-tray-btn:focus-visible{
   outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
   outline-offset:var(--component-focus-ring-offset);
