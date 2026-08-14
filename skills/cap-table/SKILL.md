@@ -233,6 +233,20 @@ through `provenance_ref` into that response's top-level pool.) The views:
 - **Preference stack** — the same classes ordered by the filed snapshot
   order. Seniority rank is honestly null with a note until a seniority
   source is extracted — never guess an order.
+- **Annual capital structure by year** (`view: "annual_capital"`) — the
+  **annual return's own** share-capital structure, one snapshot per financial
+  year, oldest first: per class, authorised/issued/subscribed/paid-up shares
+  and amounts exactly as filed. Reach for this rather than the latest capital
+  snapshot whenever the question is about **authorised** capital, or about any
+  year other than the most recent. Two things only this view can tell you: a
+  company that files annual returns but no allotments has **no** latest
+  snapshot at all (that one reads the allotment lane), and a share class the
+  company **authorised but never issued** — real, and common for preference
+  capital — appears in no other view. A year that had more than one annual
+  return filed serves the **later-filed** one and says so in its `warnings`
+  (a superseded snapshot is disclosed, never summed and never silently
+  dropped — rule 10's discipline). `not_available` with its reason when no
+  annual return is on record.
 - **Year-end annual views** — three views that need the annual ownership
   spine, not yet extracted: year-end shareholding by category, year-end
   per-holder dilution, and structure-movement between snapshots (this last
