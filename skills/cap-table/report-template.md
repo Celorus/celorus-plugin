@@ -179,17 +179,35 @@ guess an order.
 | --- | --- | --- |
 | {rank or "not available"} | {security_class} | {"seniority not yet extracted" if null} |
 
-### 6. Year-end ownership (annual spine) — not yet available
+### 6. Year-end ownership (annual spine)
 
-Three views need the annual ownership spine, which is not yet extracted:
-year-end shareholding by category, year-end per-holder dilution, and
-structure movement between snapshots (already visible between consecutive
-rounds in §2). Render:
+Two of these three views are LIVE off the MGT-7 annual return; serve them
+whenever the company has filed one. Only the per-holder view is still a
+stub, and it is the only one to render as an absence.
+
+**Year-end shareholding by category** (`v2`) — one block per financial
+year, oldest first, promoter/public by class exactly as filed:
+
+| FY | Class | Promoter | Public | Total |
+| --- | --- | --- | --- | --- |
+| {fy} | {security_class} | {promoter} | {public} | {total} |
+
+**Capital-structure movement** (`v7`) — per FY, per class, the filer's own
+opening → movement (by cause) → closing:
+
+| FY | Class | Opening | Movement (cause) | Closing |
+| --- | --- | --- | --- | --- |
+| {fy} | {security_class} | {opening} | {movement} ({cause}) | {closing} |
+
+A financial year with no annual return filed is simply **absent** from
+both — never render a zero row for it. Where a view returns
+`status: "not_available"`, render:
 
 > Not available — {reason from the view}. Expected when: {available_when}.
 
+**Year-end per-holder dilution** (`v3`) — render the absence line above.
 Do not sum a holder's §2 positions across filings into a running total
-(rule 8) — that is exactly what this section will serve once available.
+(rule 8) — that is exactly what this view will serve once available.
 
 ---
 

@@ -247,13 +247,23 @@ through `provenance_ref` into that response's top-level pool.) The views:
   (a superseded snapshot is disclosed, never summed and never silently
   dropped — rule 10's discipline). `not_available` with its reason when no
   annual return is on record.
-- **Year-end annual views** — three views that need the annual ownership
-  spine, not yet extracted: year-end shareholding by category, year-end
-  per-holder dilution, and structure-movement between snapshots (this last
-  one is already covered between consecutive rounds above). Each returns a
-  structured `status: "not_available"` with its own `reason` and
-  `available_when` — render "not available (reason)", never a fabricated
-  empty table.
+- **Year-end shareholding by category** (`view: "v2"`) — per financial year,
+  the annual return's own promoter/public split by class, plus the
+  form-level shareholder counts, exactly as filed. Use it for "who owned
+  what at year end" and for how the shareholder base changed year on year.
+  Years with no annual return filed are simply **absent** — never a
+  zero-filled year.
+- **Capital-structure movement by year** (`view: "v7"`) — per financial
+  year, per class, opening → movement (by cause) → closing, as filed on the
+  annual return. This is the filer's own account of what moved and why, so
+  prefer it over inferring movement by differencing two snapshots. Same
+  absence rule: an unfiled year does not appear.
+- **Year-end per-holder dilution** (`view: "v3"`) — **not available.** A
+  per-holder position at each year end needs an annual ownership spine that
+  is not extracted (rule 8). It returns a structured
+  `status: "not_available"` with its `reason` and `available_when` — render
+  "not available (reason)", never a fabricated empty table, and never build
+  it yourself by summing a holder's round positions.
 
 The API is **read-only** — nothing you do can change the data.
 
