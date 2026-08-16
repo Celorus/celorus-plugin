@@ -223,7 +223,10 @@ Free in shape, but disciplined in method:
    and a units payload that doesn't contain the answer is **not** a
    "not available": fall through to the bundle before concluding. Disclose any
    `unit_building` / `units_truncated` / `uncompiled_periods_on_record` warning
-   the units envelope carries.
+   the units envelope carries. A `get_cited_sections` response carrying
+   `section_truncated:...` is a PART of the source, never the whole: say so, and
+   follow the row's `next_offset` before quoting "the exact wording" or claiming
+   a term is absent from a document.
 4. **Compose only over retrieved data.** Weave the answer from what came back —
    never from memory. A cross-company comparison is a statement about two
    figures you both retrieved and cited.
