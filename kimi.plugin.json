@@ -1,7 +1,7 @@
 {
   "name": "celorus",
-  "version": "0.9.4",
-  "description": "Decision-ready financial intelligence on companies: a detailed financial-health report, a cap table / ownership report, or a grounded answer to a specific question. Every figure is read from the company's official records and cites its source; data that isn't on record is shown as \"not available\", never invented. Includes the celorus-design skill: every artifact you make (HTML, docs, decks, dashboards, spreadsheets, PDFs) follows the Celorus design language.",
+  "version": "0.9.5",
+  "description": "Decision-ready intelligence on Indian companies and the people behind them: a financial-health report, a cap table / ownership view, director and leadership profiles, or a grounded answer to one specific question, for growth work and for diligence. Every figure is read from the official record and cites its source; anything not on record is shown as \"not available\", never invented. Includes the celorus-design skill: every artifact you make (HTML, docs, decks, dashboards, spreadsheets, PDFs) follows the Celorus design language.",
   "author": {
     "name": "Celorus",
     "email": "tech@celorus.com"
@@ -27,9 +27,9 @@
   },
   "skillInstructions": "Kimi Code notes for the Celorus skills:\n\n- The data comes ONLY from the celorus-data MCP tools. If those tools are not in your tool list, say plainly that the Celorus connection is not available and stop. Never fill the gap from general knowledge, from memory, or from a web search, and never estimate a figure \u2014 a Celorus answer with an uncited number in it is a defect, not a partial answer.\n- Call the MCP tools by their exposed names in this session (they carry Kimi's `mcp__celorus-data__` prefix); the skills name them without the prefix.\n- Kimi Code has no inline artifact viewer. Where a skill offers an artifact-or-floor choice, take the floor: render the markdown + emoji table from the structured `presentation` payload rather than embedding `html_fragment`.\n- A request for an actual file (report, deck, workbook, PDF) still goes to `generate_collateral`. Do not hand-build one, and do not reach for a generic document skill \u2014 that drifts the brand and re-derives the figures.\n- When a skill says to write branded HTML yourself (the celorus-design skill), write it to a file in the working directory and give the user the path.",
   "interface": {
-    "displayName": "Celorus",
-    "shortDescription": "Company financials, cap tables, and cited answers from official records",
-    "longDescription": "Ask about a company and get decision-ready financials: a financial-health report, a cap table / ownership and funding view, or a straight answer to one specific question. Every figure is read from the company's own filed records and carries a citation; anything not on record reads \"not available\" rather than being estimated. Also carries the Celorus design language, so any report, dashboard, or document you generate looks like the product.",
+    "displayName": "Company & People Intelligence \u2014 Celorus",
+    "shortDescription": "Indian company and people intelligence: financials, cap tables, directors, cited to the record",
+    "longDescription": "Ask about an Indian company or the people behind it and get a decision-ready answer: a financial-health report, a cap table / ownership and funding view, a director or leadership profile, or a straight answer to one specific question. Built for growth work and for diligence. Every figure is read from the official record and carries a citation; anything not on record reads \"not available\" rather than being estimated. Also carries the Celorus design language, so any report, dashboard, or document you generate looks like the product.",
     "developerName": "Celorus",
     "websiteURL": "https://github.com/Celorus/celorus-plugin"
   }

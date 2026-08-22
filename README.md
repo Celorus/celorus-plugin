@@ -3,10 +3,10 @@
 **The trusted-context layer on companies. Cited intelligence for the decisions you
 make, in whatever harness you use.**
 
-Ask for a full financial-health report, a cap table, or a straight answer to a
-specific question, and get it back grounded and cited. Every figure is read from
-the company's official records and carries its source. The plugin reads; it never
-invents.
+Ask for a full financial-health report, a cap table, the people behind a company,
+or a straight answer to a specific question, and get it back grounded and cited.
+Every figure is read from the official record and carries its source. The plugin
+reads; it never invents.
 
 When a fact is not on record, the answer says **"not available"**. Never an
 estimate, never model guesswork. That honesty is the whole point: you can act on
@@ -24,6 +24,9 @@ near zero and the year gets decided.
   share classes, dilution, and the latest ownership snapshot.
 - **Ask about a company.** A specific, targeted question answered from the
   record, with the source attached. What the data cannot answer, it says so.
+- **The people behind the company.** Directors and leadership as the record has
+  them: who they are, what roles they hold, and where else they sit, each detail
+  cited like any other figure.
 - **Synthesis.** A free-form, cross-company answer when the question is broader
   than one report: compare companies, chain several figures together, put
   together something the fixed reports do not cover.
@@ -34,8 +37,8 @@ near zero and the year gets decided.
   deck, a document, a dashboard, a spreadsheet, or a PDF, comes out in the
   Celorus house style, with provenance kept intact.
 
-Not sure where to start? Just ask what Celorus can do, or name a company, and the
-plugin points you to the right deliverable.
+Not sure where to start? Just ask what Celorus can do, or name a company or a
+director, and the plugin points you to the right deliverable.
 
 ## The honesty contract
 
