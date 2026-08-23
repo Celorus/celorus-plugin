@@ -243,9 +243,9 @@ The API is **read-only** — nothing you do can change the data.
 | A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` (fetch `streams=["signals"]` — see step 3) — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`) |
-| A notable event (an allotment, a charge, an officer change) | the subdomain's `events[]` — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
-| Something reported in the news | the same `events[]`, the rows carrying `status` — always labelled as reported, never as fact; give the `corroboration_count` and cite `sources` |
-| A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` — a plain-language answer, cited; if empty, no such connection is on record |
+| A notable event (an allotment, a charge, an officer change) | the subdomain's `events[]` (fetch `streams=["events"]`) — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
+| Something reported in the news | the same `events[]` (fetch `streams=["events"]`), the rows carrying `status` — always labelled as reported, never as fact; give the `corroboration_count` and cite `sources` |
+| A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` (fetch `streams=["relationships"]`) — a plain-language answer, cited; if empty, no such connection is on record |
 | A cross-company screen ("companies that…") or a full relationship graph | not available — refuse plainly, don't improvise from a single subject's `relationships[]` |
 
 If the question names a specific year, pass it as `fy`; otherwise default to the
