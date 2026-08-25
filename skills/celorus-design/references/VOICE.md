@@ -2,6 +2,14 @@
 
 One page. For anyone — person or agent — writing copy that carries the Celorus name.
 
+> **The thread lives upstream, not here.** The one paragraph that generates every
+> Celorus decision (the brand thread, ratified 2026-07-28) is **§0 of
+> `celorus-os/17_Content_Hub/00_SPINE.md`** — founder-private, so it is referenced
+> here rather than copied, and it is not duplicated in this repo. Read it before
+> writing anything that carries the name; when a rule below does not settle a
+> question, the question to ask is *does it hold the thread?* The one-liner is
+> **"Celorus is the machinery around the person."**
+
 ## The stance
 
 Write like an operator who has done the work, not a template filling slots.
@@ -12,7 +20,7 @@ specific. Nothing shouts.
 ## Six rules
 
 1. **Lead with the outcome, not the plumbing.** Say what was decided — whether to
-   pursue, who to engage, why now — before (or instead of) which filing or feed it
+   pursue, who to engage, why now — before (or instead of) which record or feed it
    came from. Name a source only where the source *is* the value (a provenance or
    trust claim). *Rationale: the buyer cares about the decision; the machinery is
    evidence, not the headline.*
@@ -49,13 +57,29 @@ They signal the template we are writing against.
 
 - **Before:** "Celorus leverages cutting-edge AI to seamlessly unlock
   game-changing insights across your entire workflow."
-- **After:** "Celorus reads the filing, the feed, and the CRM, and tells you which
+- **After:** "Celorus reads the record, the feed, and the CRM, and tells you which
   three accounts to call this week and why."
 
 - **Before:** "We believe our platform could potentially help reduce research time
   quite significantly in many cases."
 - **After:** "Diligence that took three weeks takes two days. Every figure links to
   its source."
+
+## Public register (surfaces outside the login wall)
+
+Everything above holds. Public surfaces add one rule and one vocabulary.
+
+**The rule: name the outcome and the record, never the machinery.** Form codes,
+vendor names, registry acronyms, and pipeline vocabulary stay behind the wall.
+Public words: "the record", "cited to the source".
+
+**The one factual exception:** listing pages (Crunchbase, Tracxn, Glassdoor) may
+carry exactly one category line: "Connected intelligence on the Indian business
+ecosystem: companies, the people behind them, and how they connect." Nowhere else.
+
+**Sample copy is product-true.** A number in a template is a guarantee, not a
+metric ("0 guesses per answer"). If a claim is not product-true, it does not
+ship, even as placeholder text.
 
 ## The signatures (keep these)
 

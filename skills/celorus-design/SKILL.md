@@ -29,7 +29,7 @@ output that it was built from the skill snapshot.
 |---|---|
 | Generic HTML artifact (report, doc, status page) | `templates/html/report.html` or `dashboard.html` + foundation block |
 | **Command view** (ops command, control center, owner dashboard, weekly brief) | `templates/html/ops-command.html` — curated-rail anatomy; never render an index as a briefing |
-| Slide deck (HTML) | `templates/html/deck.html` |
+| Slide deck (HTML) | `templates/html/deck.html`; for progressive reveal `components/celorus-deck-builds.js` (bundled: `assets/celorus-deck-builds.js`) — see Deck builds below |
 | Input/collection form | `templates/html/form.html` |
 | **Financial Health report** | `templates/html/financial-health.html` — LOCKED anatomy; never improvise it |
 | **Cap table** deliverable | `templates/html/cap-table.html` — PRD-true anatomy |
@@ -130,6 +130,28 @@ automatically. Call `celorusChartDefaults(Chart)` once, take series colors from
 does not watch CSS. Gridlines = `--semantic-color-border-default`, axis text =
 `--semantic-color-fg-muted`. Meaning is never carried by hue alone: label the series.
 
+## Deck builds (progressive reveal)
+
+Only for HTML decks, and only as a presenting aid. Mark an element `data-build="1"`, `"2"`, …
+and it appears at that step; unmarked elements are always visible. Load
+`assets/celorus-deck-builds.js`, call `celorusDeckBuilds.init()` (default slide selector `.wf`),
+and let the deck keep its own key handling — `next()` / `prev()` return `true` if they consumed
+the keypress and `false` if the deck should change slides. Call `builds.enter(slideEl, 'forward'
+| 'back')` whenever a slide becomes active, so walking backwards does not re-click builds the
+presenter already showed. `revealAll(slide)` opens one slide (overview, handout); `disable()`
+stops hiding altogether.
+
+Two properties are deliberate — do not "optimise" them away:
+
+- **Layout never moves.** Hidden steps keep their space (`visibility` + `opacity`, never
+  `display:none`). A deck that reflows on each keypress makes the room re-read the whole slide
+  every time; the final layout is the layout from the first frame.
+- **It degrades to nothing.** Hiding is scoped to `html[data-deck-builds]`, set at run time, so
+  no-JS, print and PDF export show every step.
+
+**A build is never a place to hide a claim.** The slide must read correctly and completely in
+its final state — which is the state a print, a PDF export and any no-JS viewer will see.
+
 ## Hosted & embedded surfaces — decide the tier FIRST
 
 Full contract in `references/PLUGIN_SURFACES.md`. Two tiers, and picking wrong kills the brand:
@@ -211,19 +233,22 @@ website is the SOURCE of this register system and does not change.
 
 ## Snapshot provenance & regeneration
 
-The bundled snapshot was cut from `Celorus/design-system` on **10 Aug 2026** (skill v1.6 —
-consumer-contract gates on both collateral selectors and foundation tokens, corrected
-23-reader census; v1.5 added the on-inverse token family + two-asset wordmark rule; see step 7/7a):
+The bundled snapshot was cut from `Celorus/design-system` on **25 Aug 2026** (skill v1.7 —
+`celorus-deck-builds.js` bundled + the VOICE.md re-sync that `tools/check-skill-sync.mjs` now
+gates; v1.6 added consumer-contract gates on both collateral selectors and foundation tokens,
+corrected 23-reader census; v1.5 added the on-inverse token family + two-asset wordmark rule;
+see step 7/7a):
 `assets/foundation-block.css` + `assets/embedded-fonts.css` + `references/TOKENS.md` ← `tokens/dist/`, `assets/collateral.css`
 ← `templates/html/`, `assets/tokens.flat.json` ← `tokens/dist/`, logos ← `brand/logos/`,
-`assets/celorus-charts.js` ← `components/`, `assets/composition-lint.mjs` ← `tools/`, `references/COMPOSITION.md` ← `guides/`, `references/{VOICE,LOCALIZATION,PLUGIN_SURFACES,PRINT_AND_EXPORT}.md`
+`assets/celorus-charts.js` + `assets/celorus-deck-builds.js` ← `components/`, `assets/composition-lint.mjs` ← `tools/`, `references/COMPOSITION.md` ← `guides/`, `references/{VOICE,LOCALIZATION,PLUGIN_SURFACES,PRINT_AND_EXPORT}.md`
 ← `brand/` + `guides/`, `assets/public-block.css` ← `tokens/dist/` (D41 public layer),
 `assets/registers.json` ← `marketing/public/`, `assets/rings-daylight.svg` +
 `assets/rings-signal.svg` ← `brand/motifs/`. To refresh: re-copy those files (IN THIS REPO
-they must diff IDENTICAL to the live system; a downstream mirror — the plugin copy — is a
-dated PINNED copy of whatever was last mirrored, and its SYNC.md records the source commit
-it was cut from; nothing machine-gates cross-repo identity), update this date, and rebuild
-the package:
+they must diff IDENTICAL to the live system — `node tools/check-skill-sync.mjs` gates exactly
+that mapping in CI, so a stale reference now fails the build instead of shipping; a downstream
+mirror — the plugin copy — is a dated PINNED copy of whatever was last mirrored, and its
+SYNC.md records the source commit it was cut from; nothing machine-gates cross-repo identity),
+update this date, and rebuild the package:
 `cd design-system/.claude/skills && zip -rX ../../celorus-design.skill celorus-design`.
 The skill's single source home is `design-system/.claude/skills/celorus-design/`; the
 `.skill` bundle and the `celorus` plugin copy are generated from it — never edit those
