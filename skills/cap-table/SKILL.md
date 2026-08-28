@@ -142,8 +142,20 @@ summarised here overrides them. In brief:
    read — render its share fields as absent ("—"), never 0, never "not
    stated", never "not available". The two field families never merge in
    either direction.
+15. **Registry capital sits beside filed capital — a second record, never a
+   restatement.** The company register's own authorised / paid-up /
+   subscribed capital serve on the cap-table door alongside the filed
+   figures, as their own rows labelled "(registry)" and cited "per MCA master
+   data, captured <date>". Report each on its own line. Never merge, average
+   or sum a registry figure with a filed one, never present one as
+   superseding the other, and never call a difference between them a
+   reconciliation break or a fault in the filing — the register's authorised
+   and subscribed capital cover every class of share while the filed ones on
+   record are equity only, so the register's figure is routinely the larger.
+   Registry and filed paid-up capital are both company-level totals: a
+   difference there is a difference of date, so say which is as at when.
 
-If `get_semantic_metadata` is unavailable, the fourteen summaries above are
+If `get_semantic_metadata` is unavailable, the fifteen summaries above are
 your floor — apply them; never relax the honesty contract because the
 definitions could not be fetched.
 
