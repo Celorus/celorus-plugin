@@ -164,10 +164,13 @@ provenance:
 bundle carries them, each with its own provenance tag. Omit either line
 entirely when its layer is empty; never render "not available" here.
 
-- **Notable this year** ({tag}): {one-line summary of a notable event — e.g. a
-  new charge, an officer change — only if present}
+- **Notable this year** ({tag}): {one-line summary of a notable event — e.g. an
+  allotment, an officer change — only if present}
 - **Connections** ({tag}): {one-line summary of a holding or directorship —
   only if present}
+- **Secured charges** ({tag}): {one-line summary of the charges on record — the
+  count, and the open count — only if present. NEVER a total of the amounts: a
+  charge amount is the secured limit, not drawn debt}
 
 ### 8. Auditor's report & governance
 

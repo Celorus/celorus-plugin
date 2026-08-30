@@ -155,7 +155,20 @@ summarised here overrides them. In brief:
    Registry and filed paid-up capital are both company-level totals: a
    difference there is a difference of date, so say which is as at when.
 
-If `get_semantic_metadata` is unavailable, the fifteen summaries above are
+16. **A charge amount is a secured limit, not debt — charges never total.**
+   Secured-lending charges serve one row per charge, each with its own amount
+   and its own citation, on the lender & charge-holder subdomain. Never total,
+   rank or aggregate charge amounts, and never present a summed figure as the
+   company's borrowing or secured debt: the amount is the limit the charge is
+   registered against, not money drawn. Report per-charge amounts, and report
+   each figure as recorded — the source asserts no unit, so never stamp a
+   currency onto it or rescale it. Where a charge says the lender is not
+   disclosed, say "lender not disclosed" — never "Others", never a guess — and
+   still report the charge in full. A lender is a named entity only where the
+   charge filing states its company number; otherwise it is a name on record
+   and must not be read as, or matched to, a similarly-named company.
+
+If `get_semantic_metadata` is unavailable, the sixteen summaries above are
 your floor — apply them; never relax the honesty contract because the
 definitions could not be fetched.
 

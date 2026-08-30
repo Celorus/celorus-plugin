@@ -121,7 +121,7 @@ name lives once per fact in the top-level `fact_key_labels` map
 `{ section_kind, fy, content_markdown, warnings[], warning_messages[],
 provenance }` — same index-aligned pairing as a signal. `provenance`
 is `{ doc_id, srn, section_kind, section_id, page_start, page_end, cite_url }`.
-An **event** (something that happened — an allotment, a charge, an officer
+An **event** (something that happened — an allotment, an officer
 change) carries `{ event_type, event_date, parties, terms, confidence,
 warnings[], warning_messages[], provenance }`. A **relationship** (a connection
 to another party — a holding, a directorship) carries
@@ -421,9 +421,9 @@ time — do not assume a fixed catalog.
 ## Weaving in events and relationships
 
 Two supplementary layers ride alongside the figures and the narrative:
-**events** — something that happened (an allotment, a charge, an officer
-change) — and **relationships** — a connection to another party (a holding, a
-directorship). Both are cited exactly like a figure or a section (rule 2).
+**events** — something that happened (an allotment, an officer change) — and
+**relationships** — a connection to another party (a holding, a directorship),
+or a secured charge on the lender & charge-holder subdomain. Both are cited exactly like a figure or a section (rule 2).
 
 - **Restraint, not silence.** When a subdomain's `events[]` or `relationships[]`
   carry rows, add them as a short supplementary note in that subdomain's

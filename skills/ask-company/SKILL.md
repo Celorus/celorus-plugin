@@ -97,7 +97,7 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
   provenance }`. `warning_messages[]` is the plain-language sentence for each
   code, index-aligned with the sorted `warnings[]` beside it — it is what the
   reader sees (rule 2). An **event**
-  (something that happened — an allotment, a charge, an officer change) carries
+  (something that happened — an allotment, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
   warning_messages[], provenance }`; a **relationship** (a connection to
   another party — a holding, a directorship) carries
@@ -243,9 +243,10 @@ The API is **read-only** — nothing you do can change the data.
 | A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` (fetch `streams=["signals"]` — see step 3) — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`) |
-| A notable event (an allotment, a charge, an officer change) | the subdomain's `events[]` (fetch `streams=["events"]`) — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
+| A notable event (an allotment, an officer change) | the subdomain's `events[]` (fetch `streams=["events"]`) — a plain-language answer, cited; if empty, that kind of event is not on record for this company |
 | Something reported in the news | the same `events[]` (fetch `streams=["events"]`), the rows carrying `status` — always labelled as reported, never as fact; give the `corroboration_count` and cite `sources` |
 | A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` (fetch `streams=["relationships"]`) — a plain-language answer, cited; if empty, no such connection is on record |
+| A secured loan / charge / who has lent to this company | the lender & charge-holder subdomain's `relationships[]` (fetch `streams=["relationships"]`; its id comes back in `list_available_subdomains.data.master_data.charges.subdomains`) — one row per charge, NOT `events[]`. Each row carries a `charge` block (amount, status, the three lifecycle dates). **Never total the amounts** — a charge amount is the secured limit the charge is registered against, not drawn debt. Where `lender_disclosed` is false, say "lender not disclosed", never "Others" |
 | A cross-company screen ("companies that…") or a full relationship graph | not available — refuse plainly, don't improvise from a single subject's `relationships[]` |
 
 If the question names a specific year, pass it as `fy`; otherwise default to the

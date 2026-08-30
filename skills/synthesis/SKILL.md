@@ -107,7 +107,7 @@ The `celorus-data` server exposes three tools for retrieval:
   provenance }`. `warning_messages[]` is the plain-language sentence for each
   code, index-aligned with the sorted `warnings[]` beside it — it is what the
   reader sees (*Wording a caveat* below). An **event**
-  (something that happened — an allotment, a charge, an officer change) carries
+  (something that happened — an allotment, an officer change) carries
   `{ event_type, event_date, parties, terms, confidence, warnings[],
   warning_messages[], provenance }`; a **relationship** (a connection to
   another party — a holding, a directorship) carries
