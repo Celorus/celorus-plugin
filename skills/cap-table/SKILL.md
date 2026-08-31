@@ -164,9 +164,20 @@ summarised here overrides them. In brief:
    each figure as recorded — the source asserts no unit, so never stamp a
    currency onto it or rescale it. Where a charge says the lender is not
    disclosed, say "lender not disclosed" — never "Others", never a guess — and
-   still report the charge in full. A lender is a named entity only where the
-   charge filing states its company number; otherwise it is a name on record
-   and must not be read as, or matched to, a similarly-named company.
+   still report the charge in full. A lender becomes a named entity by one of
+   two routes — the filing states its company number, or the resolution pass
+   matched the name exactly — and the row says which; report a resolved lender
+   as resolved, not as filed. Otherwise it is a name on record and must not be
+   read as, or matched to, a similarly-named company. On a company's own lender
+   page the resolved evidence rides under `holding_resolution` instead, because
+   there the named counterparty is the borrower — check both keys. When a row's named
+   counterparty carries a registry status that is anything other than active,
+   give that status with the name and do not say the company currently holds or
+   owes the charge — an amalgamated, dissolved, struck-off or liquidating
+   company held it in its time. Test for "not active" rather than matching a
+   list of words, since the register's wording is open; but do not read a
+   non-active status as "defunct" either — some values describe a live company,
+   so report the status and drop the present-tense claim, not the reverse.
 
 If `get_semantic_metadata` is unavailable, the sixteen summaries above are
 your floor — apply them; never relax the honesty contract because the

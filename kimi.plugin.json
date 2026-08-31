@@ -1,6 +1,6 @@
 {
   "name": "celorus",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Decision-ready intelligence on Indian companies and the people behind them: a financial-health report, a cap table / ownership view, director and leadership profiles, or a grounded answer to one specific question, for growth work and for diligence. Every figure is read from the official record and cites its source; anything not on record is shown as \"not available\", never invented. Includes the celorus-design skill: every artifact you make (HTML, docs, decks, dashboards, spreadsheets, PDFs) follows the Celorus design language.",
   "author": {
     "name": "Celorus",
