@@ -63,8 +63,9 @@ written at all.
 `.celorus/cache/check-<slug>.md` holds an answer less than a day old or the existing page
 already carries a `resource:` line. It answers whether the name is on the record and how
 much it holds: counts only, never a figure. Write the answer to
-`.celorus/cache/check-<slug>.md` with the time. If the connection is absent, skip this
-step silently.
+`.celorus/cache/check-<slug>.md` with the time. On `clarify`, show the user the candidate
+names the check returned and ask which one they mean; nothing is written to the cache or
+the page until one is chosen. If the connection is absent, skip this step silently.
 
 **3b, with an account connected** (the `celorus-data` tools are present and answer): fetch
 the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind

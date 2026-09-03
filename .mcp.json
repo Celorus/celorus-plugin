@@ -3,6 +3,10 @@
     "celorus-data": {
       "type": "http",
       "url": "https://app.celorus.com/mcp"
+    },
+    "celorus-check": {
+      "type": "http",
+      "url": "https://app.celorus.com/open/mcp"
     }
   }
 }

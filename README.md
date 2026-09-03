@@ -64,6 +64,9 @@ Not sure where to start? Ask what Celorus can do.
   change the underlying data.
 - **Yours stays yours.** The desk folder never leaves your side; the plugin never sends
   mail, never writes to your CRM, and carries no tracker.
+- **One question before you sign in.** When the research skill asks whether a name is on
+  the record, that check is free and anonymous, and it logs the question asked, the
+  record's answer and the time, nothing about you.
 
 ## Install
 
