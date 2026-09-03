@@ -4,12 +4,12 @@
     "name": "Celorus",
     "email": "tech@celorus.com"
   },
-  "description": "Decision-ready intelligence on companies, every figure cited to its source.",
+  "description": "Sales intelligence on Indian companies and the people behind them: the sales workday from lead research to follow-up, and every record figure cited to its source.",
   "plugins": [
     {
       "name": "celorus",
       "source": ".",
-      "description": "Decision-ready intelligence on companies: financial-health reports, cap tables, and straight answers to specific questions, each figure grounded in the company's own records and cited, nothing invented."
+      "description": "Sales intelligence on Indian companies and the people behind them: the sales workday from lead research to follow-up, and every record figure cited to its source."
     }
   ]
 }

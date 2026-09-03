@@ -346,3 +346,17 @@ Compose freely, but always in three honest layers:
 3. **What the data couldn't cover** — an honest closing note of every gap marked
    "not available" and every sub-request refused, with the reason. Omit this
    only when the answer is complete and unqualified.
+
+## When no account is connected
+
+If the `celorus-data` tools are not in this session's tool list, do not attempt the
+report or the answer, and never fill it from memory or the web; a web answer is
+`research-lead`'s job and it carries the web register's label. Say the connect line
+once, in the wording of the lane you are on, and offer `research-lead` for the company:
+
+- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
+- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
+- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+
+When the counts are not known, say "The record was not asked." and the lane's second
+sentence. Nothing more on any lane.

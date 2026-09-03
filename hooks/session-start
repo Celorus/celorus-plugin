@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# SessionStart hook for the Celorus plugin: announce the desk, if there is one.
+# Reads celorus/index.md frontmatter, the seat pointer and the follow-up queue.
+# Writes nothing. Makes no network call. Needs bash and coreutils only.
+# Never fails the session: every branch exits 0.
+set -u
+
+find_desk() {
+  if [ -n "${CELORUS_DESK:-}" ] && [ -f "${CELORUS_DESK}/celorus/index.md" ]; then
+    printf '%s' "${CELORUS_DESK}"
+    return 0
+  fi
+  local d="${PWD}"
+  while [ -n "$d" ] && [ "$d" != "/" ]; do
+    if [ -f "$d/celorus/index.md" ]; then
+      printf '%s' "$d"
+      return 0
+    fi
+    d="$(dirname "$d")"
+  done
+  return 1
+}
+
+# frontmatter_value FILE KEY: the first "KEY: value" inside the leading --- block,
+# at any indentation. Quotes stripped. Empty when absent.
+frontmatter_value() {
+  awk -v key="$2" '
+    { sub(/\r$/, "") }
+    NR == 1 && $0 != "---" { exit }
+    NR > 1 && $0 == "---" { exit }
+    NR > 1 {
+      line = $0
+      sub(/^[ \t]+/, "", line)
+      if (index(line, key ":") == 1) {
+        v = substr(line, length(key) + 2)
+        sub(/^[ \t]+/, "", v)
+        gsub(/"/, "", v)
+        print v
+        exit
+      }
+    }
+  ' "$1"
+}
+
+escape_for_json() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
+emit() {
+  local ctx
+  ctx="$(escape_for_json "$1")"
+  if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
+    printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$ctx"
+  else
+    printf '{\n  "additionalContext": "%s"\n}\n' "$ctx"
+  fi
+}
+
+desk="$(find_desk)" || {
+  emit "Celorus is installed. No desk workspace was found here; say 'set up my desk' to create one, or ask what Celorus can do."
+  exit 0
+}
+
+index="$desk/celorus/index.md"
+desk_name="$(frontmatter_value "$index" desk)"
+desk_id="$(frontmatter_value "$index" desk_id)"
+
+seat="${CELORUS_SEAT:-}"
+if [ -z "$seat" ] && [ -n "$desk_id" ] && [ -f "${HOME:-/nonexistent}/.celorus/seat-${desk_id}" ]; then
+  seat="$(head -n 1 "${HOME}/.celorus/seat-${desk_id}" | tr -d '[:space:]')"
+fi
+role=""
+if [ -n "$seat" ] && [ -f "$desk/celorus/seats/${seat}.md" ]; then
+  role="$(frontmatter_value "$desk/celorus/seats/${seat}.md" role)"
+fi
+if [ -n "$seat" ]; then
+  seat_line="seat ${seat}${role:+ (${role})}"
+else
+  seat_line="no seat claimed on this machine; say 'set up my desk' to claim one"
+fi
+
+today="$(date +%F)"
+board="not yet opened"
+if [ -f "$desk/celorus/today/${today}.md" ]; then
+  opened="$(frontmatter_value "$desk/celorus/today/${today}.md" opened_at)"
+  board="opened${opened:+ at ${opened}}"
+fi
+
+due=0
+queue="$desk/celorus/queues/follow-ups.md"
+if [ -f "$queue" ]; then
+  due="$(awk -F'|' -v t="$today" '
+    !in_table {
+      if ($0 ~ /^\|[ -]*-/) in_table = 1
+      next
+    }
+    NF >= 7 {
+      by = $(NF-3); st = $(NF-1)
+      gsub(/[ \t]/, "", by); gsub(/[ \t]/, "", st)
+      if (st == "due" && by != "" && by <= t) n++
+    }
+    END { print n + 0 }
+  ' "$queue")"
+fi
+if [ "$due" = "1" ]; then
+  due_line="1 follow-up is due"
+else
+  due_line="${due} follow-ups are due"
+fi
+
+emit "A Celorus desk is installed at ${desk} for ${desk_name:-this desk}: ${seat_line}.
+Today's board is ${board}; ${due_line}.
+Open the day with the day-open skill. The chain and the layout are in celorus/index.md."
+exit 0

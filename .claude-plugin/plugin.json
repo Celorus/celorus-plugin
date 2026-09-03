@@ -1,11 +1,28 @@
 {
   "name": "celorus",
-  "version": "0.9.7",
-  "description": "Decision-ready intelligence on Indian companies and the people behind them: a financial-health report, a cap table / ownership view, director and leadership profiles, or a grounded answer to one specific question, for growth work and for diligence. Every figure is read from the official record and cites its source; anything not on record is shown as \"not available\", never invented. Includes the celorus-design skill: every artifact you make (HTML, docs, decks, dashboards, spreadsheets, PDFs) follows the Celorus design language.",
+  "version": "0.10.0",
+  "description": "Sales intelligence on Indian companies and the people behind them. Run the sales workday: open the day, order today's calls with the reason for each, research a lead in one pass, review the call, queue the follow-up; the desk's context stays in your own folder, and the workday skills run with no account. Then the record: a financial-health report, a cap table and ownership view, a director or leadership profile, or a straight answer to one specific question, for growth work and for diligence. Every record figure is read from the official record and carries its source; web findings are labelled as web findings; what is not established is said plainly, never estimated. Deepest coverage: Indian companies. Includes the celorus-design skill: every artifact you make (HTML, docs, decks, dashboards, spreadsheets, PDFs) follows the Celorus design language.",
   "author": {
     "name": "Celorus",
     "email": "tech@celorus.com"
   },
   "homepage": "https://github.com/Celorus/celorus-plugin",
-  "repository": "https://github.com/Celorus/celorus-plugin"
+  "repository": "https://github.com/Celorus/celorus-plugin",
+  "keywords": [
+    "india",
+    "companies",
+    "people",
+    "sales-intelligence",
+    "sales-workday",
+    "lead-research",
+    "crm",
+    "company-financials",
+    "cap-table",
+    "ownership",
+    "directors",
+    "due-diligence",
+    "company-research",
+    "relationship-intelligence",
+    "cited-data"
+  ]
 }
