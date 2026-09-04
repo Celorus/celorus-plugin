@@ -61,7 +61,7 @@ stated in the pattern, so there is no Holders column to render):
 | --- | --- | --- | --- | --- |
 | {holder_group} | {holder_category} | {capital_kind} | {total_shares_held or "not available"} | {total_shares_held_pct or "not available"} |
 
-Note under the table: "Holder counts are stated in the filing only at the
+Note under the table: "Holder counts are stated in the record only at the
 promoter/public group level, not per category." Percentages are per capital
 kind and group — do not sum them across rows into one total.
 
@@ -110,18 +110,18 @@ method, per-share value, date, and whether the issue price was below the
 valuer's price.
 
 **Holders in this round** — if `roster_missing` is true, write "holder
-detail is not attributable to this specific filing — see §1 Ownership for who
+detail is not attributable to this specific document — see §1 Ownership for who
 holds the company" instead of an empty table (rule 6; never "not available"
 or "unparseable" — the holder records are on record and §1 serves them). If
-the round carries a filing-grain warning, note that this list is shared
-across every round in the same filing. If the round carries a
+the round carries a document-grain warning, note that this list is shared
+across every round in the same document. If the round carries a
 `roster_partially_read` warning, still render every holder returned, and put
 this line immediately above the table (rule 9):
 
 > **This holder list is incomplete.** Part of the shareholder register filed
 > with this round could not be read — some pages of the source document are
 > unreadable, so any holders listed on those pages are missing here. Read the
-> register in full in the cited source filing.
+> register in full in the cited source document.
 
 If the round instead carries a `roster_sheets_unread` warning (a spreadsheet
 register with sheets that were not read), still render every holder returned,
@@ -130,7 +130,7 @@ and put this line immediately above the table (rule 9 applies the same way):
 > **This holder list is incomplete.** The shareholder register filed with this
 > round is a workbook with sheets that could not be read, so any holders listed
 > on those sheets are missing here. Read the register in full in the cited
-> source filing.
+> source document.
 
 A round can carry both warnings; show both lines, pages first.
 
@@ -181,7 +181,7 @@ guess an order.
 
 ### 6. Year-end ownership (annual spine)
 
-Two of these three views are LIVE off the MGT-7 annual return; serve them
+Two of these three views are LIVE off the annual return on record; serve them
 whenever the company has filed one. Only the per-holder view is still a
 stub, and it is the only one to render as an absence.
 
@@ -206,7 +206,7 @@ both — never render a zero row for it. Where a view returns
 > Not available — {reason from the view}. Expected when: {available_when}.
 
 **Year-end per-holder dilution** (`v3`) — render the absence line above.
-Do not sum a holder's §2 positions across filings into a running total
+Do not sum a holder's §2 positions across documents into a running total
 (rule 8) — that is exactly what this view will serve once available.
 
 ---
@@ -214,4 +214,4 @@ Do not sum a holder's §2 positions across filings into a running total
 ### 7. Sources
 
 List each distinct `cite_url` permalink seen, with its SRN — so every figure
-traces back to its source filing (never a raw `s3://` path).
+traces back to its source document (never a raw `s3://` path).

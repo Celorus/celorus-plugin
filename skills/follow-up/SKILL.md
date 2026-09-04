@@ -72,8 +72,11 @@ This skill runs in full with no Celorus account and never calls the record.
 
 ## Never
 
-- Never send a mail, a message or a calendar invitation; a hold on the seat's own
-  calendar, created on their yes, is the most this skill does.
+- **Sending, in three classes.** A draft, with the collateral attached, is free and ships:
+  write it and hand it over. A write to your own calendar or CRM, on your explicit yes, is free;
+  the calendar hold already ships, and a CRM write waits on the connector, so it stays
+  a proposal until then. A send to a third party is out until an approval rail exists:
+  this skill never sends one.
 - Never queue a commitment without a date; ask for one.
 - Never delete a row.
 

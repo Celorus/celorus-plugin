@@ -5,7 +5,7 @@ description: >-
   what is on the clock. Use when someone says "open my day", "what changed", "did anyone
   reply", "what's due today", or at the start of the working day; the Celorus session
   bootstrap points here. Reads the desk's queues and, where the harness has them, the
-  mailbox and calendar for replies and meetings; writes today's board. Runs with no
+  mailbox, calendar and CRM for replies and meetings; writes today's board. Runs with no
   Celorus account.
 ---
 
@@ -34,12 +34,17 @@ in `celorus/index.md`); if neither exists, ask which seat this is and say that
    dated since the last board.
 4. `celorus/signals/inbox/`: any file. It is empty until server-pushed signals land; when
    it is empty, say nothing about it.
-5. The mailbox, through the harness's mail connector when one exists: search only for
-   replies from the people named in the follow-up queue and in the last board's
-   "Today's calls" block, since the last board's timestamp. Read sender, date and subject
-   line only.
-6. The calendar, through the harness's calendar connector when one exists: today's
-   events; title, time and attendee names only.
+5. The mailbox, through the harness's mail connector when one exists: for the accounts
+   and people already on the desk (queued, named, in the book), read the threads in
+   full, not just their headers. Connecting a source is the consent to read it. The
+   scope is those accounts and never the whole mailbox.
+6. The calendar and the CRM, through their connectors when they exist: today's events
+   and the account's own rows, read in full, for the same accounts and no others.
+
+What matters from those reads lands on the account's page as source-tagged lines, each
+one dated and labelled with the source it came from, and removable in one operation.
+The desk's files are yours: nothing read here is uploaded, and it never reaches
+Celorus.
 
 When a connector is absent, say so in one line inside the block it would have fed, and
 list it in the board's `sources_missing`. Never invent a reply or a meeting.
@@ -58,7 +63,7 @@ celorus:
   date: <date>
   seat: <handle>
   opened_at: "<HH:MM>"
-  sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, mail, calendar]
+  sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, mail, calendar, crm]
   sources_missing: []
 ---
 
@@ -109,14 +114,16 @@ the user.
 
 ## With no account
 
-This skill runs in full with no Celorus account: the queues, the mailbox and the calendar
-are all on the desk's side. Connecting adds nothing today; when server-pushed signals
-land they arrive in `signals/inbox/` and appear under "Moved overnight".
+This skill runs in full with no Celorus account: the queues, the mailbox, the calendar and
+the CRM are all on the desk's side, each read through the harness's own connector.
+Connecting adds nothing today; when server-pushed signals land they arrive in
+`signals/inbox/` and appear under "Moved overnight".
 
 ## Never
 
-- Never copy a mail body or a calendar description into the workspace; write marks
-  (replied, met, due), not content.
+- Never read a source for a name that is not on the desk: the scope is the queued,
+  named and booked accounts, never the whole mailbox.
+- Never upload what you read. It stays on the desk and never reaches Celorus.
 - Never read mail from anyone not named in the queues or the last board.
 - Never invent a reply, a meeting or a signal to fill an empty block.
 - Never send anything.

@@ -52,6 +52,8 @@ The short form `· <register> · <date>` below stands for `record` and `yours` l
 
 - <qualification, institution, year> · <register> · <date>
 
+As of the day researched.
+
 ## What just happened
 
 - <up to three dated events by salience, each with its liquidity direction> · <register> · <date>
@@ -70,7 +72,7 @@ The short form `· <register> · <date>` below stands for `record` and `yours` l
 
 ## The door
 
-- Not computed: the route needs the people plane.
+- Not computed. The route needs the people plane and your book.
 
 ## Watch out
 
@@ -91,7 +93,8 @@ Every claim traceable on request.
   tool returned.
 - **The tier is shown** for anything below `demonstrated`: `stated`, `reported`,
   `affiliated` on the line. Nothing rests on an `inferred_weak` fact alone. A modelled
-  band says so.
+  band says so. A `record` line carries `record` or `registered`; those two tiers are
+  the record register's own and never appear on a `web` line.
 - **Coordinates.** Social and web in full and linked; work and personal contact
   coordinates masked exactly as the tool renders them and never unmasked here; a reveal
   is an audited event through the connected tools. The desk's own contact rails stay in
@@ -113,7 +116,7 @@ Every claim traceable on request.
 
 ## An account page
 
-Same frame, with the company's sections: what the record holds (the filings and years,
+Same frame, with the company's sections: what the record holds (the documents and years,
 as counts) · record · <date of the check>, the web ladder's findings (events, funding,
 leadership, disputes), the people
 behind it linked to their pages, the KFI-style layout the record skills use where the

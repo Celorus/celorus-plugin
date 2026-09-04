@@ -87,12 +87,32 @@ fetched.
 
 If the `celorus-data` tools are not in this session's tool list, do not attempt the
 report or the answer, and never fill it from memory or the web; a web answer is
-`research-lead`'s job and it carries the web register's label. Say the connect line
-once, in the wording of the lane you are on, and offer `research-lead` for the company:
+`research-lead`'s job and it carries the web register's label.
 
-- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
-- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
-- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+Say what the record can answer for this company, never what it says. No count, no
+figure, no URL, on any lane. Pick the case the check found, then close with the
+lane's own sentence. This skill runs no check of its own. Unless `research-lead` has
+already checked this name in this session, the case is "The record was not asked".
 
-When the counts are not known, say "The record was not asked." and the lane's second
-sentence. Nothing more on any lane.
+| The case | The value sentence |
+|---|---|
+| Depth on record, no mandate known | Celorus can answer, from regulatory sources, how this company has been doing, what it owes and to whom, who owns it and who runs it. |
+| The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
+| The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
+| Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
+| The record was not asked | The record was not asked. Then the lane's close. |
+
+The close, after the value sentence:
+
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
+  step is `/mcp`, then sign in.
+- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
+  connection.
+- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
+  Nothing more: no link, no price, no verb that promotes.
+
+When the name resolves and the company is not on the record yet, the whole line is:
+
+- **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
+- **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.

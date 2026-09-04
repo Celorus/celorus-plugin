@@ -32,14 +32,14 @@ with the `cite_url` permalink as a footnote.
 > that row's `warning_messages` (index-aligned with the row's sorted
 > `warnings`) — **never the raw `warnings` code**. A raw code is internal
 > machinery, and a bare token printed beside a named company's figure reads to
-> that company as a fault in its own filing even when it is not one. Most
+> that company as a fault in its own record even when it is not one. Most
 > caveats are per-row, so gather them from the rows and render each distinct
 > one once.
 >
 > **If the state is `constrained_proceed` but no row carries a caveat, the
 > qualification is somewhere else — find it, never print an empty caveat
-> line.** This happens when the qualification is about the FILING rather than a
-> figure: part of a document was not ingested, a filing's ingest never
+> line.** This happens when the qualification is about the RECORD rather than a
+> figure: part of a document was not ingested, a document's ingest never
 > finished, or a section was withheld. Read the envelope's own `message` and
 > its `diagnostics[]` entries (each carries a plain-language `message`) and say
 > plainly what is missing. "Some of this company's filed material is not
@@ -66,7 +66,7 @@ catalog. Render "not available" only for structurally-expected headline lines
 ### 0. Header & scope
 
 Identity, FY, form/format, SRN, `cite_url`; note standalone/consolidated scope.
-*(from `list_available_subdomains.filings`)*
+*(from `list_available_subdomains.data.filings`)*
 
 ### 1. Financial snapshot
 
@@ -109,7 +109,7 @@ anchors.
 
 Operating / investing / financing + net, from the `content_markdown` of the
 cash-flow section, with provenance. Render **"not available"** only when the
-filing carries no cash-flow section.
+document carries no cash-flow section.
 
 | Activity | Amount | Provenance |
 | --- | --- | --- |
@@ -201,7 +201,7 @@ tag.
 
 ### 9. Results walk-through
 
-YoY movements + balance-sheet structure — **arithmetic and filing facts only**,
+YoY movements + balance-sheet structure — **arithmetic and recorded facts only**,
 no inferred intent. Each statement traces to a figure or section already cited
 above.
 
@@ -210,4 +210,4 @@ above.
 ### 10. Sources
 
 List each distinct `cite_url` permalink seen, with its SRN — so every figure
-traces back to its source filing (never a raw `s3://` path).
+traces back to its source document (never a raw `s3://` path).

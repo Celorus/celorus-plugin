@@ -96,7 +96,7 @@ company) say so plainly; do not offer a picker or invent a report.
 ### 4. Paved road: customize, then hand off
 
 Present the chosen report's options from `get_input_request`. Each section carries a
-status: a section that is **not on record** for this filing is shown greyed as a
+status: a section that is **not on record** for this document is shown greyed as a
 disclosed omission, never hidden, never guessed. If the user wants to tailor it (a
 specific year, a subset of sections, a particular format) and more than one choice is
 open, surface the server-rendered picker (or its selection code) exactly as the report
@@ -136,13 +136,29 @@ a missing file is honest, a hand-built one is not.
 
 ## When no account is connected
 
-The day runs; the record does not. Say so once, in the wording of the lane you are on,
-and route the ask about a company to `research-lead`, which answers from the web register
-and asks the record only whether it holds anything:
+Say what the record can answer for this company, never what it says. No count, no
+figure, no URL, on any lane. Pick the case the check found, then close with the
+lane's own sentence.
 
-- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
-- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
-- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+| The case | The value sentence |
+|---|---|
+| Depth on record, no mandate known | Celorus can answer, from regulatory sources, how this company has been doing, what it owes and to whom, who owns it and who runs it. |
+| The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
+| The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
+| Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
+| The record was not asked | The record was not asked. Then the lane's close. |
 
-When the counts are not known (no check ran), say "The record was not asked." and the
-lane's second sentence. Nothing more on any lane.
+The close, after the value sentence:
+
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
+  step is `/mcp`, then sign in.
+- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
+  connection.
+- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
+  Nothing more: no link, no price, no verb that promotes.
+
+When the name resolves and the company is not on the record yet, the whole line is:
+
+- **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
+- **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.

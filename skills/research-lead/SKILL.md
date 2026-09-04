@@ -79,9 +79,9 @@ frontmatter `citations` list and opens only when the desk asks where a fact came
 Bands only; masked coordinates exactly as rendered; the tier shown on anything the record
 did not file.
 
-**3c, with no account:** say the counts line from the check, if there was one, in this
-lane's wording (below), and nothing else from the record. Y is the number of entries in
-the check's list of years, never the list itself.
+**3c, with no account:** pick the case the check found and say its value sentence in this
+lane's wording (below), and nothing else from the record. Never a count, never a year,
+never the list itself.
 
 ## Step 4: write the page
 
@@ -108,16 +108,36 @@ Then:
 
 ## When no account is connected
 
-Say the counts line once, after the web register, in the wording of the lane you are
-running on, and nothing more:
+Say what the record can answer for this company, never what it says. No count, no
+figure, no URL, on any lane. Pick the case the check found, then close with the
+lane's own sentence.
 
-- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
-- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
-- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+| The case | The value sentence |
+|---|---|
+| Depth on record, no mandate known | Celorus can answer, from regulatory sources, how this company has been doing, what it owes and to whom, who owns it and who runs it. |
+| The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
+| The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
+| Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
+| The record was not asked | The record was not asked. Then the lane's close. |
 
-For a person the first sentence reads "The record holds N filings naming this person."
-When no check ran, the line reads "The record was not asked." When the check found nothing,
-it reads "This name is not on the record."
+The close, after the value sentence:
+
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
+  step is `/mcp`, then sign in.
+- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
+  connection.
+- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
+  Nothing more: no link, no price, no verb that promotes.
+
+When the name resolves and the company is not on the record yet, the whole line is:
+
+- **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
+- **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.
+
+For a person, say the "Only the identity and the board are on record" case's sentence
+(above) when the record holds a board seat for them, and otherwise "The record was not
+asked". Never compose a new promise about a person.
 
 ## While you work
 
@@ -129,7 +149,7 @@ Never name a tool, a stream or a path to the user.
 
 The web register and the check run in full; the page is written with `web` and `yours`
 lines and a full "Not established" section. Connecting adds the `record` register: the
-figures, the filings, the people behind a company, each verbatim and cited.
+figures, the documents, the people behind a company, each verbatim and cited.
 
 ## Never
 

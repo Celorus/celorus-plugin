@@ -191,7 +191,7 @@ tiles/callouts/rows; the `@page` footer keeps page number + provenance.
 
 ## Data honesty contract (any artifact carrying figures)
 
-Figures cite their source (for MCA data: `SRN · section · page`). Derived values are visibly
+Figures cite their source (for record data: `SRN · section · page`). Derived values are visibly
 marked "computed". Missing data renders as a designed "— not available" state — never a guess
 and never 0 (a real 0 is the number). Filed values render exactly as filed with a scale note
 ("figures as filed, INR Lakh"). Indian conventions (full table in `references/LOCALIZATION.md`):

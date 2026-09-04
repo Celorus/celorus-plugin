@@ -134,7 +134,11 @@ is the desk's own material.
 ## Never
 
 - Never quote from a call that was not recorded; never guess at pace or attribution.
-- Never apply the CRM proposal, never write to a CRM, never send anything.
+- **Sending, in three classes.** A draft, with the collateral attached, is free and ships:
+  write it and hand it over. A write to your own calendar or CRM, on your explicit yes, is free;
+  the calendar hold already ships, and a CRM write waits on the connector, so it stays
+  a proposal until then. A send to a third party is out until an approval rail exists:
+  this skill never sends one.
 - Never drop a signal the person named: it goes to the register even when it sounds
   unbuildable.
 - Never let a commitment through without a date.

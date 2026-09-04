@@ -83,10 +83,10 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
 
 - `resolve_subject`'s `data` is a **dict** (`subject_id`, `canonical_name`, plus
   `candidates[]` on `clarify`).
-- `list_available_subdomains`'s `data` carries `filings[]` (each `srn`,
-  `form_code`, `fy`, `format`, `doc_id`, `cite_url`) and `subdomains[]` (which
-  report areas have data and their `available_years`). This is how you answer
-  "which years / what was filed" and whether the company is covered.
+- `list_available_subdomains`'s response carries `data.filings[]` (each `srn`,
+  `form_code`, `fy`, `format`, `doc_id`, `cite_url`) and `data.subdomains[]`
+  (which report areas have data and their `available_years`). This is how you
+  answer "which years / what was filed" and whether the company is covered.
 - `get_subdomain_data`'s `data` is a **list of subdomains**, each
   `{ subdomain_id, display_name, semantic_description, available_years,
   signals[], sections[], events[], relationships[] }`. A **signal** carries
@@ -216,7 +216,7 @@ The API is **read-only** — nothing you do can change the data.
    `data.sections[]`) — sparing you the eyeball over every `subdomains[]` description
    and keeping the next fetch small. `proceed` with a **non-empty** `sections` → fetch
    only those `subdomain_id`s in step 3. `proceed` with an **empty** `sections`, OR
-   `stop` (the selector is unavailable — this is **not** a filing miss) → you **must**
+   `stop` (the selector is unavailable — this is **not** a miss on the record) → you **must**
    fall back to the full `list_available_subdomains` set; never let the narrowing step
    thin the answer. Selection never decides what *exists* — only where to look first.
 3. **Fetch — signals-first for a figure question.** For a figure / filed-fact
@@ -258,11 +258,11 @@ Don't assume a fixed catalog. Call `list_available_subdomains(subject_id)` to se
 which report areas have data — each with a `semantic_description` (what it covers)
 and its `available_years` — then request those `subdomain_ids` from
 `get_subdomain_data`. For a figure, fetch the relevant subdomain and read the signal
-whose `fact_key_labels` name matches the question; a figure the filing doesn't carry simply
+whose `fact_key_labels` name matches the question; a figure the record doesn't carry simply
 isn't in the response → answer "not available" for it. Never invent a key or assume
 a figure exists.
 
-Narrative answers come from the section's `content_markdown` (PDF filings only).
+Narrative answers come from the section's `content_markdown` (PDF documents only).
 Summarise or quote it faithfully — condense, do not editorialise, and do not add
 anything the markdown does not say.
 
@@ -292,11 +292,11 @@ Cite every figure and every summarised claim compactly from its own row's
 literal `section_kind`, and the page range — never a relabelled or invented
 version. Use an inline tag or a footnote:
 
-- PDF filing with pages: `[SRN T80153117 · aoc4.auditor_report · p.18–25]`
-- Pageless filing — XBRL or XFA eForm (no pages — this is honest, not missing):
+- A document on record, with pages: `[SRN T80153117 · aoc4.auditor_report · p.18–25]`
+- A pageless document on record — XBRL or XFA eForm (no pages — this is honest, not missing):
   `[SRN T78191814 · aoc4.balance_sheet · no page range]`
 - Always make the `cite_url` permalink available (e.g. as a footnote link) so a
-  reader can open the source filing — never print a raw `s3://` path.
+  reader can open the source document — never print a raw `s3://` path.
 
 When `page_start` / `page_end` are `null`, render "no page range" — never
 fabricate a page number. When you summarise several sections, **each distinct
@@ -313,7 +313,7 @@ Every row that carries `warnings[]` carries `warning_messages[]` beside it: the
 same caveats, written as plain-language sentences, index-aligned with the row's
 sorted `warnings[]`. **Render the sentence. Never print the raw code.** A code is
 internal machinery, and a bare token printed beside a named company's figure
-reads to that company as a fault in its own filing even when it is not one.
+reads to that company as a fault in its own record even when it is not one.
 Never re-word a sentence the response DID
    supply — that wording is what the product stands behind. When NO sentence is
    supplied, put the caveat in your own plain words; the raw code is the last
@@ -331,7 +331,7 @@ data does not contain the answer, **say so and stop** — do not reach for gener
 knowledge to fill the gap. Honest refusals look like:
 
 - "That figure is not available in the records on file for {company}."
-- "The store holds no narrative for this record (it is an XBRL filing, which
+- "The store holds no narrative for this record (it is an XBRL document, which
   carries no prose), so I can't answer that from the data."
 - "I can't answer that — it would need {data the store doesn't have, e.g. a
   market valuation / a competitor comparison / a forward projection}, which is
@@ -361,12 +361,32 @@ Keep answers tight and in this order:
 
 If the `celorus-data` tools are not in this session's tool list, do not attempt the
 report or the answer, and never fill it from memory or the web; a web answer is
-`research-lead`'s job and it carries the web register's label. Say the connect line
-once, in the wording of the lane you are on, and offer `research-lead` for the company:
+`research-lead`'s job and it carries the web register's label.
 
-- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
-- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
-- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+Say what the record can answer for this company, never what it says. No count, no
+figure, no URL, on any lane. Pick the case the check found, then close with the
+lane's own sentence. This skill runs no check of its own. Unless `research-lead` has
+already checked this name in this session, the case is "The record was not asked".
 
-When the counts are not known, say "The record was not asked." and the lane's second
-sentence. Nothing more on any lane.
+| The case | The value sentence |
+|---|---|
+| Depth on record, no mandate known | Celorus can answer, from regulatory sources, how this company has been doing, what it owes and to whom, who owns it and who runs it. |
+| The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
+| The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
+| Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
+| The record was not asked | The record was not asked. Then the lane's close. |
+
+The close, after the value sentence:
+
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
+  step is `/mcp`, then sign in.
+- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
+  connection.
+- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
+  Nothing more: no link, no price, no verb that promotes.
+
+When the name resolves and the company is not on the record yet, the whole line is:
+
+- **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
+- **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.

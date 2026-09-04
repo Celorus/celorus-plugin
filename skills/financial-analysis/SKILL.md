@@ -95,9 +95,9 @@ company's multi-year financial narrative — take the shorter path in step 2.
 The field **absent**, or `rung: 2`, means "not offered": take the classic
 path. Absence is never an error, and a class you don't recognize is ignored.
 
-`list_available_subdomains`'s `data` carries `filings[]` (each filing's `srn`,
-`form_code`, `fy`, `format`, `doc_id`, `cite_url`) and `subdomains[]` (which
-report areas have data and their `available_years`).
+`list_available_subdomains`'s response carries `data.filings[]` (each `srn`,
+`form_code`, `fy`, `format`, `doc_id`, `cite_url`) and `data.subdomains[]`
+(which report areas have data and their `available_years`).
 
 `get_subdomain_data`'s `data` is a **list of subdomains**, each:
 `{ subdomain_id, display_name, semantic_description, available_years, signals[],
@@ -392,7 +392,7 @@ time — do not assume a fixed catalog.
   as plain-language sentences, index-aligned with the row's sorted `warnings[]`.
   **Render the sentence. Never print the raw code.** A code is internal
   machinery, and a bare token printed beside a named company's figure reads to
-  that company as a fault in its own filing even when it is not one. Never re-word a sentence the response DID
+  that company as a fault in its own record even when it is not one. Never re-word a sentence the response DID
   supply — that wording is what the product stands behind. When NO sentence is
   supplied, put the caveat in your own plain words; the raw code is the last
   resort, not the second one.
@@ -411,7 +411,7 @@ time — do not assume a fixed catalog.
   editorialise) with the section's provenance. Signals are the precise, citable
   headline figures layered on top.
 - **Empty is honest, not a gap:** empty auditor / notes / cash-flow / narrative
-  sections are **honest** for XBRL or eForm-only filings whose attachments aren't
+  sections are **honest** for XBRL or eForm-only documents whose attachments aren't
   ingested yet — render "not available" calmly; do not flag it as a data gap or
   strain to synthesize prose that isn't there.
 - **Absent ≠ zero, and a filed boolean/enum/text answer ≠ "not available"** —
@@ -463,11 +463,11 @@ is whatever the response carries (e.g. `aoc4.balance_sheet`,
 `aoc4.profit_and_loss`, `aoc4.auditor_report_findings`); use that exact string.
 Use a footnote or an inline tag:
 
-- PDF filing with pages: `[SRN T80153117 · aoc4.auditor_report_findings · p.18–25]`
-- Pageless filing — XBRL or XFA eForm (no pages — this is honest, not missing):
+- A document on record, with pages: `[SRN T80153117 · aoc4.auditor_report_findings · p.18–25]`
+- A pageless document on record — XBRL or XFA eForm (no pages — this is honest, not missing):
   `[SRN T78191814 · aoc4.balance_sheet · no page range]`
 - Always make the `cite_url` permalink available (e.g. as a footnote link) so a
-  reader can open the source filing — never print a raw `s3://` path.
+  reader can open the source document — never print a raw `s3://` path.
 
 When `page_start` / `page_end` are `null`, render "no page range" — never
 fabricate a page number. When `srn` is `null` (figures anchored under a catch-all
@@ -479,7 +479,7 @@ merge several rows under one citation.
 ## Rendering "not available"
 
 Write the literal phrase **"not available"** in the cell/line. Where useful, add
-the honest reason in parentheses, e.g. "not available (XBRL filing carries no
+the honest reason in parentheses, e.g. "not available (XBRL document carries no
 narrative prose)" or "not available (no cash-flow figures in the store)". Never
 leave a number-shaped blank that a reader could mistake for zero.
 
@@ -487,12 +487,32 @@ leave a number-shaped blank that a reader could mistake for zero.
 
 If the `celorus-data` tools are not in this session's tool list, do not attempt the
 report or the answer, and never fill it from memory or the web; a web answer is
-`research-lead`'s job and it carries the web register's label. Say the connect line
-once, in the wording of the lane you are on, and offer `research-lead` for the company:
+`research-lead`'s job and it carries the web register's label.
 
-- **Claude Code, Cowork, Claude Desktop:** The record holds N filings across Y years for this company. Connect Celorus (run `/mcp` and sign in) to read them.
-- **Kimi Code:** The record holds N filings across Y years for this company. Connect Celorus (sign in through the celorus-data connection) to read them.
-- **Codex, ChatGPT:** The record holds N filings across Y years for this company. Reading them needs a Celorus account connected to this plugin.
+Say what the record can answer for this company, never what it says. No count, no
+figure, no URL, on any lane. Pick the case the check found, then close with the
+lane's own sentence. This skill runs no check of its own. Unless `research-lead` has
+already checked this name in this session, the case is "The record was not asked".
 
-When the counts are not known, say "The record was not asked." and the lane's second
-sentence. Nothing more on any lane.
+| The case | The value sentence |
+|---|---|
+| Depth on record, no mandate known | Celorus can answer, from regulatory sources, how this company has been doing, what it owes and to whom, who owns it and who runs it. |
+| The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
+| The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
+| Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
+| The record was not asked | The record was not asked. Then the lane's close. |
+
+The close, after the value sentence:
+
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
+  step is `/mcp`, then sign in.
+- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
+  connection.
+- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
+  Nothing more: no link, no price, no verb that promotes.
+
+When the name resolves and the company is not on the record yet, the whole line is:
+
+- **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
+- **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.

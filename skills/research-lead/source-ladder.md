@@ -9,7 +9,7 @@ it is below `demonstrated`.
 
 | Rung | Source | Yields | Tier | Trust |
 |---|---|---|---|---|
-| 1 | Exchange announcements (the BSE and NSE corporate-announcement pages), listed companies only | dated events: results, board changes, allotments, buybacks | `filed` on the exchange; still `web` on the page | strongest; the company's own filing to the exchange |
+| 1 | Exchange announcements (the BSE and NSE corporate-announcement pages), listed companies only | dated events: results, board changes, allotments, buybacks | `record` on the exchange; still `web` on the page | strongest; the company's own announcement to the exchange |
 | 2 | Credit-rating rationales (CRISIL, ICRA, CARE, India Ratings), rated companies | real figures, dated, with the analyst's reading; ownership and group facts | `reported` | the best free source of figures; still not the record |
 | 3 | The registrar's master-data lookup (company status, incorporation, directors' names) | identity, status, the board's names | `registered` | reliable identity; sign-in requirements change, so say when the lookup could not be reached |
 | 4 | Tax and enterprise registrations (GST and Udyam lookups) | existence, state, registration date | `registered` | existence only; never a figure |
