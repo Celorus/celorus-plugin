@@ -55,11 +55,14 @@ summarised here overrides them. The three, in brief:
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation);
-   for a missing year, present the available years and ask which one.
-   A `clarify` carrying `available_streams` and NO `candidates` /
-   `available_years` is the one you answer yourself: the tool measured only the
+   for a missing year with no stream pointer, present the available years and
+   ask which one.
+   A `clarify` carrying `available_streams` is the part you answer yourself,
+   whether or not `available_years` rides with it: the tool measured only the
    streams you named, another stream holds the data, and the re-ask is a different
-   call — make it before you ask the user anything.
+   call — make it for the SAME year you asked for, and say the answer came from the
+   stream you switched to; ask the user only if that re-ask comes back empty too.
+   `available_years` and `candidates` stay the user's to choose.
 
 If `get_semantic_metadata` is unavailable, the three summaries above are your
 floor — apply them; never relax the honesty contract because the definitions

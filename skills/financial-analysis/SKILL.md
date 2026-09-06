@@ -45,11 +45,14 @@ summarised here overrides them. The three, in brief:
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation);
-   for a missing year, present the available years and ask which one.
-   A `clarify` carrying `available_streams` and NO `candidates` /
-   `available_years` is the one you answer yourself: the tool measured only the
+   for a missing year with no stream pointer, present the available years and
+   ask which one.
+   A `clarify` carrying `available_streams` is the part you answer yourself,
+   whether or not `available_years` rides with it: the tool measured only the
    streams you named, another stream holds the data, and the re-ask is a different
-   call — make it before you ask the user anything.
+   call — make it for the SAME year you asked for, and say the answer came from the
+   stream you switched to; ask the user only if that re-ask comes back empty too.
+   `available_years` and `candidates` stay the user's to choose.
 
    - One candidate → *"I found **Acme Manufacturing Private Limited** — did you mean that company? (yes / no)"* Proceed only on **yes**.
    - Two or more → *"Which did you mean? (1) Acme Steel Ltd  (2) Acme Steel Pvt Ltd"*
@@ -241,8 +244,10 @@ time — do not assume a fixed catalog.
    (the absolute amount); `boolean` → Yes/No from `value`; `enum`/`text` →
    `value` verbatim (per the absent-vs-present rule). `clarify` (the
    requested year is absent) → present `available_years[]` and ask which year
-   (rule 3); a `clarify` carrying only `available_streams` is the stream-pointer
-   shape — re-ask the stream it names instead of asking the user. `constrained_proceed` → render the figures AND surface the per-row
+   (rule 3); a `clarify` carrying `available_streams` is the stream-pointer shape —
+   re-ask the stream it names, for the same year, instead of asking the user, whether
+   or not `available_years` rides with it; say the answer came from the stream you
+   switched to, and ask the user only if that re-ask comes back empty too. `constrained_proceed` → render the figures AND surface the per-row
    caveats beside the affected lines, worded from `warning_messages` (*Wording a
    caveat* below) — do not hide them and do not drop the
    figure. `fallback` → every figure line is "not available".

@@ -47,11 +47,13 @@ kind="honesty_rules")`**; it returns the rules as data (`data.semantic[]`), each
 1. **Missing data is "not available", never an estimate, never general knowledge.**
 2. **Every figure carries its provenance**, read off the tool response.
 3. **`clarify` is a question to the user, never a guess.** If a tool returns `clarify`,
-   stop and ask, offering at least two choices; for a missing year, present the available
-   years and ask which one. A `clarify` carrying `available_streams` and NO `candidates` /
-   `available_years` is the one you answer yourself: the tool measured only the
-   streams you named, another stream holds the data, and the re-ask is a different
-   call — make it before you ask the user anything.
+   stop and ask, offering at least two choices; for a missing year with no stream
+   pointer, present the available years and ask which one. A `clarify` carrying `available_streams` is the part you
+   answer yourself, whether or not `available_years` rides with it: the tool measured
+   only the streams you named, another stream holds the data, and the re-ask is a
+   different call — make it for the SAME year you asked for, and say the answer came
+   from the stream you switched to; ask the user only if that re-ask comes back empty
+   too. `available_years` and `candidates` stay the user's to choose.
 
 If `get_semantic_metadata` is unavailable, the three summaries above are your floor;
 never relax the honesty contract because the definitions could not be fetched.

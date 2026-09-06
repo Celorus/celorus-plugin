@@ -46,10 +46,12 @@ summarised here overrides them. In brief:
    cites its formula + model version and is labelled **"derived, not
    filed"**, never presented as though it were itself a filed number.
 3. **`clarify` is a question to the user — never a guess.** Offer at least two
-   choices; never pick for them. A `clarify` carrying `available_streams` and NO `candidates` /
-   `available_years` is the one you answer yourself: the tool measured only the
-   streams you named, another stream holds the data, and the re-ask is a different
-   call — make it before you ask the user anything.
+   choices; never pick for them. A `clarify` carrying `available_streams` is the part you
+   answer yourself, whether or not `available_years` rides with it: the tool measured
+   only the streams you named, another stream holds the data, and the re-ask is a
+   different call — make it for the SAME year you asked for, and say the answer came
+   from the stream you switched to; ask the user only if that re-ask comes back empty
+   too. `available_years` and `candidates` stay the user's to choose.
 4. **Filed values are reported exactly as filed — reconciliation mismatches
    are a warning, never a silent correction.** Share allotment documents are
    primary issuance only (never infer a seller); a debenture is never counted
