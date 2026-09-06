@@ -181,6 +181,10 @@ a stream this field does not enumerate, or serve nothing at all — and a
 `streams=["signals"]` call for it comes back empty. When one does come back empty, the envelope's
 `available_streams` names the stream that holds the year; re-ask with it before
 reporting "not available".
+An area whose entry carries `signals_widened_only: true` has BORROWED figures — each
+was filed in another area and reached this one through its anchor, so it is relevant
+here but not native: say so in one clause when you quote them. It describes that area's
+figures only, not any narrative it also serves.
 Request those `subdomain_ids` from `get_subdomain_data`; render
 "not available" for any area a company lacks. Read the coverage from the tool each
 time — do not assume a fixed catalog.

@@ -182,6 +182,10 @@ a stream this field does not enumerate, or serve nothing at all — and a
 `streams=["signals"]` call for it comes back empty. When one does come back empty, the envelope's
 `available_streams` names the stream that holds the year; re-ask with it before
 reporting "not available".
+An area whose entry carries `signals_widened_only: true` has BORROWED figures — each
+was filed in another area and reached this one through its anchor, so it is relevant
+here but not native: say so in one clause when you quote them. It describes that area's
+figures only, not any narrative it also serves.
 
 **Narrow a pointed sub-question — `select_relevant_sections(subject_id, query_text)`.**
 For a sub-question that targets one area rather than a broad sweep, pass its text
