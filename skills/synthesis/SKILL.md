@@ -56,6 +56,10 @@ summarised here overrides them. The three, in brief:
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation);
    for a missing year, present the available years and ask which one.
+   A `clarify` carrying `available_streams` and NO `candidates` /
+   `available_years` is the one you answer yourself: the tool measured only the
+   streams you named, another stream holds the data, and the re-ask is a different
+   call — make it before you ask the user anything.
 
 If `get_semantic_metadata` is unavailable, the three summaries above are your
 floor — apply them; never relax the honesty contract because the definitions
@@ -99,7 +103,7 @@ The `celorus-data` server exposes three tools for retrieval:
 
 - `get_subdomain_data`'s `data` is a **list of subdomains**, each
   `{ subdomain_id, display_name, semantic_description, available_years,
-  signals[], sections[], events[], relationships[] }`. A **signal** carries
+  years_by_stream, signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, fy, value, normalized_value, value_type, unit,
   is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`;
   a **section** carries
@@ -170,6 +174,14 @@ The API is **read-only** — nothing you do can change the data.
 Discover the available `subdomain_ids` at runtime via `list_available_subdomains`
 (each carries a `semantic_description` and `available_years`); request those from
 `get_subdomain_data` and render any figure not in the response as "not available".
+
+`years_by_stream` splits `available_years` into `{signals, sections}`: read
+`years_by_stream.signals` before asking for FIGURES at a year — a year on the union
+but not on that list will not serve FIGURES: it may hold narrative, be carried by
+a stream this field does not enumerate, or serve nothing at all — and a
+`streams=["signals"]` call for it comes back empty. When one does come back empty, the envelope's
+`available_streams` names the stream that holds the year; re-ask with it before
+reporting "not available".
 
 **Narrow a pointed sub-question — `select_relevant_sections(subject_id, query_text)`.**
 For a sub-question that targets one area rather than a broad sweep, pass its text

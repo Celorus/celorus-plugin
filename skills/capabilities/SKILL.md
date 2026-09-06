@@ -48,7 +48,10 @@ kind="honesty_rules")`**; it returns the rules as data (`data.semantic[]`), each
 2. **Every figure carries its provenance**, read off the tool response.
 3. **`clarify` is a question to the user, never a guess.** If a tool returns `clarify`,
    stop and ask, offering at least two choices; for a missing year, present the available
-   years and ask which one.
+   years and ask which one. A `clarify` carrying `available_streams` and NO `candidates` /
+   `available_years` is the one you answer yourself: the tool measured only the
+   streams you named, another stream holds the data, and the re-ask is a different
+   call — make it before you ask the user anything.
 
 If `get_semantic_metadata` is unavailable, the three summaries above are your floor;
 never relax the honesty contract because the definitions could not be fetched.

@@ -54,6 +54,10 @@ summarised here overrides them. The three, in brief:
 3. **`clarify` is a question to the user — never a guess.** If a tool returns
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation).
+   A `clarify` carrying `available_streams` and NO `candidates` /
+   `available_years` is the one you answer yourself: the tool measured only the
+   streams you named, another stream holds the data, and the re-ask is a different
+   call — make it before you ask the user anything.
 
    - One candidate → *"I found **Acme Manufacturing Private Limited** — did you mean that company? (yes / no)"* Proceed only on **yes**.
    - Two or more → *"I found a few matches — which did you mean? (1) Acme Steel Ltd  (2) Acme Steel Pvt Ltd"*
@@ -89,7 +93,7 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
   answer "which years / what was filed" and whether the company is covered.
 - `get_subdomain_data`'s `data` is a **list of subdomains**, each
   `{ subdomain_id, display_name, semantic_description, available_years,
-  signals[], sections[], events[], relationships[] }`. A **signal** carries
+  years_by_stream, signals[], sections[], events[], relationships[] }`. A **signal** carries
   `{ fact_key, fy, value, normalized_value, value_type, unit,
   is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`;
   a **section** carries
@@ -257,7 +261,16 @@ latest available (read `list_available_subdomains` to choose).
 Don't assume a fixed catalog. Call `list_available_subdomains(subject_id)` to see
 which report areas have data — each with a `semantic_description` (what it covers)
 and its `available_years` — then request those `subdomain_ids` from
-`get_subdomain_data`. For a figure, fetch the relevant subdomain and read the signal
+`get_subdomain_data`.
+
+`years_by_stream` splits `available_years` into `{signals, sections}`: read
+`years_by_stream.signals` before asking for FIGURES at a year — a year on the union
+but not on that list will not serve FIGURES: it may hold narrative, be carried by
+a stream this field does not enumerate, or serve nothing at all — and a
+`streams=["signals"]` call for it comes back empty. When one does come back empty, the envelope's
+`available_streams` names the stream that holds the year; re-ask with it before
+reporting "not available".
+For a figure, fetch the relevant subdomain and read the signal
 whose `fact_key_labels` name matches the question; a figure the record doesn't carry simply
 isn't in the response → answer "not available" for it. Never invent a key or assume
 a figure exists.

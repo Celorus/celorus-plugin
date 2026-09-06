@@ -46,6 +46,10 @@ summarised here overrides them. The three, in brief:
    `clarify`, stop and ask; never pick for the user. Any question you put to them
    must offer at least two choices (a single fuzzy match → a yes/no confirmation);
    for a missing year, present the available years and ask which one.
+   A `clarify` carrying `available_streams` and NO `candidates` /
+   `available_years` is the one you answer yourself: the tool measured only the
+   streams you named, another stream holds the data, and the re-ask is a different
+   call — make it before you ask the user anything.
 
    - One candidate → *"I found **Acme Manufacturing Private Limited** — did you mean that company? (yes / no)"* Proceed only on **yes**.
    - Two or more → *"Which did you mean? (1) Acme Steel Ltd  (2) Acme Steel Pvt Ltd"*
@@ -100,8 +104,8 @@ path. Absence is never an error, and a class you don't recognize is ignored.
 (which report areas have data and their `available_years`).
 
 `get_subdomain_data`'s `data` is a **list of subdomains**, each:
-`{ subdomain_id, display_name, semantic_description, available_years, signals[],
-sections[], events[], relationships[] }`. A **signal** carries
+`{ subdomain_id, display_name, semantic_description, available_years,
+years_by_stream, signals[], sections[], events[], relationships[] }`. A **signal** carries
 `{ fact_key, fy, value, normalized_value, value_type, unit,
 is_canonical, low_confidence, warnings[], warning_messages[], provenance_ref }`.
 `warning_messages[]` is the plain-language sentence for each code, index-aligned
@@ -170,7 +174,14 @@ The API is **read-only** — nothing you do can change the data.
 
 `list_available_subdomains(subject_id)` returns the report areas that have data for
 this company — each with a `semantic_description` (what it covers) and its
-`available_years`. Request those `subdomain_ids` from `get_subdomain_data`; render
+`available_years`. `years_by_stream` splits `available_years` into `{signals, sections}`: read
+`years_by_stream.signals` before asking for FIGURES at a year — a year on the union
+but not on that list will not serve FIGURES: it may hold narrative, be carried by
+a stream this field does not enumerate, or serve nothing at all — and a
+`streams=["signals"]` call for it comes back empty. When one does come back empty, the envelope's
+`available_streams` names the stream that holds the year; re-ask with it before
+reporting "not available".
+Request those `subdomain_ids` from `get_subdomain_data`; render
 "not available" for any area a company lacks. Read the coverage from the tool each
 time — do not assume a fixed catalog.
 
@@ -226,7 +237,8 @@ time — do not assume a fixed catalog.
    (the absolute amount); `boolean` → Yes/No from `value`; `enum`/`text` →
    `value` verbatim (per the absent-vs-present rule). `clarify` (the
    requested year is absent) → present `available_years[]` and ask which year
-   (rule 3). `constrained_proceed` → render the figures AND surface the per-row
+   (rule 3); a `clarify` carrying only `available_streams` is the stream-pointer
+   shape — re-ask the stream it names instead of asking the user. `constrained_proceed` → render the figures AND surface the per-row
    caveats beside the affected lines, worded from `warning_messages` (*Wording a
    caveat* below) — do not hide them and do not drop the
    figure. `fallback` → every figure line is "not available".
