@@ -231,14 +231,37 @@ time — do not assume a fixed catalog.
 
 3. **Discover** — `list_available_subdomains(subject_id)`. Use `data.filings[]`
    for the header (form, FY, SRN, `doc_id`, `cite_url`) — **default to the
-   latest `fy`** unless the user named one. Use `data.subdomains[]`
-   to see which report areas have data and their `available_years`. `fallback` →
-   known company, no data → render the header and "not available" sections.
+   latest `fy`** unless the user named one. `data.subdomains[]`
+   lists every askable id; an entry whose `served_from` carries
+   `"master_data"` is served wholly or partly from the company register — its
+   identity, status and lifecycle, registered address, activity classification
+   and capital rows sit there — and those rows need the fy-less call in
+   step 4. Where that is its only plane the entry has no years at all.
+   A company whose list holds only such entries, and whose `data.filings[]`
+   is empty, is registry-only: build the header from `resolve_subject`
+   (name, CIN, registry status) and say plainly that no filed document is on
+   record for it; the sections that need filed documents are "not available"
+   for that reason; the register-served rows above render from their own
+   subdomains. Otherwise read each
+   entry's `available_years` to see which report areas have data and for
+   which years. `fallback` → known company, no data → render the header and
+   "not available" sections.
    `stop` → as rule 3 / rule 1.
 
 4. **Fetch** — `get_subdomain_data(subject_id, subdomain_ids=<the ids from
    list_available_subdomains>, fy=<chosen year>)`. One call returns every stream
-   for every subdomain. `proceed` / `constrained_proceed` → each subdomain's `signals[]`
+   for every subdomain. The register's own rows are the exception: they merge
+   only on a default read, so they need a **second call with no `fy`** — a
+   year-scoped call silently returns none of them. Make that call **for the
+   master-data-served ids only**, with `streams=["signals"]`, and leave the
+   charge index out of it: charges carry no year and already served on the
+   call above. From that second response take **only** the signal rows the
+   register itself supplied — the ones carrying an inline `provenance` whose
+   `origin` names the register, which is the content test the honesty rules
+   key on — and render them beside the filed figures, never merged into them,
+   never as a restatement of them,
+   and saying which is as at when.
+   `proceed` / `constrained_proceed` → each subdomain's `signals[]`
    and `sections[]` carry their figures and `content_markdown`; **render each
    signal by its `value_type`** — `numeric` → `normalized_value` with its `unit`
    (the absolute amount); `boolean` → Yes/No from `value`; `enum`/`text` →

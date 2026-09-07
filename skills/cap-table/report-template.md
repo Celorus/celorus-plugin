@@ -159,6 +159,26 @@ The most recent post-allotment capital structure, as of {as_of_srn}.
 price, latest post-money valuation — each with its `formula_id` or "not
 available".
 
+**Registry capital** — the company register's own authorised / subscribed /
+paid-up capital: a second record beside the filed figures above (rule 15),
+never a restatement of them, never merged, averaged or summed with them, and
+never presented as superseding them. Render this block only when the registry
+capital view is live; omit it entirely when it is not.
+
+| Figure | Amount | Captured | Provenance |
+| --- | --- | --- | --- |
+| {label from `fact_key_labels`, e.g. "Authorised capital (registry)"} | {the row's served value} | {`provenance.captured_at`, else "not dated"} | per registry master data, captured {`provenance.captured_at`} |
+
+Date each row from its **own** `provenance.captured_at`, never from a date the
+view carries as a whole. Where it is absent, write "not dated" in the Captured
+cell **and** change the whole citation clause to "per registry master data,
+capture date unknown" — never "captured null", never the word "null" in either
+cell, never an empty cell.
+
+When these are the only capital figures the door served, say so in one line:
+the register holds them and no filed cap table stands behind them — no share
+classes, allotments, holders or rounds.
+
 ### 4. As-converted / fully-diluted view
 
 Each class from §3, expressed on an as-converted basis. Render "not

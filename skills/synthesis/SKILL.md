@@ -175,8 +175,16 @@ invent one). `value_type` tells you how to render a signal (see rule 1): only
 The API is **read-only** — nothing you do can change the data.
 
 Discover the available `subdomain_ids` at runtime via `list_available_subdomains`
-(each carries a `semantic_description` and `available_years`); request those from
-`get_subdomain_data` and render any figure not in the response as "not available".
+(each entry carries a `semantic_description`, an `available_years` and a
+`served_from`); request those from `get_subdomain_data` and render any figure not
+in the response as "not available". An entry's `served_from` names the planes that
+can serve it. The register's own signals — identity, status and lifecycle,
+registered address, activity classification and capital — merge only on a call
+**without** `fy`, so pass a year and those rows drop out, while the charge index
+carries no year at all and serves on the ordinary call. An entry served
+from the register alone (`["master_data"]`) has no years to pass. A company whose
+catalogue holds only such entries, and whose `data.filings[]` is empty, is served
+from the register alone; say that, rather than that the record holds nothing.
 
 `years_by_stream` splits `available_years` into `{signals, sections}`: read
 `years_by_stream.signals` before asking for FIGURES at a year — a year on the union

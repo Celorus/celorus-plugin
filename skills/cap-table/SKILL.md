@@ -216,8 +216,11 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
   says what, in plain language). Render the whole report **and** carry that
   sentence into it, near the affected section; never drop it and never
   downgrade the report to "not available" because of it,
-- **`fallback`** (known company, but no live cap-table content — e.g. no
-  share-allotment documents ingested yet, or only stub views apply),
+- **`fallback`** (known company, but no live **filed** cap-table content —
+  e.g. no share-allotment documents ingested yet, or only stub views apply.
+  It speaks about the filed views, never about the record: the registry
+  capital view can be live underneath it, and the envelope's `message` says
+  which case this is — reproduce it),
 - **`clarify`** (resolved but you must ask — rule 3),
 - **`stop`** (no such subject — do not invent one).
 
@@ -305,6 +308,21 @@ through `provenance_ref` into that response's top-level pool.) The views:
   `status: "not_available"` with its `reason` and `available_when` — render
   "not available (reason)", never a fabricated empty table, and never build
   it yourself by summing a holder's round positions.
+- **Registry capital** (`view: "registry_capital"`) — the company register's
+  own authorised / subscribed / paid-up capital, served as the last element of
+  `data` on a `view="all"` call and selectable on its own. These are rule 15's
+  "(registry)" rows: a second record beside the filed figures, never a
+  restatement of them and never cap-table coverage — no share classes,
+  allotments, holders or rounds stand behind them. Every row carries its own
+  citation inline and its own capture date; cite them "per registry master
+  data, captured <date>"; where a row carries no capture date the whole clause
+  becomes "per registry master data, capture date unknown" — never "captured
+  null", never an empty date. Take each row's display name from
+  the envelope's `fact_key_labels` (e.g. "Authorised capital (registry)") —
+  never name one yourself. This view can be live while every filed view is
+  `not_available` and the envelope state is `fallback`. That state means no
+  *filed cap-table* content — never that the company has filed nothing, since
+  it may have filed other forms, and never that the record holds nothing.
 
 The API is **read-only** — nothing you do can change the data.
 
@@ -315,9 +333,13 @@ The API is **read-only** — nothing you do can change the data.
    **one** candidate → yes/no confirm; **two or more** → present them and ask
    which. `stop` → no such company is on record — stop.
 2. **Fetch** — `get_captable(subject_id, view="all")`. `fallback` → known
-   company, no live cap-table content — render the header and "not
-   available" for every section. `proceed` → every view's own `status` tells
-   you whether it has content; render "not available" (with its `reason`)
+   company, no filed cap-table content — render the header; then, if the
+   registry capital view is live, its rows as rule 15's "(registry)" lines
+   cited "per registry master data, captured <date>"; then "not available"
+   for every filed section, with that view's own `reason` where it carries
+   one; reproduce the
+   envelope's `message` — it says which case this is. `proceed` → every
+   view's own `status` tells you whether it has content; render "not available" (with its `reason`)
    for any view that is a stub. `constrained_proceed` → the same full report
    as `proceed`, plus the envelope's `message` reproduced in the report as a
    caveat — the data is served, and the reader has to be told what is known
