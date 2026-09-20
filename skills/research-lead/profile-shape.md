@@ -73,7 +73,7 @@ As of the day researched.
 
 ## Connections
 
-- works_at [[<firm slug>]] · shown · record · <date> · <the citation the tool returned>
+- works_at [[<firm slug>]] · shown · record · <date> · [<the label the tool returned>](<the address the tool returned>)
 - works_at [[<firm slug>]] · shown · web · <date> · <url> · unverified
 - works_at [[<firm slug>]] · shown · yours · <date> · crm-export-<date>
 - works_at [[<firm slug>]] · said · yours · <date> · <what you told the desk, in a few words>
@@ -123,7 +123,11 @@ Every claim traceable on request.
   desk asks where a fact came from; the body carries the register and the date on every
   line, and a `web` line also carries the word `unverified` and the source URL, in the form
   fixed in the skill; a `record` proof line under `## Connections` also ends with its
-  citation, as the tool returned it (R24).
+  citation, as the tool returned it (R24). Write that citation as a link,
+  `[<the label the tool returned>](<the address the tool returned>)`, so the desk's views can
+  tell it from the tier word beside it and show it as the place the fact came from (R35). When
+  the tool returned no address, write the label alone: the views then show no source for that
+  line, which is honest, and the citation is on this page either way.
 - **Two registers, never blended.** A web line and a record line about the same fact sit
   on two lines; where they disagree the record wins and both are shown.
 - **The desk's own facts** ("met him in March") are written under `yours`, dated, and
@@ -140,7 +144,8 @@ Under it, one proof line for each connection in the header, and one for each con
 inferred and no source showed. The proof word is fixed by where the connection came from:
 
 - `shown` when the record or a web page shows it. A `record` line ends with the citation the
-  tool returned; a `web` line carries the page's url and ends `unverified`.
+  tool returned, written as a link, `[<label>](<address>)`, or as the label alone when the tool
+  gave no address (R35); a `web` line carries the page's url and ends `unverified`.
 - `shown` with the register `yours` when the desk's own CRM export shows it. The line ends with
   the export's file name, `crm-export-<date>`, which is its citation; never `said` for the
   export (R25).

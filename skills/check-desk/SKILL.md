@@ -121,10 +121,11 @@ Each finding is one row: the words in bold, the page, and one line of detail.
    pack. A desk with no pack keeps every kind.
 2. **C02 missing must-have detail.** `type` or `title` is empty; a must-have detail of the
    page's kind is empty; a person, family or firm holds one or two of `stage`,
-   `relationship_kind`, `owner` but not all three. Not `index.md` or `log.md`: the index holds
-   only its version and the log has no header at all, both by rule, and C12 below is the rule
-   that reads them. Without that said, the first check on a desk `install-desk` had just
-   written correctly read as two findings against two of its own files.
+   `relationship_kind`, `owner` but not all three. Not `index.md`, which by rule holds only its
+   version, so C02 would otherwise report it twice over (no `type` and no `title`) against a
+   file `install-desk` had just written correctly. `log.md` is not read here either, and it
+   never could have been: by rule it has no header at all, so it is a page with no header
+   before it is a page with a detail missing, and it falls to C12. Both are C12's to read.
 3. **C03 word on no list.** A detail named in `field_lists` holds a word that is on neither
    its list nor the desk's own words for that list. A list with no words is not checked.
 4. **C04 own word with no match.** An own-words entry for a pack list names no word on that
@@ -490,9 +491,47 @@ On "merge <page> into <page>", "merge these two", "these are the same", or "same
 `call-review`:
 
 1. Refuse in one line when the two are one page, when they are of different kinds, or when either
-   names the other in `not_same_as`. When the second page is not on the desk, say it was merged
-   only when a record under `celorus/merges/` names it as `merged`, and otherwise that there is
-   no such page; either way, stop.
+   names the other in `not_same_as`. When either page is on the desk but the merge cannot use
+   its header, say where it is and which of the four states it is in, never that there is no
+   such page, and ask for the mend that fits that state and no other:
+   - `no header`, listed as **C12**: there is no front matter at all, or it is empty, or what
+     is between the fences is not a set of `key: value` lines - a list, a bare word, nothing
+     but comments. Ask for a header with at least a `type` and a `title`. A page with no header
+     is the likeliest twin there is, because a file browser makes one when you click an
+     unresolved link, and telling that person to put a header *back* names a header they never
+     had.
+   - `the header does not parse`, listed as **C12**: there is one and YAML will not take it.
+     Ask for the YAML to be put back.
+   - `not readable as UTF-8`, listed as **C12**: the file's bytes are not. Ask for it to be
+     saved again as UTF-8 text - the header may be perfectly good, and asking for the YAML back
+     names a fault the page does not have.
+   - The header parses and says nothing (`{}` between the fences), listed as **C02**, twice, as
+     "no title" and "no type" - **not C12**. Say that its header says neither `type` nor
+     `title`, and ask for those. Naming C12 here sends the person looking for a row that is not
+     there.
+
+   When the second page is not on the desk at all, say it was merged only when a record under
+   `celorus/merges/` names it as `merged` **and that record's header does not carry an `undone:`
+   line**: an undo writes that line into the record it puts back, and a record carrying it says
+   nothing about where the other page went. Where that line is there, it decides, and reading
+   the pages instead is wrong - where the two pages were alike enough that the merge changed
+   nothing, a merge that stands and a merge that was undone leave the very same bytes, and
+   whichever way you read them one of the two is answered wrongly. One kind of record has no
+   line to read: one written before the undo began leaving it. Only then read the pages, and
+   only this much - when the record's `changed:` list names the kept page, and the record's
+   `after/` copy of that page differs from its `before/` copy or there is no `after/` copy,
+   and the page on the desk now matches the `before/` copy, that merge was put back. That is
+   a guess, and it is wrong in both directions. It says the merge still stands when the merge
+   changed nothing on the kept page, and again when that page was edited after the undo. It
+   says the merge was put back when the page was returned to those bytes by hand and no undo
+   happened. Those are the common ways it is wrong, not all of them. It is everything an
+   unmarked record can give. Otherwise say there is no such page; either way, stop. Refuse too
+   when a record under `celorus/merges/` names this exact pair this way round, its `kept` the
+   page you are keeping and its `merged` the other, and the kept page still matches that
+   record's `after/` copy while the other page is still on the desk: that is a merge cut before
+   its last step, and merging again would merge a second time. Name the record and say to undo
+   it first. (A record whose header carries an `undone:` line is not this - it finished and was
+   put back.)
 2. The record folder is `celorus/merges/<date>-<kept>-<other>/`; when a folder of that name
    exists, add `-2`, then `-3`, and so on, and never write into a folder that exists. Copy both
    pages, and every page on which a link will change, into its `before/`, keeping their paths
@@ -510,13 +549,53 @@ On "merge <page> into <page>", "merge these two", "these are the same", or "same
 4. Work out every link to the other page on the desk, outside `celorus/merges/`, to point at
    the kept page, whether written `[[<other>]]`, `[[<other>|…]]` or `[[<other>#…]]`. Copy each
    page that changes, as it will stand, into the record folder's `after/`.
-5. Write the record folder's `merge.md` with `type: merge-record`, `title`,
-   `description`, `timestamp` (now, in ISO 8601 with the local offset), `kept` and `merged`
-   (plain file names, never links), `removed` (the other page's path) and `changed` (every
-   changed page's path), before any page on the desk changes.
-6. Write the kept page and every repointed page onto the desk. Delete the other page last, so
+5. Work out the three things this merge cannot put right, reading the desk as it *will* be:
+   with the repointed pages as step 4 leaves them and the other page gone.
+   - `still_named`: every line that still holds the other page's bare file name, as
+     `<path>:<line>`, where `<path>` is written from `celorus/` down without the `celorus/`
+     itself (`queues/follow-ups.md:12`) and `<line>` is the line's number in the finished file.
+     Search for the name as a whole word (a letter, a digit, `-` or `_` against it does not
+     count, so `meera-sample` is not found inside `meera-sample-2`). Leave out the desk's own
+     furniture, which is `celorus/merges/`, `celorus/model/` and `celorus/views/`: naming the
+     merged page is what a record under `merges/` is for, and a view is generated, so step 8 is
+     about to rewrite it and sending a person there would send them to the wrong file.
+     **Search every other line, including the rows of a table** - a queue row is a table row,
+     and it is the row this whole list exists to find. Report the line as it stands; do not
+     work out which column the name sits in.
+   - `points_at_itself`: every line of the kept page that step 4's repointing turned into a
+     link to the kept page, as `<line>: <the line>`, numbered in the kept page as step 7 will
+     write it. Only lines the repointing moved; a line that already named the kept page is the
+     person's own.
+   - `named_only_holds_details`: true when the kept page is a `person`, its `standing` is
+     `named-only`, the desk's switch is off, and the finished page holds contact details -
+     which means either anything under `## Coordinates` beyond `- Not established.`, **or an
+     email address or phone number anywhere in the body or in any header value**. Both halves,
+     because a detail carried over in the header is the way a merge usually puts one there.
+
+   Change none of them. A queue row may want repointing or may want closing, a self-referential
+   line may want deleting or may want rewriting, and a `standing` is a claim about a
+   relationship that only the person can make.
+6. Write the record folder's `merge.md` with `type: merge-record`, `title`,
+   `description`, `timestamp` (now, in ISO 8601 with a `T` between the date and the time and
+   the local offset), `kept` and `merged`
+   (plain file names, never links), `removed` (the other page's path), `changed` (every
+   changed page's path) and the three lists from step 5, before any page on the desk changes.
+7. Write the kept page and every repointed page onto the desk. Delete the other page last, so
    a merge cut short at any point leaves a record to undo it from.
-7. Rebuild the views, and log one line: `* <time> · <handle> · check-desk · merged <other> into <kept> · yours`.
+8. Rebuild the views, and log one line: `* <time> · <handle> · check-desk · merged <other> into <kept> · yours`.
+9. Say what the merge could not put right, in one sentence for each list that is not empty, and
+   nothing when all three are. A merge repoints `[[links]]` and only those, so a queue row or a
+   desk-log row that keys the person by the bare slug goes on naming a page that no longer
+   opens, and nothing else ever says so: this skill walks past the queues as the desk's own
+   furniture, no rule reads a queue row, and a bare slug is not a link, so a file browser draws
+   it as ordinary text rather than as an unresolved one. A follow-up promise to a real person
+   detaches from that person after a routine dedupe, which is what a merge is for. Name the
+   rows, with their paths and line numbers, so the person can go to each one. Say that a line
+   now points at its own page, and where it is. Name a rule only if you have run the check and
+   seen it: a self-pointing proof line comes out C15, a line under `## Connections` that is not
+   a proof line at all comes out C12, and the same sentence in ordinary prose elsewhere on the
+   page raises nothing. Say that the kept page is named-only and now holds contact details, and
+   that C08 is the rule that will report it.
 
 On "undo the merge of <other> into <kept>", or "undo that merge" for the record with the newest
 `timestamp`: first check that every path the record names in `changed` and `removed` resolves
@@ -524,8 +603,14 @@ inside `celorus/`, outside `celorus/merges/`, and has its copy under `before/`; 
 say which and change nothing. Then, when every page named in `changed` still matches its copy
 under `after/`, or under `before/`, when the merge was cut short, and the removed page has not
 come back (or is still there, unchanged from its `before/` copy), copy the pages named in
-`changed` and `removed` from `before/` back into place, and nothing else; rebuild the views and
-log one line: `* <time> · <handle> · check-desk · undid the merge of <other> into <kept> · yours`.
+`changed` and `removed` from `before/` back into place, and nothing else; then, **unless the
+record already carries an `undone:` line, add `undone: <timestamp>` to its header** - the moment
+with its offset and a `T` between the date and the time, as `install-desk` writes a timestamp,
+and nothing else: the line goes into a header, and a record whose header will not parse stops
+every merge and every undo on the desk, not only this one. Last, once the pages are back, and
+once only, because two `undone:` keys in one header is a duplicate key and YAML keeps the last of
+them without a word; rebuild the views and log one line:
+`* <time> · <handle> · check-desk · undid the merge of <other> into <kept> · yours`.
 Otherwise name the pages that changed since, and change nothing.
 
 ## Say at the end

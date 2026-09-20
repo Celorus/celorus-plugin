@@ -79,7 +79,9 @@ identity, the freshest events, the people behind it); for a person, `get_people`
 employer where known and `get_person_profile`. Every figure verbatim as the tool gives it.
 Each record line reads `<the fact> · record · <as of>`; its citation goes into the
 header's `sources` list and opens only when the desk asks where a fact came from; a proof line
-under `## Connections` also ends with it (R24).
+under `## Connections` also ends with it (R24), written as a link of the label the tool returned
+to the address it returned, `[<label>](<address>)`, so the views can tell the citation from the
+tier word beside it, and as the label alone when the tool returned no address (R35).
 Bands only; masked coordinates exactly as rendered; the tier shown on anything the record
 did not file.
 

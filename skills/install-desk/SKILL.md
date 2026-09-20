@@ -80,7 +80,8 @@ Every page header is flat: each detail at the top level, never under a block. A 
 is a quoted link by name, `works_at: "[[<slug>]]"`.
 
 Mint the `desk_id` as `d-` followed by eight random lowercase letters or digits. Every
-`timestamp` is now, in ISO 8601 with the local offset. Then write the seat pointer: the
+`timestamp` is now, in ISO 8601 with a `T` between the date and the time and the local
+offset. Then write the seat pointer: the
 file `~/.celorus/seat-<desk_id>` in the user's home folder, holding the handle on one
 line. It is the only thing the pack keeps outside the desk folder, and it is per machine
 on purpose: a pointer inside a synced desk would follow the desk to every machine.
