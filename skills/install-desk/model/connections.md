@@ -16,6 +16,13 @@ connections:
 - 'for_conversation: brief -> conversation, held in the page, never drawn'
 - 'from: learning -> conversation, held in the page, never drawn'
 - 'themes: learning -> theme, held in the page, never drawn'
+draws:
+- works_at
+- worked_at
+- part_of
+- knows
+- introduced_by
+- member_of
 proof_required:
 - works_at
 - worked_at

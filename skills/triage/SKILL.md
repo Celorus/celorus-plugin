@@ -21,17 +21,22 @@ walking up from the working directory that contains `celorus/index.md`; the seat
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. Without a desk, say so in
 one line and offer `install-desk`. Without today's board, run `day-open` first.
 
+If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
+`../install-desk/layout-1.md` says, and say once that "update my desk" moves it to layout 2.
+
 ## What you read
 
 - `celorus/queues/supplied.md`: rows in state `new`, `researched` or `contacted`.
 - `celorus/queues/follow-ups.md`: rows in state `due` (by today or earlier) or `replied`.
 - `celorus/queues/book.md`: rows dated within the last week.
 - `celorus/today/<date>.md`: the first three blocks, as written by `day-open`.
-- Each lead's page under `people/`, `families/` or `accounts/` where one exists: its
+- Each lead's page under `people/`, `families/` or `firms/` where one exists: its
   `clock`, `last_touch`, `readiness` and the freshest dated line under "What just
   happened".
 - `celorus/motion-spec.md`: the lead definition, the clocks and `caps`.
 - `celorus/crm/`: the export's name column, for the dedupe.
+- A list the user describes as bought or scraped is never queued or ordered: say so in one
+  line and leave its names off the day.
 
 ## The dedupe
 
@@ -72,8 +77,9 @@ research first" and stays on the list: research is the first call's preparation.
   and, below the numbered list, the dedupe count and "Later today" when there is one.
 - State changes in `celorus/queues/supplied.md`: `already-yours` from the dedupe;
   `researched` once a page exists.
-- One line in `celorus/log.md`:
-  `- <date> <time> · <handle> · triage · wrote today/<date>.md (today's calls) · yours`.
+- One line in `celorus/log.md`, directly under today's heading `## <date>` (add the heading
+  above the older days if missing), with `<time>` as two-digit `HH:MM`:
+  `* <time> · <handle> · triage · wrote today/<date>.md (today's calls) · yours`.
 
 No row in `desk-log.md`: the research row and the call row come from the skills that do
 those things.

@@ -22,14 +22,25 @@ The desk folder is the one named by `CELORUS_DESK`, or else the first folder fou
 walking up from the working directory that contains `celorus/index.md`. If neither
 exists, say in one line that there is no desk here, offer `install-desk`, and stop. The
 seat is `CELORUS_SEAT`, or the handle in `~/.celorus/seat-<desk_id>` (the `desk_id` is
-in `celorus/index.md`); if neither exists, ask which seat this is and say that
+in `celorus/desk.md`); if neither exists, ask which seat this is and say that
 `install-desk` can claim it for next time.
+
+If `celorus/desk.md` is missing, the desk is layout 1, or a layout 2 desk whose desk.md is
+lost; `celorus/index.md` tells them apart. If its header holds a nested `celorus` block, the
+desk is on layout 1: read and write it as `../install-desk/layout-1.md` says, and say once
+that "update my desk" moves it to layout 2. If its header holds only `okf_version: "0.2"`,
+say once that `desk.md` is lost and should be restored from the copy taken before the last
+update or from the desk's history, and open the day without the stamps.
+
+If the desk is on layout 1, or the `model_version` in `celorus/desk.md` is lower than the one
+in the plugin's `../install-desk/model/model.md`, put one line at the top of the board: "A newer desk model
+is ready. Say "update my desk" to see what changes first." Never update from day-open.
 
 ## What you read
 
 1. The most recent board in `celorus/today/`, for where the day left off.
-2. `celorus/queues/follow-ups.md`: rows whose state is `due` and whose `by` date is
-   today or earlier.
+2. `celorus/queues/follow-ups.md`: rows whose state is `due` and whose `by` date is today
+   or earlier, both what we owe (`owed_by` `us`) and what is owed to us (`them`).
 3. `celorus/queues/supplied.md`: rows whose state is `new`. `celorus/queues/book.md`: rows
    dated since the last board.
 4. `celorus/signals/inbox/`: any file. It is empty until server-pushed signals land; when
@@ -59,12 +70,11 @@ type: board
 title: <date>
 description: The day's board
 timestamp: <now>
-celorus:
-  date: <date>
-  seat: <handle>
-  opened_at: "<HH:MM>"
-  sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, mail, calendar, crm]
-  sources_missing: []
+date: <date>
+seat: <handle>
+opened_at: "<HH:MM>"
+sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, mail, calendar, crm]
+sources_missing: []
 ---
 
 # <weekday> <day> <month> <year>
@@ -77,7 +87,8 @@ celorus:
 
 ## Due today
 
-- <Name>: <what>, by <date>, from <the call file>. · yours · <date of the call>
+- We owe <Name>: <what>, by <date>, from <the conversation page>. · yours · <date of the conversation>
+- <Name> owes us: <what>, by <date>, from <the conversation page>. · yours · <date of the conversation>
 
 ## On the clock
 
@@ -99,12 +110,16 @@ Then:
 
 - In `celorus/queues/follow-ups.md`, a row whose person replied gets state `replied`.
   The row stays; `follow-up` decides what comes next.
+- Run `check-desk` over the whole desk, and add one line at the end of "Due today":
+  `- <N> things on the desk need attention: views/needs-attention.md. · yours · <date>`
+  (leave the line out when N is 0).
 - Append the day header row to `celorus/desk-log.md`:
   `| <date> | <handle> | day | · | · | open | new <N> · due <N> · meetings <N> | · | day-open |`.
   Run twice in one day and the board's first three blocks are refreshed in place, "Today's
   calls" and "Done" are left alone, and no second header row is written.
-- Append one line to `celorus/log.md`:
-  `- <date> <time> · <handle> · day-open · wrote today/<date>.md · yours`.
+- Append one line to `celorus/log.md`, directly under today's heading `## <date>` (add it
+  above the older days if missing), with `<time>` as two-digit `HH:MM`:
+  `* <time> · <handle> · day-open · wrote today/<date>.md · yours`.
 
 ## While you work
 

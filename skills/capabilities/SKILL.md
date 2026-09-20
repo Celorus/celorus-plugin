@@ -17,7 +17,8 @@ You are the way in. Two doors lead out, and both are first-class:
 - **The day.** The sales workday, run from a desk workspace on the user's own side:
   `day-open` (what moved overnight), `triage` (who to call first, with the reason),
   `research-lead` (a lead researched in one pass), `call-review` (what they said, what we
-  owe), `follow-up` (what comes back, and when). These run with no Celorus account.
+  owe), `follow-up` (what comes back, and when), `check-desk` (what needs attention on the
+  desk, and who can introduce you to whom). These run with no Celorus account.
 - **The record.** What the official record holds on a company and the people behind it:
   a templated report (Financial Health, Cap Table) on the paved road, or a free-form,
   cited answer on the open road. This door needs an account connected.

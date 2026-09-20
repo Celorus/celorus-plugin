@@ -1,38 +1,44 @@
 # The profile page
 
-One page per person, family or company, at `celorus/people/<slug>.md`,
-`celorus/families/<slug>.md` or `celorus/accounts/<slug>.md`. The frontmatter is an OKF
-concept with every Celorus field under one `celorus:` block. The body follows the room
-brief's running order, every section present.
+One page per person, family or firm, at `celorus/people/<slug>.md`,
+`celorus/families/<slug>.md` or `celorus/firms/<slug>.md`. Every detail sits at the top of the
+header, never under a block. The body follows the room brief's running order, every section
+present.
 
 ## Frontmatter
 
 ```yaml
 ---
-type: person                                       # person · family · account
+type: person                                       # person · family · firm
 title: <canonical name>
 description: <one line: level, function, employer; the freshest event>
 resource: https://app.celorus.com/subject/<id>     # only when the record holds the subject
-tags: [supplied-L1, band-D]
+tags: [supplied-l1, band-D]
 timestamp: <now, ISO 8601 with offset>
-celorus:
-  slug: <slug>
-  kind: person                                     # person · family · account
-  segments: []                                     # the segments the record or the web support
-  band: D                                          # a band, never a point estimate; absent when unknown
-  readiness: 62                                    # coverage of the fields the brief needs, 0 to 100
-  clock: money-in-motion                           # money-in-motion · reason-to-call · handle-with-care
-  source_list: supplied-L1                         # or book · follow-up · inbound
-  family: <family slug>                            # the family page, where one exists
-  registers_used: [record, web, yours]
-  research_minutes: 9
-  last_touch: <date>
-  as_of: <date>
-  provenance: on-request
-  citations:                                       # record register only; never rendered in the body
-    - {claim: <short key>, ref: <the citation the tool returned>, as_of: <date>}
+standing: researched                               # person only: in-conversation · researched · named-only
+name_source: supplied-l1                           # person only, a plain file name without `.md`, never a link: supplied-<list, lowercase> · supplied-ask-<date> · book · crm-export-<date> · <conversation file name; for an inbound lead, the mail or call that brought it>
+works_at: "[[<firm slug>]]"                        # person only, when shown or said, never a guess; with its line under Connections
+worked_at: "[[<firm slug>]]"                       # person only, a firm they have left; the same rule as works_at
+role_title: <title>                                # person only
+not_same_as: [<file name without .md>]             # plain file names, never links; see "same person?" in the skill
+member_of: "[[<family slug>]]"                     # person only, on a wealth desk or a desk with no pack
+segments: []                                       # the segments the record or the web support
+band: D                                            # a band, never a point estimate; absent when unknown
+readiness: 62                                      # coverage of the fields the brief needs, 0 to 100
+clock: money-in-motion                             # money-in-motion · reason-to-call · handle-with-care
+source_list: supplied-l1                           # or book · follow-up · inbound
+registers_used: [record, web, yours]
+research_minutes: 9
+last_touch: <date>
+as_of: <date>
+provenance: on-request
+sources:                                           # record register only; never rendered in the body, except at the end of a record proof line
+  - {resource: <the citation the tool returned>, claim: <short key>, as_of: <date>}
 ---
 ```
+
+`supplied-ask-<date>` is the name the user gave you in the ask itself, on that date, when it
+came from no list, book, export or conversation page.
 
 ## Body
 
@@ -65,6 +71,14 @@ As of the day researched.
 - Obligation: <dated commitments; the timing hook> · <register> · <date>
 - Open with: <rapport topics at recurring or defining intensity only> · <register> · <date>
 
+## Connections
+
+- works_at [[<firm slug>]] · shown · record · <date> · <the citation the tool returned>
+- works_at [[<firm slug>]] · shown · web · <date> · <url> · unverified
+- works_at [[<firm slug>]] · shown · yours · <date> · crm-export-<date>
+- works_at [[<firm slug>]] · said · yours · <date> · <what you told the desk, in a few words>
+- worked_at <firm in plain words> · guessed · <register> · <date> · <why we think so>
+
 ## Coordinates
 
 - <social and web coordinates, in full, linked> · <register> · <date>
@@ -72,7 +86,7 @@ As of the day researched.
 
 ## The door
 
-- Not computed. The route needs the people plane and your book.
+- From your desk: ask "who can introduce me to <name>?" for the paths over your own pages. Through the record: not computed; that route needs the people plane and your book.
 
 ## Watch out
 
@@ -105,16 +119,43 @@ Every claim traceable on request.
   coordinates. A minor is never named.
 - **Never from inference.** No line infers a family relationship, a community or anything
   protected from a surname, a locality or a co-appearance.
-- **Provenance on demand.** Citations live in the frontmatter and open when the desk asks
-  where a fact came from; the body carries the register and the date on every line, and a
-  `web` line also carries the word `unverified` and the source URL, in the form fixed in
-  the skill.
+- **Provenance on demand.** Citations live in the header's `sources` list and open when the
+  desk asks where a fact came from; the body carries the register and the date on every
+  line, and a `web` line also carries the word `unverified` and the source URL, in the form
+  fixed in the skill; a `record` proof line under `## Connections` also ends with its
+  citation, as the tool returned it (R24).
 - **Two registers, never blended.** A web line and a record line about the same fact sit
   on two lines; where they disagree the record wins and both are shown.
 - **The desk's own facts** ("met him in March") are written under `yours`, dated, and
   never presented as a fact about the subject.
 
-## An account page
+## The Connections section
+
+Write the heading on every profile page, even when there is nothing to put under it yet.
+Connection lines are read under `## Connections` and nowhere else, so a page without the
+heading is a page the "who can introduce me" walk never looks at - `check-desk` lists it
+(C14), and a question the desk finds no path for hedges until the heading is there.
+
+Under it, one proof line for each connection in the header, and one for each connection you
+inferred and no source showed. The proof word is fixed by where the connection came from:
+
+- `shown` when the record or a web page shows it. A `record` line ends with the citation the
+  tool returned; a `web` line carries the page's url and ends `unverified`.
+- `shown` with the register `yours` when the desk's own CRM export shows it. The line ends with
+  the export's file name, `crm-export-<date>`, which is its citation; never `said` for the
+  export (R25).
+- `said` when the user told the desk in the ask. The register is `yours`, and the line ends
+  with what they told the desk, in a few words.
+- `guessed` for anything you inferred. The other end is in plain words, never a link, and a
+  guess is never in the header; the line ends with why you think so.
+
+Never `shown` for what the record or the page did not literally show. A proof line keeps the
+order above even for the web, with the date straight after the register; the long web form
+under "Body" is for the other sections. With nothing to prove, leave the section empty under
+its heading; never write "Not established" here, since every line under the heading is read
+as a proof line. A connection you inferred, and no source showed, is a `guessed` line.
+
+## A firm page
 
 Same frame, with the company's sections: what the record holds (the documents and years,
 as counts) · record · <date of the check>, the web ladder's findings (events, funding,

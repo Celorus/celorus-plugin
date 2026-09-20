@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook for the Celorus plugin: announce the desk, if there is one.
-# Reads celorus/index.md frontmatter, the seat pointer and the follow-up queue.
+# Reads the desk's stamps (celorus/desk.md; celorus/index.md on a layout 1 desk),
+# the seat pointer and the follow-up queue.
 # Writes nothing. Makes no network call. Needs bash and coreutils only.
 # Never fails the session: every branch exits 0.
 set -u
@@ -22,9 +23,12 @@ find_desk() {
 }
 
 # frontmatter_value FILE KEY: the first "KEY: value" inside the leading --- block,
-# at any indentation. Quotes stripped. Empty when absent.
+# at any indentation, trailing blanks trimmed. A double-quoted value loses its quotes, and each
+# backslash keeps only the character after it (\" reads as ", \\ as \; a backslash at the very
+# end stays); a single-quoted one loses its quotes, keeps any double quote, and reads a doubled
+# single quote as one; any other value loses every double quote. Empty when absent.
 frontmatter_value() {
-  awk -v key="$2" '
+  awk -v key="$2" -v q="'" '
     { sub(/\r$/, "") }
     NR == 1 && $0 != "---" { exit }
     NR > 1 && $0 == "---" { exit }
@@ -34,7 +38,22 @@ frontmatter_value() {
       if (index(line, key ":") == 1) {
         v = substr(line, length(key) + 2)
         sub(/^[ \t]+/, "", v)
-        gsub(/"/, "", v)
+        sub(/[ \t]+$/, "", v)
+        if (length(v) >= 2 && substr(v, 1, 1) == "\"" && substr(v, length(v), 1) == "\"") {
+          v = substr(v, 2, length(v) - 2)
+          out = ""
+          for (i = 1; i <= length(v); i++) {
+            c = substr(v, i, 1)
+            if (c == "\\" && i < length(v)) { i++; c = substr(v, i, 1) }
+            out = out c
+          }
+          v = out
+        } else if (length(v) >= 2 && substr(v, 1, 1) == q && substr(v, length(v), 1) == q) {
+          v = substr(v, 2, length(v) - 2)
+          gsub(q q, q, v)
+        } else {
+          gsub(/"/, "", v)
+        }
         print v
         exit
       }
@@ -67,9 +86,14 @@ desk="$(find_desk)" || {
   exit 0
 }
 
-index="$desk/celorus/index.md"
-desk_name="$(frontmatter_value "$index" desk)"
-desk_id="$(frontmatter_value "$index" desk_id)"
+stamps="$desk/celorus/desk.md"
+[ -f "$stamps" ] || stamps="$desk/celorus/index.md"
+desk_name="$(frontmatter_value "$stamps" desk)"
+desk_id="$(frontmatter_value "$stamps" desk_id)"
+# The id names a file under ~/.celorus, so it is used only when it holds nothing but lowercase
+# letters, digits and hyphens, spelled out so no locale widens the range. Anything else reads
+# as no id, and no seat pointer is read.
+case "$desk_id" in *[!abcdefghijklmnopqrstuvwxyz0123456789-]*) desk_id="" ;; esac
 
 seat="${CELORUS_SEAT:-}"
 if [ -z "$seat" ] && [ -n "$desk_id" ] && [ -f "${HOME:-/nonexistent}/.celorus/seat-${desk_id}" ]; then

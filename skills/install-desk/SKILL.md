@@ -5,8 +5,9 @@ description: >-
   when someone says "set up my desk", "install the desk", "create my Celorus workspace",
   "check my desk setup" or "refresh my desk setup", or when any workday skill finds no
   desk. Two modes: a single seat (five minutes, no account needed) and a whole desk (the
-  operator, from the desk's private bundle). Runs entirely on the user's side: it never
-  connects to Celorus and never sends anything anywhere.
+  operator, from the desk's private bundle). Also checks a desk's setup, or updates a desk
+  to the newest model when someone says "update my desk". Runs entirely on the user's
+  side: it never connects to Celorus and never sends anything anywhere.
 ---
 
 # Install the desk
@@ -16,14 +17,18 @@ Celorus structure, that every workday skill reads and writes. It is theirs: insp
 backed up their way, and it stays with them if the plugin is ever removed. A hidden
 `.celorus/` beside it holds scratch that may be deleted at any time.
 
-Three phrases, three modes:
+Four phrases, four modes:
 
 - **"set up my desk"** creates a desk. Seat mode by default; desk mode when the user says
   they are the operator or a private desk bundle is installed.
-- **"check my desk setup"** verifies an existing desk and changes nothing.
+- **"check my desk setup"** verifies an existing desk and changes nothing. What the pages
+  themselves say, a missing detail or a link to nothing, is "check my desk", which is
+  `check-desk`.
 - **"refresh my desk setup"** re-reads the desk bundle and rewrites the configuration
   files only (`motion-spec.md` and the role profiles inside it); it never touches a data
   file.
+- **"update my desk"** moves a desk to the newest model, after a preview and one yes. It
+  never deletes a page.
 
 ## Where the desk lives: the one path convention
 
@@ -58,14 +63,21 @@ Then confirm the desk folder and write the scaffold.
 
 ## What you write (seat mode)
 
-Every file in `scaffold.md`, with the answers filled in, in this order: `.gitignore` at
-the desk folder root (add the line `.celorus/`; create the file if absent), then under
-`celorus/`: `index.md`, `log.md`, `desk-log.md` (header only), `motion-spec.md`,
-`register.md`, `marks.md`, `queues/supplied.md`, `queues/follow-ups.md`,
-`queues/book.md`, `seats/<handle>.md`, `context/tone.md`, `context/never-say.md`,
-`context/notes.md`, `crm/README.md`, and the folders `today/`, `people/`, `families/`,
-`accounts/`, `calls/`, `briefs/`, `drafts/`, `reviews/`, `context/brand/` and
-`signals/inbox/`, each holding an empty `.gitkeep`.
+Every file in `scaffold.md`, with the answers filled in, in this order: `.gitignore` at the
+desk folder root (add the two lines; create the file if absent), then under `celorus/`:
+`index.md`, `desk.md`, `log.md`, `desk-log.md` (header only), `motion-spec.md`, `register.md`,
+`marks.md`, `queues/supplied.md`, `queues/follow-ups.md`, `queues/book.md`,
+`seats/<handle>.md`, `context/tone.md`, `context/never-say.md`, `context/notes.md`,
+`crm/README.md`, `rules/rulebook.md`, `model/own-words.md`, then the model pages (the
+scaffold's "The model pages"), and the empty folders the scaffold names.
+
+Then the Obsidian settings. Obsidian rewrites its own settings when it closes, so before
+writing them say that Obsidian must be shut, and wait until the person says it is. Write the
+four files in `obsidian.md`, byte for byte, and run `check-desk` over the whole desk once, so
+`views/` holds its three pages from the first day.
+
+Every page header is flat: each detail at the top level, never under a block. A connection
+is a quoted link by name, `works_at: "[[<slug>]]"`.
 
 Mint the `desk_id` as `d-` followed by eight random lowercase letters or digits. Every
 `timestamp` is now, in ISO 8601 with the local offset. Then write the seat pointer: the
@@ -73,10 +85,11 @@ file `~/.celorus/seat-<desk_id>` in the user's home folder, holding the handle o
 line. It is the only thing the pack keeps outside the desk folder, and it is per machine
 on purpose: a pointer inside a synced desk would follow the desk to every machine.
 
-Finish with the first line of `log.md`:
-`- <date> <time> · <handle> · install-desk · wrote the scaffold · yours`. The register
+Finish with the first line of `log.md`, under the heading `## <date>`:
+`* <time> · <handle> · install-desk · wrote the scaffold · yours`. The register
 label `yours` marks what came from the desk itself; nothing here came from the web or
-the record.
+the record. Every later line goes directly under its day's heading, and a new day's
+heading goes above the older ones.
 
 ## Desk mode: the operator
 
@@ -100,28 +113,46 @@ connectors; their CRM as a tagged export in `celorus/crm/`; their brand tokens i
 4. Everything else exactly as seat mode.
 
 "Refresh my desk setup" repeats steps 1 and 2 only, bumps `timestamp` on the two files,
-and appends one line to `log.md`.
+and writes one line to `log.md`, under the day's heading.
 
 ## Verify mode: "check my desk setup"
 
-Report, and change nothing:
+Report, and change nothing. First read `celorus/desk.md`. If it is missing, the desk is
+layout 1, or a layout 2 desk whose desk.md is lost; `index.md` tells them apart. If its
+header holds a nested `celorus` block, the desk is on layout 1, one version behind: say so
+in one line, check it against `layout-1.md` in this skill's folder, and say that "update my
+desk" moves it to layout 2 without losing a page. If its header holds only
+`okf_version: "0.2"`, `desk.md` is lost: say so in one line, and say to restore it from the
+copy taken before the last update or from the desk's history; "update my desk" stops rather
+than make its stamps up. Otherwise:
 
 - the desk folder found, and how (the variable or the walk);
-- each required file present or missing: `index.md`, `log.md`, `desk-log.md`,
+- each required file present or missing: `index.md`, `desk.md`, `log.md`, `desk-log.md`,
   `motion-spec.md`, `register.md`, `marks.md`, the three queues, the three context files,
-  `crm/README.md`, and `.gitignore` carrying `.celorus/`;
-- `index.md` carries `okf_version: "0.1"`, and `layout_version: 1` with a non-empty
-  `desk_id` under `celorus:`;
-- every markdown file under `celorus/` opens with frontmatter that has a non-empty `type`
-  and a `timestamp`;
-- every `type` is one of the desk's known types: `index`, `log`, `desk-log`,
-  `motion-spec`, `register`, `marks`, `queue`, `board`, `person`, `family`, `account`,
-  `call`, `brief`, `draft`, `review`, `seat`, `context`;
+  `crm/README.md`, `rules/rulebook.md`, `model/model.md`, `model/connections.md`,
+  `model/own-words.md`, and `.gitignore` carrying `.celorus/` and
+  `celorus/.obsidian/workspace*.json`;
+- `index.md` has a header holding only `okf_version: "0.2"`; `log.md` has no header: it
+  holds `# Log`, then `## YYYY-MM-DD` day headings with lines `* HH:MM · ...` under them;
+- `desk.md` carries `layout_version: 2`, a `model_version`, and a non-empty `desk` and `desk_id`;
+- every other markdown file under `celorus/` opens with a header that has a non-empty `type`,
+  and a `timestamp` outside `model/` and `views/`;
+- outside `model/`, `views/` and `merges/`, every `type` is a kind named by a
+  `kind-<kind>.md` page in `model/`, or one of the system types listed in `model/model.md`;
+- outside those three folders, no header holds a nested value (a list of plain words,
+  or of quoted links, is fine), except `sources`;
 - the header of `desk-log.md` is exactly
   `| date | seat | lead | source | minutes | action | outcome | mark | by |`;
-- the header of `queues/follow-ups.md` is exactly `| who | what | by | from | state |`;
+- the header of `queues/follow-ups.md` is exactly `| owed_by | who | what | by | from | state |`;
 - the seat pointer for this machine exists and names a seat file that exists;
 - no absolute path anywhere under `celorus/`.
+
+## Update mode: "update my desk"
+
+Follow `update.md` in this skill's folder exactly: take a commit or a dated copy first, show
+the preview, change nothing until the person says yes, then run the steps in order. It never
+deletes a page and never sends anything. If a step stops, name the step and say the desk is
+as it was.
 
 ## Say at the end (set-up and refresh)
 

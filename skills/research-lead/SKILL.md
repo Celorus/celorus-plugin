@@ -24,6 +24,9 @@ walking up from the working directory that contains `celorus/index.md`; the seat
 research and present the page in the conversation, then offer `install-desk`; a page is
 written to disk only inside a desk.
 
+If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
+`../install-desk/layout-1.md` says, and say once that "update my desk" moves it to layout 2.
+
 ## Start the clock
 
 Note the time you start. The minutes from here to the written page go into the desk log
@@ -75,7 +78,8 @@ the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind
 identity, the freshest events, the people behind it); for a person, `get_people` on the
 employer where known and `get_person_profile`. Every figure verbatim as the tool gives it.
 Each record line reads `<the fact> · record · <as of>`; its citation goes into the
-frontmatter `citations` list and opens only when the desk asks where a fact came from.
+header's `sources` list and opens only when the desk asks where a fact came from; a proof line
+under `## Connections` also ends with it (R24).
 Bands only; masked coordinates exactly as rendered; the tier shown on anything the record
 did not file.
 
@@ -86,11 +90,38 @@ never the list itself.
 ## Step 4: write the page
 
 `profile-shape.md` is the contract; follow it section by section, every section present
-even when it reads "Not established". The path is `celorus/people/<slug>.md`,
-`celorus/families/<slug>.md` or `celorus/accounts/<slug>.md`; the slug is the canonical
-name, lowercase, hyphenated. A family is the page unit for a wealth desk: the family page
-lists its principals, each with their own person page, and carries the household
-aggregate only.
+even when it reads "Not established" (the Connections section excepted: with nothing to
+prove, its heading stands with nothing under it). The path is `celorus/people/<slug>.md`,
+`celorus/firms/<slug>.md`, or `celorus/families/<slug>.md` when `celorus/desk.md` names the
+`wealth` pack or no pack; the slug is the canonical name, lowercase, hyphenated, and no other
+page on the desk may already use it. A family is the page unit for a wealth desk: the family
+page lists its principals, each with their own person page carrying `member_of`, and carries
+the household aggregate only.
+
+Before writing a new person page, look for a person page with the same title or alias. If one
+exists and neither lists the other in `not_same_as`, ask "same person?", naming each page's firm
+and last conversation, and write nothing until the answer. On "no", add the other page's file
+name, without `.md`, to a `not_same_as` list on both.
+
+A person page says where the name came from in `name_source`. A name the user gave in the ask
+itself is `supplied-ask-<date>`; an inbound lead's `name_source` is the conversation page of the
+mail or call that brought it, written before the person page (R26). If the user describes the
+list a name came from as bought or scraped, write no page for it and say why in one line.
+
+Every connection in the header gets its one proof line under `## Connections`, the word fixed
+by where it came from, as `profile-shape.md` says: `shown` or `said`. A guess is never in the
+header, so a `guessed` line stands on its own under `## Connections` with nothing in the header
+above it; `check-desk` lists a header connection whose only proof line is a guess as C07.
+
+Before writing a new firm page, look for a firm page with the same title or alias. If one
+exists and neither lists the other in `not_same_as`, ask "same firm?", naming each page's last
+conversation, and write nothing until the answer; on "no", add each file name to the other's
+`not_same_as`.
+
+When the person works or worked at a firm that has no page, write `celorus/firms/<slug>.md` with `type`,
+`title`, `description` and `timestamp` only, and a body of the title and an empty
+`## Connections` heading, so the link points at something. Never put a new firm in the account
+role.
 
 If a page exists, update it: keep every older line the new read did not contradict, show
 a contradiction on two lines with the record winning, bump `timestamp`, and add to
@@ -100,11 +131,15 @@ Then:
 
 - Append the research row to `celorus/desk-log.md`:
   `| <date> | <handle> | <slug> | <source> | <minutes> | research | not-yet | · | research-lead |`.
-  `<source>` is one of `supplied-<list>`, `book`, `follow-up` or `inbound`.
+  `<source>` is one of `supplied-<list>`, `supplied-ask-<date>`, `book`, `follow-up` or
+  `inbound`.
 - Update the lead's reason line on today's board if the research changed it.
 - Mark the queue row `researched` in `celorus/queues/supplied.md`.
-- Append one line to `celorus/log.md`:
-  `- <date> <time> · <handle> · research-lead · wrote people/<slug>.md · <registers used>`.
+- Append one line to `celorus/log.md`, directly under today's heading `## <date>` (add the
+  heading above the older days if missing), with `<time>` as two-digit `HH:MM`:
+  `* <time> · <handle> · research-lead · wrote <the page's path under celorus/> · <registers used>`,
+  one line for each page written.
+- Run `check-desk` over the pages you wrote, and say its count in one line.
 
 ## When no account is connected
 
