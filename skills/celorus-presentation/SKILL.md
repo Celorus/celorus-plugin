@@ -19,6 +19,23 @@ honesty-guarded and display-ready; you place it, you don't recompute it.
 
 ## How it works
 
+**First, fetch the honesty spine.** Once at the start of your work, call
+**`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")`** and follow the
+returned rule bodies (`data.semantic[]`) verbatim; *The hard rules* below says what
+they cover and why nothing summarised there overrides them.
+
+**That first call is also the sign-in test.** It is the first thing this skill asks
+of the server, so its answer is what tells you whether this session has an account
+at all. Data coming back is what settles it, and nothing else does. If the answer is
+not data — it asks you to sign in or to re-authorize, it refuses for want of
+authorization, it errors, it comes back empty, or you cannot read it as data — stop
+there and follow *When no account is connected* below, which decides it under its
+four outcomes: the tools being listed does not mean the account behind them is
+authorized, and every tool here sits behind the same sign-in, so calling a second
+one only spends a second refusal.
+
+Then, with the spine in hand:
+
 1. Resolve the subject with `resolve_subject` (use `list_available_subdomains` if you
    need to pick which areas to show).
 2. Call **`get_presentation(subject_id, subdomain_ids, fy, include_html: true)`**
@@ -51,10 +68,10 @@ honesty-guarded and display-ready; you place it, you don't recompute it.
 This dashboard inherits the **same honesty spine** as every Celorus skill (missing
 is "not available" — never estimated; every figure carries its provenance;
 `clarify` is a question, never a guess). That spine's authoritative wording lives
-in **one server-fed source**, not copied here: once at the start of your work, call
-**`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")`** and follow the
-returned rule bodies (`data.semantic[]`) verbatim. On top of the spine, this
-skill's own display rules are:
+in **one server-fed source**, not copied here: *How it works* opens by fetching it,
+and the returned rule bodies (`data.semantic[]`) are binding exactly as they stand.
+
+On top of the spine, this skill's own display rules are:
 
 1. **Render values and markers EXACTLY as supplied.** Never recompute, never reformat
    a figure, never invent a trend, and never restyle the fragment. The server copies
@@ -82,11 +99,43 @@ skill's own display rules are:
 If `get_semantic_metadata` is unavailable, the spine summary above is your floor —
 apply it; never relax the honesty contract because the definitions could not be
 fetched.
+The floor is for a call that came back with data and no definitions in it. It is
+not for an answer that was not data. If the call did not come back with data — it
+asked you to sign in or to re-authorize, it refused for want of authorization, it
+errored, it came back empty, or you cannot read it as data — the floor does not
+apply: this session has no account until a `celorus-data` call comes back with
+data, *When no account is connected* below governs it and decides it under its
+four outcomes, and you stop there rather than carry on under the summaries.
 
 ## When no account is connected
 
-If the `celorus-data` tools are not in this session's tool list, do not attempt the
-report or the answer, and never fill it from memory or the web; a web answer is
+**A listed tool is not a connected account.** The `celorus-data` tools can all be
+listed, and the panel can report the server connected, while the account behind
+them is not authorized: a sign-in that has aged out leaves every tool in place and
+every call refused. Tool-list membership is therefore silent on exactly the case
+this section exists to catch, and neither it nor the word "connected" is the test.
+
+The test is a call. This session has an account when a `celorus-data` call comes
+back with data, and not before, so the first call this skill makes is what settles
+it. Its answer is binding:
+
+- **Data comes back.** The account is connected. Carry on.
+- **The call asks you to sign in or to re-authorize, or refuses for want of
+  authorization.** The account is not connected, whatever the tool list or the
+  panel says. Stop on that first answer: do not call again, do not try a different
+  tool to see whether that one works, and do not attempt the report or the answer.
+  Every tool here sits behind the same sign-in, so a second call only spends a
+  second refusal to learn what the first one already said.
+- **No `celorus-data` tool is there to call.** The account is not connected either,
+  and there is nothing here to attempt.
+- **Anything else: an error, an empty answer, or a reply you cannot read as one of
+  the three above.** It settles nothing, and it is not an account; do not read it as
+  one. Make one more `celorus-data` call and let its answer decide, under these
+  same four outcomes. That is the last call: if the second answer is also
+  unreadable, treat this session as having no account, stop there, and do not
+  attempt the report or the answer.
+
+Never fill what you could not read from memory or the web; a web answer is
 `research-lead`'s job and it carries the web register's label.
 
 Say what the record can answer for this company, never what it says. No count, no
