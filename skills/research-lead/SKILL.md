@@ -62,13 +62,48 @@ written at all.
 ## Step 3: the record
 
 **3a, the check.** For a company only: if a `celorus-check` connection is present in this
-session, call its `check_record` tool once with the name and the kind `company`, unless
-`.celorus/cache/check-<slug>.md` holds an answer less than a day old or the existing page
-already carries a `resource:` line. It answers whether the name is on the record and how
-much it holds: counts only, never a figure. Write the answer to
-`.celorus/cache/check-<slug>.md` with the time. On `clarify`, show the user the candidate
-names the check returned and ask which one they mean; nothing is written to the cache or
-the page until one is chosen. If the connection is absent, skip this step silently.
+session, call its `check_record` tool once with the name and the kind `company`, unless the
+desk's cache holds a case, "Not found" or "Clarify" for it asked less than a day ago, or holds
+"Refused" and the time it may be asked again has not come, or the existing page already
+carries a `resource:` line. The cache is `.celorus/cache/check-<slug>.md` under the desk
+folder ("Find the desk" above); with no desk, no cache is read or written, and the check is
+asked at most once in this session. Here `<slug>` is the cache key, not the page's slug (the
+canonical name): the name as asked, lowercase, with every run of characters that are not
+letters or digits turned into one hyphen. When step 2's web register found the company's
+registered name, ask the check with that name. A held "Refused" whose time has not come: say
+in one line that the record was asked too often and when it may be asked again, and the case
+is "The record was not asked". A held "Not found" is routed as a fresh `not_found` (below).
+Every time kept in the cache, a case's, a "Refused" retry time and a "Not found" time, is an
+ISO 8601 timestamp with its offset. Ask through the harness's connection, never through
+anything the plugin runs itself. It answers whether the name is on the record and how much
+it holds: counts only, never a figure. The counts pick the case and go no further. Write to
+the cache the case and the time it was asked, as an ISO 8601 timestamp with its offset, and
+nothing else: never the counts. The case is one of: "Depth on record" when the answer is
+`on_record` and the record holds returns the company has filed (its count of returns filed
+is not zero); "Only the identity and the board are on record" when it is `on_record` and the
+record holds none filed; "The record was not asked" when it is `on_record` with null
+`counts`, since the record could not be read, and that case is written too so the day's ask
+is not spent again. A `not_found` is written as "Not found" with its time. A `not_found` can
+also mean the check could not read, so it proves nothing on its own. If the check refuses
+the ask as too many requests, write "Refused" and the time it may be asked again, as an ISO
+8601 timestamp with its offset (a day after the refusal when the refusal shows no wait), and
+say in one line when it may be asked again and what its limit is, in words, when the refusal
+shows them (its `retry_after_s`, `limit` and `message`); otherwise say in one line that the
+record was asked too often and to try again later. The case is then "The record was not
+asked". The six record skills read and write this same cache under the same key and ask only
+when it holds nothing current for that key, so on a desk a company is asked at most once a
+day, and with no desk at most once a session. Every entry is written under the key of the
+name the user asked, under the key of the name the check was asked with when that differs,
+and under the key of the check's canonical name when it gave one. A "Not found" entry also
+records the name the check was asked with, and a fresh or held "Not found" is never said to
+the user as a case: say the "not on the Celorus record yet" line below only when that
+recorded name is the company's registered name, as the desk's own pages or this session's
+web register record it; otherwise the case is "The name does not resolve". On `clarify`,
+show the user the candidate names and ask which one is meant, and write "Clarify" with its
+time and those names, names only and never a count. Within the day, a skill that finds it
+asks the user to choose among those names without asking the check again; when a name is
+chosen and the check is asked for it, write that case under the chosen name's key and the
+asked name's key. If the connection is absent, skip this step silently.
 For a person or a family, do not call the check while person lookups are deferred: it
 answers `not_found` for every person, whether or not the record holds them, so the answer
 says nothing about the person, and a family is its principals, each a person. Write nothing

@@ -579,8 +579,61 @@ Never fill what you could not read from memory or the web; a web answer is
 
 Say what the record can answer for this company, never what it says. No count, no
 figure, no URL, on any lane. Pick the case the check found, then close with the
-lane's own sentence. This skill runs no check of its own. Unless `research-lead` has
-already checked this name in this session, the case is "The record was not asked".
+lane's own sentence.
+
+**Where the case comes from.** This holds for a company only. For a person or a family there is no
+check and no cache: the check defers persons, so the case is "The record was not asked".
+For a company, take the first of these that applies:
+
+- **The desk's cache.** The cache is `.celorus/cache/check-<slug>.md` under the desk folder,
+  found as `research-lead`'s "Find the desk" says: the folder named by `CELORUS_DESK`, or else
+  the nearest folder up from the working directory that holds `celorus/index.md`. Here
+  `<slug>` is the cache key, not a page's slug: the name as asked, lowercase, with every run
+  of characters that are not letters or digits turned into one hyphen. With no desk, no
+  cache is read or written, and the check is asked at most once in this session. When the
+  cache holds a case asked less than a day ago, use that case, ask nothing, and say when it
+  was checked, in words (for example: checked today, at ten past two). When it holds "Not
+  found" asked less than a day ago, ask nothing, and route it as a fresh `not_found` (below).
+  When it holds "Clarify" asked less than a day ago, ask nothing and ask the user to choose
+  among its names. When it holds
+  "Refused" and the time it may be asked again has not come, ask nothing, say in one line
+  that the record was asked too often and when it may be asked again, and the case is "The
+  record was not asked".
+- **The check.** Else, when a `celorus-check` connection is present in this session, ask
+  its `check_record` tool once, through that connection, with the name and the kind
+  `company`, and write the case and the time it was asked to the cache, never the counts.
+  Every time kept in the cache, a case's, a "Refused" retry time and a "Not found" time, is
+  an ISO timestamp with its offset; the spoken form is for display only. One ask per company per day on this desk, however many record skills run on it:
+  the cache is what holds that ration. If the check refuses the ask as too many requests,
+  write "Refused" and the time it may be asked again to the cache (a day after the refusal
+  when the refusal shows no wait). Say in one line when it may be asked again and what its
+  limit is, in words, when the refusal shows them (its `retry_after_s`, `limit` and
+  `message`); otherwise say in one line that the record was asked too often and to try
+  again later. The case is then "The record was not asked".
+- **Neither.** Else, and only then, the case is "The record was not asked".
+
+Nothing the plugin runs itself asks the check: the ask goes through the harness's
+connection, never through a script, a hook or the engine.
+
+The cache holds a case, "Refused", "Not found" or "Clarify", each with its time, and never a
+count. "Depth on record": the check answered `on_record` and the record holds returns the
+company has filed. "Only the identity and the board are on record": it answered `on_record`
+and the record holds none filed. An `on_record` answer with no counts could not be read: the
+case is "The record was not asked", and it is kept too, so the next skill does not ask again
+the same day. A `not_found` is kept as "Not found", and a kept one is routed exactly as a
+fresh one. A `not_found` can also mean the check could not read, so it proves nothing on its
+own. Every entry is written under the key of the name the user asked, under the key of the
+name the check was asked with when that differs, and under the key of the check's canonical
+name when it gave one. A "Not found" entry also records the name the check was asked with,
+and a fresh or held "Not found" is never said to the user as a case: say the "not on the
+Celorus record yet" line below only when that recorded name is the company's registered
+name, as the desk's own pages or this session's web register record it; otherwise the case
+is "The name does not resolve". On `clarify`, show the user the candidate names and ask
+which one is meant, and write "Clarify" with its time and those names, names only and never
+a count. Within the day, a skill that finds it asks the user to choose among those names
+without asking the check again; when a name is chosen and the check is asked for it, write
+that case under the chosen name's key and the asked name's key. On "Depth on record", the
+desk's mandate picks the row: a seller vetting a counterparty or a banker reads its own row.
 
 | The case | The value sentence |
 |---|---|
