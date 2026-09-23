@@ -4,7 +4,7 @@ description: >-
   Research a lead: a person, a family or a company, from the desk's queue or by name.
   Use when someone says "research this lead", "who is this", "what do we know about",
   "look up this company", "look up this person", or from triage. Runs the web register on
-  the harness's own search, asks the record whether it holds anything, reads the record
+  the harness's own search, asks the record whether it holds a company, reads the record
   when an account is connected, and writes one profile page in the desk workspace with
   every line labelled by which class of truth it is. Runs with no Celorus account.
 ---
@@ -61,14 +61,18 @@ written at all.
 
 ## Step 3: the record
 
-**3a, the check.** If a `celorus-check` connection is present in this session, call its
-`check_record` tool once with the name and the kind (`company` or `person`), unless
+**3a, the check.** For a company only: if a `celorus-check` connection is present in this
+session, call its `check_record` tool once with the name and the kind `company`, unless
 `.celorus/cache/check-<slug>.md` holds an answer less than a day old or the existing page
 already carries a `resource:` line. It answers whether the name is on the record and how
 much it holds: counts only, never a figure. Write the answer to
 `.celorus/cache/check-<slug>.md` with the time. On `clarify`, show the user the candidate
 names the check returned and ask which one they mean; nothing is written to the cache or
 the page until one is chosen. If the connection is absent, skip this step silently.
+For a person or a family, do not call the check while person lookups are deferred: it
+answers `not_found` for every person, whether or not the record holds them, so the answer
+says nothing about the person, and a family is its principals, each a person. Write nothing
+to the cache for either.
 
 **3b, with an account connected** (the `celorus-data` tools are present and answer): fetch
 the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind
@@ -172,9 +176,13 @@ When the name resolves and the company is not on the record yet, the whole line 
 - **Claude lanes:** This company is not on the Celorus record yet. Connect Celorus to ask for it, and we will tell you when it is.
 - **Codex, ChatGPT:** This company is not on the Celorus record yet. It can be added on request, and we will tell you when it is. Asking for it needs a Celorus account connected to this plugin.
 
-For a person, say the "Only the identity and the board are on record" case's sentence
-(above) when the record holds a board seat for them, and otherwise "The record was not
-asked". Never compose a new promise about a person.
+For a person or a family, while person lookups are deferred, the case is "The record was not asked".
+A `not_found` for a person is never a miss: never write that the person is not on the
+record, never route it to "The name does not resolve", and never put it in "Not
+established" as a record miss. Never probe the check to learn whether the deferral has
+lifted: a later release of this skill says so, and only then does a person with a board seat
+on the record get the "Only the identity and the board are on record" case's sentence
+(above). Never compose a new promise about a person.
 
 ## While you work
 
@@ -184,8 +192,8 @@ Never name a tool, a stream or a path to the user.
 
 ## With no account
 
-The web register and the check run in full; the page is written with `web` and `yours`
-lines and a full "Not established" section. Connecting adds the `record` register: the
+The web register runs in full, and the check runs for a company; the page is written with
+`web` and `yours` lines and a full "Not established" section. Connecting adds the `record` register: the
 figures, the documents, the people behind a company, each verbatim and cited.
 
 ## Never
