@@ -482,51 +482,72 @@ For a company, take the first of these that applies:
   found as `research-lead`'s "Find the desk" says: the folder named by `CELORUS_DESK`, or else
   the nearest folder up from the working directory that holds `celorus/index.md`. Here
   `<slug>` is the cache key, not a page's slug: the name as asked, lowercase, with every run
-  of characters that are not letters or digits turned into one hyphen. With no desk, no
-  cache is read or written, and the check is asked at most once in this session. When the
-  cache holds a case asked less than a day ago, use that case, ask nothing, and say when it
-  was checked, in words (for example: checked today, at ten past two). When it holds "Not
-  found" asked less than a day ago, ask nothing, and route it as a fresh `not_found` (below).
-  When it holds "Clarify" asked less than a day ago, ask nothing and ask the user to choose
-  among its names. When it holds
-  "Refused" and the time it may be asked again has not come, ask nothing, say in one line
-  that the record was asked too often and when it may be asked again, and the case is "The
-  record was not asked".
-- **The check.** Else, when a `celorus-check` connection is present in this session, ask
-  its `check_record` tool once, through that connection, with the name and the kind
-  `company`, and write the case and the time it was asked to the cache, never the counts.
-  Every time kept in the cache, a case's, a "Refused" retry time and a "Not found" time, is
-  an ISO timestamp with its offset; the spoken form is for display only. One ask per company per day on this desk, however many record skills run on it:
-  the cache is what holds that ration. If the check refuses the ask as too many requests,
-  write "Refused" and the time it may be asked again to the cache (a day after the refusal
-  when the refusal shows no wait). Say in one line when it may be asked again and what its
-  limit is, in words, when the refusal shows them (its `retry_after_s`, `limit` and
-  `message`); otherwise say in one line that the record was asked too often and to try
-  again later. The case is then "The record was not asked".
+  of characters that are not letters or digits turned into one hyphen. With no desk, no cache
+  is read or written, and the check is asked at most once in this session. Read the notes
+  first, each only while it holds: a "Refused" until the time it may be asked again, a "Could
+  not read" for an hour after it was asked; a note whose time has passed is not read. A
+  "Refused" or "Could not read" entry is a note, not a case and never a miss: it is read only
+  by its own rule, never as a case. Writing a case, "Not found" or "Clarify" under a key
+  replaces any note under that key. When the cache holds "Refused" and the time it may be
+  asked again has not come, ask nothing, say in one line that the record was asked too often
+  and when it may be asked again, when the note says that time came from the refusal;
+  otherwise say in one line that the record was asked too often and to try again later, never
+  naming the kept time. The case is "The record was not asked". When it holds "Could not read"
+  asked less than an hour ago, ask nothing, say in one line "the check could not read the
+  record, asked at HH:MM" with the time it was asked, and the case is "The record was not
+  asked"; after the hour, ask again. When the cache holds a case asked less than a day ago,
+  use that case, ask nothing, and say when it was checked, in words (for example: checked
+  today, at ten past two). When it holds "Not found" asked less than a day ago, ask nothing,
+  and route it as a fresh `not_found` (below). When it holds "Clarify" asked less than a day
+  ago, ask nothing and ask the user to choose among its names.
+- **The check.** Else, when a `celorus-check` connection is present in this session, ask its
+  `check_record` tool once, through that connection, with the name and the kind `company`, and
+  write the case and the time it was asked to the cache, never the counts. Every time kept in
+  the cache, a case's, a "Refused" retry time, a "Could not read" time and a "Not found" time,
+  is an ISO timestamp with its offset; the spoken form is for display only. One answered ask
+  per company per day on this desk, however many record skills run on it: the cache is what
+  holds that ration. A failed read is held on the desk for an hour and then asked again. If
+  the check answers with an error in place of an answer (a read it could not make, a query it
+  will not take, or the ask refused as too many requests), that is a non-answer and not a
+  miss: say it as the check not answering, never as "not on the record" or as anything about
+  the company. If the check refuses the ask as too many requests, write "Refused" and the time
+  it may be asked again to the cache, noting whether that time came from the refusal (when the
+  refusal shows no wait, the time is a day after the refusal and did not come from it). Say in
+  one line when it may be asked again and what its limit is, in words, when the refusal shows
+  them (its `retry_after_s`, `limit` and `message`); otherwise say in one line that the record
+  was asked too often and to try again later. If it could not read the record, write "Could
+  not read" and the time it was asked to the cache, and say in one line "the check could not
+  read the record, asked at HH:MM" with the time it was asked. If it will not take the query,
+  keep nothing, and say in one line the check's own error words as it gave them. The case is
+  then "The record was not asked".
 - **Neither.** Else, and only then, the case is "The record was not asked".
 
 Nothing the plugin runs itself asks the check: the ask goes through the harness's
 connection, never through a script, a hook or the engine.
 
-The cache holds a case, "Refused", "Not found" or "Clarify", each with its time, and never a
-count. "Depth on record": the check answered `on_record` and the record holds returns the
-company has filed. "Only the identity and the board are on record": it answered `on_record`
-and the record holds none filed. An `on_record` answer with no counts could not be read: the
-case is "The record was not asked", and it is kept too, so the next skill does not ask again
-the same day. A `not_found` is kept as "Not found", and a kept one is routed exactly as a
-fresh one. A `not_found` can also mean the check could not read, so it proves nothing on its
-own. Every entry is written under the key of the name the user asked, under the key of the
-name the check was asked with when that differs, and under the key of the check's canonical
-name when it gave one. A "Not found" entry also records the name the check was asked with,
-and a fresh or held "Not found" is never said to the user as a case: say the "not on the
-Celorus record yet" line below only when that recorded name is the company's registered
-name, as the desk's own pages or this session's web register record it; otherwise the case
-is "The name does not resolve". On `clarify`, show the user the candidate names and ask
-which one is meant, and write "Clarify" with its time and those names, names only and never
-a count. Within the day, a skill that finds it asks the user to choose among those names
-without asking the check again; when a name is chosen and the check is asked for it, write
-that case under the chosen name's key and the asked name's key. On "Depth on record", the
-desk's mandate picks the row: a seller vetting a counterparty or a banker reads its own row.
+The cache holds a case, "Not found" or "Clarify", each with its time, and never a count. It
+also holds two notes and no other error from the check: "Refused", with the time it may be
+asked again and whether that time came from the refusal, and "Could not read", with the time
+it was asked. "Depth on record": the check answered `on_record` and the record holds returns
+the company has filed. "Only the identity and the board are on record": it answered
+`on_record` and the record holds none filed. An `on_record` answer with null `counts` is the
+case "On the record, counts not available", kept as that case, never as counts and never as
+"The record was not asked", because the record was asked and answered: say the value sentence
+of that case's row in the table below, and the day's one ask
+is spent. A `not_found` is kept as "Not found", and a kept one is routed exactly as a fresh
+one. Only a `not_found` is a miss; an error from the check never is. Every entry is written
+under the key of the name the user asked, under the key of the name the check was asked with
+when that differs, and under the key of the check's canonical name when it gave one. A "Not
+found" entry also records the name the check was asked with, and a fresh or held "Not found"
+is never said to the user as a case: say the "not on the Celorus record yet" line below only
+when that recorded name is the company's registered name, as the desk's own pages or this
+session's web register record it; otherwise the case is "The name does not resolve". On
+`clarify`, show the user the candidate names and ask which one is meant, and write "Clarify"
+with its time and those names, names only and never a count. Within the day, a skill that
+finds it asks the user to choose among those names without asking the check again; when a name
+is chosen and the check is asked for it, write that case under the chosen name's key and the
+asked name's key. On "Depth on record", the desk's mandate picks the row: a seller vetting a
+counterparty or a banker reads its own row.
 
 | The case | The value sentence |
 |---|---|
@@ -534,6 +555,7 @@ desk's mandate picks the row: a seller vetting a counterparty or a banker reads 
 | The desk is a seller vetting a counterparty | Celorus can answer, from regulatory sources, whether this company can pay and any warning signs its auditor has flagged, and who owns and runs it. |
 | The desk is a banker | Celorus can answer, from regulatory sources, who owns this company and who controls it, and what it owes and to whom. |
 | Only the identity and the board are on record | Celorus can answer, from regulatory sources, who sits on this company's board and how many other boards each of them sits on. |
+| On the record, counts not available | This company is on the Celorus record, and its counts are not available. Then the lane's close. |
 | The name does not resolve | Nothing is written. No line, no ask. The page's "not established" section carries the miss. |
 | The record was not asked | The record was not asked. Then the lane's close. |
 
