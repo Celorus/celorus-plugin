@@ -160,18 +160,22 @@ For a company, take the first of these that applies:
   not read" for an hour after it was asked; a note whose time has passed is not read. A
   "Refused" or "Could not read" entry is a note, not a case and never a miss: it is read only
   by its own rule, never as a case. Writing a case, "Not found" or "Clarify" under a key
-  replaces any note under that key. When the cache holds "Refused" and the time it may be
-  asked again has not come, ask nothing, say in one line that the record was asked too often
-  and when it may be asked again, when the note says that time came from the refusal;
-  otherwise say in one line that the record was asked too often and to try again later, never
-  naming the kept time. The case is "The record was not asked". When it holds "Could not read"
+  replaces any note under that key. Writing a note never replaces a case: the case stays under
+  the key beside the note. When the cache holds "Refused" and the time it may be asked again
+  has not come, ask nothing, say in one line that the record was asked too often and when it
+  may be asked again, when the note says that time came from the refusal; otherwise say in one
+  line that the record was asked too often and to try again later, never naming the kept time.
+  The case is "The record was not asked", or "On the record, counts not available" when the
+  note keeps that the company is on the Celorus record. When it holds "Could not read"
   asked less than an hour ago, ask nothing, say in one line "the check could not read the
   record, asked at HH:MM" with the time it was asked, and the case is "The record was not
-  asked"; after the hour, ask again. When the cache holds a case asked less than a day ago,
-  use that case, ask nothing, and say when it was checked, in words (for example: checked
-  today, at ten past two). When it holds "Not found" asked less than a day ago, ask nothing,
-  and route it as a fresh `not_found` (below). When it holds "Clarify" asked less than a day
-  ago, ask nothing and ask the user to choose among its names.
+  asked", or "On the record, counts not available" when the note keeps that the company is on
+  the Celorus record; after the hour, ask again. When the cache holds a case other than "On
+  the record, counts not available" asked less than a day ago, or that case asked less than an
+  hour ago, use that case, ask nothing, and say when it was checked, in words (for example:
+  checked today, at ten past two); after that hour, ask again. When it holds "Not found" asked
+  less than a day ago, ask nothing, and route it as a fresh `not_found` (below). When it holds
+  "Clarify" asked less than a day ago, ask nothing and ask the user to choose among its names.
 - **The check.** Else, when a `celorus-check` connection is present in this session, ask its
   `check_record` tool once, through that connection, with the name and the kind `company`, and
   write the case and the time it was asked to the cache, never the counts. Every time kept in
@@ -191,7 +195,10 @@ For a company, take the first of these that applies:
   not read" and the time it was asked to the cache, and say in one line "the check could not
   read the record, asked at HH:MM" with the time it was asked. If it will not take the query,
   keep nothing, and say in one line the check's own error words as it gave them. The case is
-  then "The record was not asked".
+  then "The record was not asked". But a "Refused" or "Could not read" written under a key
+  that holds the case "On the record, counts not available" asked less than a day ago keeps
+  that the company is on the Celorus record, so a failed ask does not lose that fact, and the
+  case is then "On the record, counts not available".
 - **Neither.** Else, and only then, the case is "The record was not asked".
 
 Nothing the plugin runs itself asks the check: the ask goes through the harness's
@@ -200,14 +207,17 @@ connection, never through a script, a hook or the engine.
 The cache holds a case, "Not found" or "Clarify", each with its time, and never a count. It
 also holds two notes and no other error from the check: "Refused", with the time it may be
 asked again and whether that time came from the refusal, and "Could not read", with the time
-it was asked. "Depth on record": the check answered `on_record` and the record holds returns
-the company has filed. "Only the identity and the board are on record": it answered
-`on_record` and the record holds none filed. An `on_record` answer with null `counts` is the
+it was asked. Each note also carries whether it keeps that the company is on the Celorus
+record. "Depth on
+record": the check answered `on_record` and the record holds returns the company has filed.
+"Only the identity and the board are on record": it answered `on_record` and the record holds
+none filed. An `on_record` answer with null `counts` is the
 case "On the record, counts not available", kept as that case, never as counts and never as
 "The record was not asked", because the record was asked and answered: say the value sentence
-of that case's row in the table below, and the day's one ask
-is spent. A `not_found` is kept as "Not found", and a kept one is routed exactly as a fresh
-one. Only a `not_found` is a miss; an error from the check never is. Every entry is written
+of that case's row in the table below. Its missing counts are a failed read: the case is held
+on the desk for an hour, not a day, and it is not the day's one answered ask. A `not_found`
+is kept as "Not found", and a kept one is routed exactly as a fresh one. Only a `not_found`
+is a miss; an error from the check never is. Every entry is written
 under the key of the name the user asked, under the key of the name the check was asked with
 when that differs, and under the key of the check's canonical name when it gave one. A "Not
 found" entry also records the name the check was asked with, and a fresh or held "Not found"
