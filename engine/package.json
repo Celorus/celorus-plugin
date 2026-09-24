@@ -1,0 +1,10 @@
+{
+  "name": "celorus-desk",
+  "private": true,
+  "description": "The Celorus desk tools: one local program behind two doors, a stdio MCP server (server.js) and a command line (cli.js). No dependencies; the plugin manifest holds the version.",
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  }
+}

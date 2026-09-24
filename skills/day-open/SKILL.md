@@ -127,6 +127,18 @@ One plain progress line per step ("Reading the follow-up queue", "Looking for re
 "Writing today's board"). Never name a tool, a file path or a connector's internals to
 the user.
 
+## When the desk tools cannot run
+
+The desk tools are the `celorus-desk` server this plugin starts on this machine. Before its
+first write, this skill calls `check_desk` once, so it knows the desk tools answer before
+anything is written; a refusal is an answer. When a desk tool call cannot be made before
+anything is written, because the tool is missing or it does not run, write nothing, say
+exactly this sentence and stop, and never make the page or the answer from these
+instructions instead:
+"The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
+If a desk tool call cannot be made after this skill has written, say which pages were
+written and stop; that sentence is never said then.
+
 ## With no account
 
 This skill runs in full with no Celorus account: the queues, the mailbox, the calendar and

@@ -1,50 +1,104 @@
 ---
 name: check-desk
 description: >-
-  List what needs attention on the desk and rebuild its generated views: a page of an unknown
+  Run the desk tools' check over the desk and show what needs attention: a page of an unknown
   kind, a missing detail, a word on no list, a link to nothing, a connection with no proof, a
   guess drawn as a line, contact details on a person who was only named, a name with no
-  source, two pages that may be the same, a layout slip. Answers "who can introduce me to
-  <name>?" with the ranked paths over the desk's own pages, and merges two pages that are one,
-  with an undo. Use when someone says "check my desk", "what needs attention", "rebuild the
-  views", "who can introduce me to", "merge these two", or after any skill writes a page. It lists and never blocks, and never sends anything. Runs with no
+  source, two pages that may be the same, a layout slip. Rebuilds the generated views, answers
+  "who can introduce me to <name>?" with the ranked paths over the desk's own pages, and merges
+  two pages that are one, with an undo. Use when someone says "check my desk", "what needs
+  attention", "rebuild the views", "who can introduce me to", "merge these two", or after any
+  skill writes a page. It lists and never blocks, and never sends anything. Runs with no
   Celorus account.
 ---
 
 # Check the desk
 
-The desk stays readable because its pages follow one model. This skill reads the model the
-desk holds in `celorus/model/`, walks the pages, lists every gap in
-`celorus/views/needs-attention.md`, and rebuilds the other views. It lists; it never blocks,
-never refuses another skill's write, and never changes a page except the page's generated part.
+The check is the desk tools' `check_desk`: it reads the desk, runs every rule over it and
+returns each finding as a row. This skill runs the check and shows the page. It lists; it
+never blocks, never refuses another skill's write, and never changes a page except the page's
+generated part.
 
-One thing it does not do: if the model cannot be read, list the page and stop. Do not rebuild
-a view or write a path page. It cannot be read when `celorus/model/model.md` is not there,
-when its header does not parse, and also when the header parses perfectly and one of the
-blocks the rest of the model is built from is missing; the same goes for a `kind-` page that
-has lost its `kind`, `folder` or `must_have`. A header that reads cleanly is not the same as a
-model that can be read, and a page that is one line short is the likeliest of the three. Every
-view and every path page is written from the model, so they would otherwise be written from
-words nobody wrote, and a wrong view is worse than yesterday's view. Say which page, and that
-the views were left as they are.
+## House rules
+
+1. Numbers and rows come only from a tool. The model writes sentences and never counts.
+2. A page is shown from the path the tool returns, never retyped.
+3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
+4. Nothing is sent. A mail stops at a draft.
+5. Every change ends in the desk's own history.
+6. The seat must be known before anything is written.
+
+These hold over every section of this skill, the walk and the merge included. Where a section
+below seems to ask for something they forbid, they win.
+
+## Find the desk
+
+The check finds the desk: the folder named by `CELORUS_DESK`, or else the first folder found
+by walking up from the working directory that contains `celorus/index.md`. When it cannot, it
+refuses and says what a desk is and how to name one: say its sentence, offer `install-desk`,
+and stop. The seat is `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`, where
+`desk_id` is the one the check returns. When the check returns layout 1, the desk has no
+`celorus/desk.md`: say in one line that "update my desk" moves it to layout 2, and stop.
+
+Without a seat, run the check without `record`, so it stays read-only, say its summary, and
+write nothing: no view, no path page, no merge and no log line. Say that the seat is not known, and that
+`CELORUS_SEAT` or `install-desk` sets it.
 
 Whether the desk's files are all there is a different question: "check my desk setup" is
 `install-desk`'s verify mode. This skill reads what the pages say.
 
-## Find the desk
-
-The desk folder is the one named by `CELORUS_DESK`, or else the first folder found by walking
-up from the working directory that contains `celorus/index.md`; the seat is `CELORUS_SEAT` or
-the handle in `~/.celorus/seat-<desk_id>`, where `desk_id` is in `celorus/desk.md`. Without a
-desk, say so in one line and offer `install-desk`. Without `celorus/desk.md` the desk is on
-layout 1: say in one line that "update my desk" moves it to layout 2, and stop.
-
 ## How much to check
 
-- After another skill writes: the pages it wrote, and the pages those pages link to.
-- On "check my desk", and when `day-open` opens the day: every page.
+- After another skill writes: call `check_desk` with `scope`, the pages it wrote; the check
+  keeps the findings on those pages and on the pages they link. Where its rules stopped at the
+  layout, its summary says the scope was not applied, and its findings are the whole check's.
+- On "check my desk", and when `day-open` opens the day: call `check_desk` over the whole desk.
+
+## Run the check and show the page
+
+Call `check_desk` with `record: true`. The check is read-only unless asked to record, and a
+hand run stamps only with `--record`; this skill asks, so a clean whole-desk check can write
+its stamp. Tell the person not to save `desk.md` while the check records.
+Its answer is the whole of what this skill knows about the desk's rules:
+
+- `findings`: one row per finding, each with its `page`, its `rule` and its `message`.
+- `rules`: the words of each rule, by its id, C01 to C15.
+- `findings_by_rule`: how many rows each rule has.
+- `summary`: the check's own sentence about the run.
+- `pages_with_problems`: each page the check could not read, or whose stamps it could not
+  read, with why and the remedy. A page with no header is not one of them; the rules say
+  whether it should have one.
+- `root`: the desk folder the check read, and `layout`, `desk` and `desk_id` from its stamps.
+- `checked_with`: the lines the check wrote into `celorus/desk.md`, or null and the reason none
+  is reported written. A whole-desk check asked to record writes two lines there, clean or not:
+  `checked_with: <version>` and `checked_findings: <n>`. They say which release checked the
+  desk and how many findings it listed, never that the desk is clean. They are the check's
+  record of itself, not a change to the desk, so they take no log line. The stamp rewrites
+  `desk.md` in place, the same file. When the stamp is not reported written, the reason says
+  what happened and whether `desk.md`, or the file the stamp went into, was put back. When that
+  file may not hold its old text, the answer carries that text in `previous_text`, and
+  `previous_text_is_desk_md` says whose text it is: true when it is `desk.md`'s own, false when
+  it is the earlier text of the file the stamp went into, which may no longer be `desk.md`. A
+  failed stamp never fails the check: its findings stand either way.
+
+The rules live in the desk tools and nowhere else. Never judge a page against a rule yourself,
+never add, drop, merge or reword a row, and never count rows or pages: every number you say is
+one the check returned. A refusal from the check names what it takes; say it, and ask for
+that.
+
+Then write `celorus/views/needs-attention.md` from the check's rows, as "What you write"
+below says, and show that page from its path under the `root` the check returned, never
+retyped into the answer.
+
+One thing it does not do: when a row's message is `the model cannot be read from this page`,
+the model cannot be read, so list the page and stop. Do not rebuild a view or write a path
+page. Every view and every path page is written from the model, so they would otherwise be
+written from words nobody wrote, and a wrong view is worse than yesterday's view. Say which
+page, and that the views were left as they are.
 
 ## What you read
+
+The check reads the desk itself. The walk and the views below read these pages of it:
 
 - `celorus/desk.md`: `pack`, and the switch `named_only_contact_details`.
 - `celorus/model/model.md`: the kinds, the system types, the details every page carries, the
@@ -91,133 +145,6 @@ and `## Connections ##` are all the section, because a person cannot tell them f
 `### Connections`, `## connections` and `## Connections and proof` are each a different
 heading, because a person can see that they are.
 
-A page of a kind that draws a line and has no such heading is listed (C14), and until the
-heading is there, a question the desk finds no path for is answered with the hedge rather than
-with "nothing connects". A page with a second `## Connections` heading is listed under layout
-the same way: the first section is the one read, and the lines under the second are walked by
-nobody. A desk whose own `model/connections.md` is listed under layout cannot say that nothing
-connects either: while that page says two things, what draws a line on the desk is not
-settled. Three of the reasons a page hedges are listed here too, so that the
-check you are sent to can show them: on a page that states a kind, whose header reads, and whose
-name is neither `index.md` nor `log.md`, a line under Connections you could not read is listed
-under layout with the line, and so is a shown or said line whose target is not a link; a
-connection word no copy of the model names is a word on no list. On any other page those same
-two are C15 with the line, on the line's own page, because no layout row carries them there. A
-page that did not decode at all is listed for that, and its lines are not read one by one. The rest are C15 that way too: a line the walk
-could not take for a reason written on the desk itself. So a page that hedges sends you to a
-check with a row behind the hedge, and every line the hedge names is on a row of it, unless a
-page under `model/` is listed under layout. The desk's connections page unsettles every line at
-once. A kind page that cannot be read takes its kind out of the model, and a line with that
-kind at either end is then turned away with nothing on its own page to say why, because the row
-that would say why is one of the model's own, and those stand down while a model page is
-unreadable. Put that page's header back and the rows return.
-
-## The rules
-
-Each finding is one row: the words in bold, the page, and one line of detail.
-
-1. **C01 unknown kind.** A page's `type` is neither a kind with a `kind-<kind>.md` page nor a
-   system type in `model.md`. Or the kind belongs to a pack and the desk runs a different
-   pack. A desk with no pack keeps every kind.
-2. **C02 missing must-have detail.** `type` or `title` is empty; a must-have detail of the
-   page's kind is empty; a person, family or firm holds one or two of `stage`,
-   `relationship_kind`, `owner` but not all three. Not `index.md`, which by rule holds only its
-   version, so C02 would otherwise report it twice over (no `type` and no `title`) against a
-   file `install-desk` had just written correctly. `log.md` is not read here either, and it
-   never could have been: by rule it has no header at all, so it is a page with no header
-   before it is a page with a detail missing, and it falls to C12. Both are C12's to read.
-3. **C03 word on no list.** A detail named in `field_lists` holds a word that is on neither
-   its list nor the desk's own words for that list. A list with no words is not checked.
-4. **C04 own word with no match.** An own-words entry for a pack list names no word on that
-   pack list, or the entry cannot be read in either shape, or the desk's own word is now also
-   a standard word on that list. In the last case the desk's meaning is kept; say which two
-   meanings clash and let the person decide.
-5. **C05 link that points at nothing.** A `[[link]]` names no page on the desk; a sent page's
-   `file` is not in the desk folder.
-6. **C06 connection with no proof line.** A header connection named in `proof_required` has no
-   line under `## Connections` for the same connection and target.
-7. **C07 guess drawn as a line.** A guessed line links its target; or a header connection whose
-   only proof lines are guesses.
-8. **C08 contact details on a named-only person.** While `named_only_contact_details` is
-   `false`, a person whose `standing` is `named-only` carries an email address, a phone number
-   or a `## Coordinates` section holding any line but `- Not established.` Drawing a fence
-   round an address does not hide it: the marker lines are skipped and the words between them
-   are read. If a fenced block on that page was never closed its structure cannot be read at
-   all, so this rule reads the page the plain way and the row says so - it would rather list a
-   worked example than go quiet about a person's address. The check lists; it never blocks.
-9. **C09 name with no source.** A person's `name_source`, when it has one (a missing one is
-   C02), is a link, where it should be the
-   plain file name of the page the name came from; or it names no conversation, sent item,
-   brief or research page on the desk, and is not `supplied-<list>`, `book` or
-   `crm-export-<date>`.
-10. **C10 may be the same.** Two persons, two firms or two families share a title or alias
-    (the same words in any order), and neither lists the other in `not_same_as` (one file
-    name, or a list of them).
-11. **C11 file name used twice.** Two pages of a kind share a file name in different folders.
-12. **C12 layout.** A required desk file is missing; a model page cannot be read; a fenced
-    block on a page was opened and never closed, so the lines below it were not read, and the
-    two rules that would have to assume something about them say nothing about that page until
-    you close it: whether each connection in your header is backed by a proof line, and whether
-    a link in the body points at a page. Links in the header are still checked;
-    a page of a kind sits outside its kind's folder; a page has a second `## Connections`
-    heading, and only the first is read; a header holds a nested value (only
-    `sources` may);
-    `index.md` holds anything but `okf_version: "0.2"`; `log.md` has a header, or a line that
-    is not blank, `# Log`, a `## <date>` heading or a `* <time> · ...` line; `desk.md` is not on
-    layout 2; `connections.md` names no `draws`, which would leave the rules about drawn lines
-    passing in silence, or a word in `draws` has no entry under `connections:` naming the kinds
-    at its ends, or such an entry names at an end something that is no kind of page on this
-    desk: the rule about leaving a firm reads those ends. Two more rows on that same page: no
-    kind is named `firm`, so the rule about leaving one is written against a word this desk
-    does not use; and a connection is written twice, in the header and in the list under the
-    text, and the two disagree, or one copy names it and the other does not; and a connection
-    some copy says draws a line is not in `draws`, which is the quiet direction of that same
-    drift, because `draws` is the copy the walk reads and a word dropped from it stops drawing
-    over the whole desk while every other copy still says it does. One row on `model/model.md`,
-    which is where both lists live: a word is named there both as a kind of page and as part of
-    the desk itself, which quietly stops that kind being walked. While any page under `model/`
-    cannot be read, whatever the reason, the rules that read from a model page of their own say
-    nothing on this desk: C01, C03, the C04 row about a word of your own pointing at something
-    no list holds, the C09 row about a name source naming no page of a kind that can hold one,
-    and the two rows above about ends that are no kind and no kind named `firm`. The words
-    that page held may be the ones they read, and a finding drawn from that gap would be this
-    check inventing one. The page itself is named here in the same run, so you can see what
-    was lost and put it back. The other C04 row, a line on your own words page that cannot be
-    read as a word at all, is still listed: it reads only the page the finding is about, so no
-    gap anywhere else could have produced it.
-13. **C13 evidence link drawn as a line.** Only a relationship draws a line. On a page of a
-    kind whose `kind-<kind>.md` page names a connection in `draws` among its must-have or usual
-    details, a header detail holds a `[[link]]`, and the detail is neither a connection in
-    `draws` nor a detail the model names for that kind or for every page. A link inside
-    `sources` never draws.
-14. **C14 no Connections section.** A page of a kind that draws a line has no `## Connections`
-    heading, read as the section above says a heading is read. Connection lines are read there
-    and nowhere else, so this is a page whose connections nobody looked at, and a question the
-    desk finds no path for hedges until the heading is there. Not raised on a page whose fenced
-    block was opened and never closed: the heading may be one of the lines that block took, and
-    that page is already listed for the fence.
-15. **C15 connections on a page that draws no line.** Listed with the page and the line, for
-    every line the path page counts as not walked that no other row already carries. A line
-    under `## Connections` on a page no path runs through: a page whose `type` is a system type
-    in `model.md` - the desk's own furniture, a board, a queue, a draft - even when the same
-    word is also named as a kind, and a page that states no kind at all outside every kind's
-    folder, an index and a page with no header at all among them. A proof line
-    outside the `## Connections`
-    section, on any page, an index and the log included: connection lines are read in the first
-    section of that name and nowhere else, so a line under a second one is listed as being
-    there. And on a page the walk reads, a line it still cannot take: its connection does not
-    join that kind of page (`part_of` joins two firms, so on a person's page it draws nothing);
-    it names only the page it sits on; it names a page that is not on the desk, or one the walk
-    never reaches (a page only furniture answers to, or a page with no kind outside every
-    kind's folder); or it joins two firms along a connection the model does not run from a
-    firm to a firm, where a page whose kind is not a kind here is read as a firm. Whether a
-    line draws is asked the way the walk asks it, from the ends the model states for the
-    connection, never from a kind page's list of its usual connections. A guess, and a line of
-    a connection no copy of the model calls a drawing one, are neither counted there nor listed
-    here, except on a desk whose model names nothing that draws: there every line but a guess
-    is counted, and the one layout row on `model/connections.md` says why. The line is not read
-    as a connection: a furniture page draws no line, and reading its lines would make it draw.
-
 ## What you write
 
 `celorus/views/needs-attention.md`, rewritten whole:
@@ -236,14 +163,16 @@ Listed, never blocking. Walk it with the person whose desk it is.
 
 | what | page | detail |
 |---|---|---|
-| <the rule's bold words, without the id> | [[<page file name>]] | <one line> |
+| <the rule's words from `rules`, without the id> | [[<page file name>]] | <the row's message> |
 ```
 
-The detail is the finding in the checker's few words, naming what is missing or wrong: a
-missing must-have detail reads `no <detail>`, as `no standing`.
+One table row per row the check returned, in the order it returned them, each copied as the
+check wrote it: the rule's words, the page, and the message word for word. Never reword a
+message, and never add a row the check did not return.
 
 With nothing found, the table is replaced by `Nothing to look at.` After a scoped check, keep
-the rows for pages outside the scope as they were.
+the rows for pages outside the scope as they were. When the check says the scope was not
+applied, write needs-attention as for a whole check, since its rows are the whole check's.
 
 In every view and every path page, a name with no page on the desk is written plain and never
 as a link, wherever it stands: a link to a page that is not there offers to make an empty one,
@@ -615,9 +544,29 @@ Otherwise name the pages that changed since, and change nothing.
 
 ## Say at the end
 
-After a check: the number to look at, and the three rules with the most rows, in their bold
-words. After a path: the first path in words, who knows whom and how we know it, and where
-the page is. Never read out a named-only person's contact details.
+After a check: the check's `summary`, as it returned it, and the page, shown from its path.
+Name a rule by its words from `rules`, with the number `findings_by_rule` gives it, never a
+number of your own. When `checked_with` names lines the check wrote, say so in one sentence.
+Whenever `checked_with` carries `previous_text` (text, not null), whatever its reason says, say
+the reason as it came and show `previous_text` as it came. When `previous_text_is_desk_md` is
+true, it is `desk.md`'s previous text, and the person can put it back into `desk.md`. When it is
+false, say it is the earlier text of the file the stamp went into, which may no longer be
+`desk.md`, and never suggest writing it over `desk.md`: that could overwrite a newer save. Never
+write desk.md yourself.
+After a path: the first path in words, who knows whom and how we know it, and where the page
+is. Never read out a named-only person's contact details.
+
+## When the desk tools cannot run
+
+The desk tools are the `celorus-desk` server this plugin starts on this machine. Before its
+first write, this skill calls `check_desk` once, so it knows the desk tools answer before
+anything is written; a refusal is an answer. When a desk tool call cannot be made before
+anything is written, because the tool is missing or it does not run, write nothing, say
+exactly this sentence and stop, and never make the page or the answer from these
+instructions instead:
+"The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
+If a desk tool call cannot be made after this skill has written, say which pages were
+written and stop; that sentence is never said then.
 
 ## With no account
 
@@ -629,6 +578,8 @@ Connecting adds nothing to the check.
 - Never block, undo or refuse another skill's write, and never change a page's own lines to
   fix a finding. List it; the person fixes it, or says "fix it" for one row. A merge changes
   pages only when the person asks for it, as "Merge two pages" says.
+- Never judge a page against a rule yourself, and never count: rows and numbers come from the
+  check.
 - Never draw a guess as a line, on a page, in a view or in a path.
 - Never send anything, and never read outside the desk folder.
 
