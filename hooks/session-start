@@ -6,20 +6,123 @@
 # Never fails the session: every branch exits 0.
 set -u
 
-find_desk() {
-  if [ -n "${CELORUS_DESK:-}" ] && [ -f "${CELORUS_DESK}/celorus/index.md" ]; then
-    printf '%s' "${CELORUS_DESK}"
-    return 0
+# The kind of the entry at $1, looked at without following it, in the desk tools' words.
+odd_kind() {
+  if [ -p "$1" ]; then printf 'a pipe'
+  elif [ -S "$1" ]; then printf 'a socket'
+  elif [ -c "$1" ] || [ -b "$1" ]; then printf 'a device'
+  else printf 'neither a file nor a folder'; fi
+}
+
+# What a link at $1 leads to, in the desk tools' words.
+link_kind() {
+  if [ ! -e "$1" ]; then printf 'a link that points nowhere'
+  elif [ -d "$1" ]; then printf 'a link to a folder'
+  elif [ -f "$1" ]; then printf 'a link to a file'
+  else printf 'a link to something that is neither a file nor a folder'; fi
+}
+
+# Why the celorus folder $1 holds no index.md the desk tools can read, by its path under the
+# desk, or nothing when it does. Nothing is opened: a pipe there would wait for a writer.
+index_fault() {
+  local f="$1/index.md"
+  if [ ! -r "$1" ] || [ ! -x "$1" ]; then
+    printf 'celorus/ cannot be read: this machine gives no permission to read or search it'
+  elif [ -L "$f" ]; then printf 'celorus/index.md is %s' "$(link_kind "$f")"
+  elif [ ! -e "$f" ]; then printf 'celorus/ holds no index.md'
+  elif [ -d "$f" ]; then printf 'celorus/index.md is a folder, not a page'
+  elif [ ! -f "$f" ]; then printf 'celorus/index.md is %s, not a page' "$(odd_kind "$f")"
+  elif [ ! -r "$f" ]; then printf 'celorus/index.md cannot be read: this machine gives no permission to read it'
   fi
-  local d="${PWD}"
-  while [ -n "$d" ] && [ "$d" != "/" ]; do
-    if [ -f "$d/celorus/index.md" ]; then
-      printf '%s' "$d"
-      return 0
-    fi
-    d="$(dirname "$d")"
+}
+
+# Whether folder $1 holds an entry named exactly `celorus`, read in the folder's listing: the glob
+# reads the listing and matches case exactly, so on a disk that ignores case (macOS's default) a
+# folder named `Celorus`, which a look-up by the name would find, is not it. A folder that cannot
+# be listed is looked at by the name, as the engine does.
+holds_celorus() {
+  if [ -r "$1" ]; then
+    local listed=( "$1"/[c]elorus )
+    [ "${listed[0]}" = "$1/celorus" ] && { [ -e "${listed[0]}" ] || [ -L "${listed[0]}" ]; }
+  else
+    [ -e "$1/celorus" ] || [ -L "$1/celorus" ]
+  fi
+}
+
+# The name of an entry in folder $1's listing that is `celorus` in another case (`Celorus`,
+# `CELORUS`) and holds an index.md, or nothing: a desk's record folder misnamed, refused by name
+# with the rename, as the engine refuses it. One without an index.md is walked past.
+misnamed() {
+  [ -r "$1" ] || return 0
+  local m
+  for m in "$1"/[cC][eE][lL][oO][rR][uU][sS]; do
+    [ "$m" = "$1/celorus" ] && continue
+    if [ -e "$m/index.md" ] || [ -L "$m/index.md" ]; then printf '%s' "${m##*/}"; return 0; fi
   done
-  return 1
+}
+
+# The line for a misnamed entry $1, found by the door $2 says in words.
+misnamed_said() {
+  local walked=""
+  case "$2" in "the first "*) walked=", and the walk stops there: no desk above it is used" ;; esac
+  printf '%s/ holds an index.md, but the desk tools read a desk only from a folder named exactly celorus/, so %s is no desk the tools can read%s. Rename %s/ to celorus/, then ask again. Nothing was changed.' \
+    "$1" "$2" "$walked" "$1"
+}
+
+# The desk the engine would use (the same stop rule): the folder CELORUS_DESK names, or the first
+# folder on the walk up from $PWD, that holds an entry named exactly `celorus`, of any kind. Prints that folder and
+# returns 0 only when its celorus/ is a plain folder holding a plain, readable index.md. Prints one
+# line naming what is wrong, by its path under that folder, and returns 2 otherwise: never a desk
+# above it. Returns 1, printing nothing, when the walk finds no celorus entry.
+find_desk() {
+  local d where m named="${CELORUS_DESK:-}"
+  local shape="A desk's celorus/ is a plain folder holding a plain, readable index.md: make it one, then ask again."
+  local walk="the first folder on the walk up from the working folder that holds a celorus entry"
+  if [ -n "$named" ]; then
+    d="$named"
+    if ! holds_celorus "$d"; then
+      m="$(misnamed "$d")"
+      if [ -n "$m" ]; then misnamed_said "$m" "the folder CELORUS_DESK names, ${named},"; return 2; fi
+      printf 'CELORUS_DESK names %s, which holds no celorus/index.md. Set CELORUS_DESK to the desk folder (the one holding celorus/index.md), or name that folder as `desk`.' "$named"
+      return 2
+    fi
+    where="so the folder CELORUS_DESK names, ${named}, is no desk the tools can read. ${shape}"
+  else
+    d="${PWD}"
+    while [ -n "$d" ] && [ "$d" != "/" ] && ! holds_celorus "$d"; do
+      m="$(misnamed "$d")"
+      if [ -n "$m" ]; then misnamed_said "$m" "$walk"; return 2; fi
+      d="$(dirname "$d")"
+    done
+    [ -n "$d" ] && [ "$d" != "/" ] || return 1
+    where="so the first folder on the walk up from the working folder that holds a celorus entry is no desk the tools can read, and the walk stops there: no desk above it is used. ${shape}"
+  fi
+  local e="$d/celorus" fault=""
+  if [ -L "$e" ]; then
+    local kind
+    kind="$(link_kind "$e")"
+    if [ "$kind" = "a link to a folder" ]; then
+      fault="$(index_fault "$e")"
+      if [ -z "$fault" ]; then
+        printf 'celorus/ is a link to a folder, in %s: the desk tools read that desk through the link and write nothing through it, and no desk above it is used. Put a plain folder in its place, then ask again.' \
+          "$([ -n "$named" ] && printf 'the folder CELORUS_DESK names, %s' "$named" || printf 'the first folder on the walk up from the working folder that holds a celorus entry')"
+        return 2
+      fi
+      [ "$fault" = "celorus/ holds no index.md" ] && fault="celorus/ is a link to a folder that holds no index.md"
+    else
+      fault="celorus/ is ${kind}"
+    fi
+  elif [ ! -d "$e" ]; then
+    if [ -f "$e" ]; then fault="celorus is a file, not a folder"; else fault="celorus is $(odd_kind "$e"), not a folder"; fi
+  else
+    fault="$(index_fault "$e")"
+  fi
+  if [ -n "$fault" ]; then
+    printf '%s, %s' "$fault" "$where"
+    return 2
+  fi
+  printf '%s' "$d"
+  return 0
 }
 
 # frontmatter_value FILE KEY: the first "KEY: value" inside the leading --- block,
@@ -81,10 +184,15 @@ emit() {
   fi
 }
 
-desk="$(find_desk)" || {
+found=0
+desk="$(find_desk)" || found=$?
+if [ "$found" -eq 2 ]; then
+  emit "Celorus is installed. ${desk}"
+  exit 0
+elif [ "$found" -ne 0 ]; then
   emit "Celorus is installed. No desk workspace was found here; say 'set up my desk' to create one, or ask what Celorus can do."
   exit 0
-}
+fi
 
 stamps="$desk/celorus/desk.md"
 [ -f "$stamps" ] || stamps="$desk/celorus/index.md"

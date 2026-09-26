@@ -136,7 +136,24 @@ main(process.argv.slice(2)).then(
       process.stderr.write(`${err.message}\n`);
       process.exitCode = 2;
     } else {
-      process.stderr.write(`celorus-desk: ${err && err.stack ? err.stack : err}\n`);
+      // An error the command has no words for: its text can carry an absolute path or the
+      // system's own message, so stderr says one fixed sentence naming the command, from a fixed
+      // set, and the error follows it only when CELORUS_DESK_DEBUG=1 asks for it.
+      const [command, toolName] = process.argv.slice(2);
+      const named =
+        command === "call" && TOOLS.some((tool) => tool.name === toolName)
+          ? `call ${toolName}`
+          : ["check", "tools", "call"].includes(command)
+            ? command
+            : "the command";
+      let said =
+        `celorus-desk: ${named} stopped on an error it has no words for, so it cannot say what it ` +
+        "did or did not change. Run it again with CELORUS_DESK_DEBUG=1 set to see the error after this line.\n";
+      const env = process.env;
+      if (env.CELORUS_DESK_DEBUG === "1") {
+        said += `${err instanceof Error && err.stack ? err.stack : require("node:util").inspect(err)}\n`;
+      }
+      process.stderr.write(said);
       process.exitCode = 1;
     }
   },

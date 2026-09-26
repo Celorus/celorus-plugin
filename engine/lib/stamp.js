@@ -46,6 +46,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { readPage, splitPage } = require("./desk.js");
 const { parseHeader, HeaderError } = require("./header.js");
+const { rootFault } = require("./linkedroot.js");
 
 const VERSION_KEY = "checked_with";
 const COUNT_KEY = "checked_findings";
@@ -104,6 +105,11 @@ function sameValue(a, b) {
 // first where one applies (here, and in stampCheckedWith up to the open), and then NOT_APPLIED.
 function whyNot(read, { record, scoped, applied, version }) {
   if (!record) return "This run was read-only: only a run asked to record (record: true) writes the stamp.";
+  // A desk whose celorus/, celorus/views/ or celorus/log.md is a link, or whose celorus/views/ is
+  // not a folder: the check read it and reports as ever, and writes no stamp, in the words every
+  // writer refuses it in (lib/linkedroot.js).
+  const linked = rootFault(read.root);
+  if (linked !== null) return linked;
   if (scoped && applied) return "A check narrowed by scope does not stamp the desk; only a whole-desk check does.";
   if (read.stampsUnread) return `The desk's stamps page, ${read.stampsUnread.rel}, could not be read, so nothing was written.`;
   if (read.deskPage === null) {

@@ -68,6 +68,16 @@ Not sure where to start? Ask what Celorus can do.
   the record, that check is free and anonymous, and it logs the question asked, the
   record's answer and the time, nothing about you.
 
+## What the desk tools refuse, and what they leave to you
+
+- **They run as you.** The desk tools run with your own file rights, on the desk folder you
+  name. When a tool writes a page, it stops before its first change if a page it must touch is
+  a link, not a file, or cannot be read. When a tool writes a page, it writes a real file inside
+  your desk, never through a link.
+- **What they leave to you.** The tools do not guard against another program on
+  your machine changing the desk while a call runs. That is the same trust you give any
+  program that runs as you.
+
 ## Install
 
 The connector is a standard MCP endpoint over OAuth, so it is not tied to one tool. The

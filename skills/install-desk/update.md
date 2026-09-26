@@ -1,8 +1,11 @@
 # Updating a desk
 
 Read this when the person says "update my desk", or says yes to the line day-open shows when
-the plugin's model is newer than the desk's. The steps below run in this order. Each one
-checks whether it is already done and skips if so, so a second run changes nothing.
+the plugin's model is newer than the desk's. The update is the desk tools' `update_desk`,
+never done by hand: it runs the steps below in this order, each one checks whether it is
+already done and skips if so, so a second run changes nothing. If the desk tools cannot run,
+say "The desk tools are not running on this machine, so I cannot do this. Nothing was
+changed." and stop.
 
 ## Before anything changes
 
@@ -12,23 +15,31 @@ checks whether it is already done and skips if so, so a second run changes nothi
    desk, not in it, so taking it changes nothing on the desk. If they say no, stop and say
    why: steps 3 and 4 write `index.md` and `log.md` afresh, and the copy is the only place
    their old text is kept.
-2. Check every stop below before writing anything: a page already sitting where a page would
-   move (step 1), a desk whose stamps would have to be made up (step 2), a missing `log.md` or
-   follow-ups queue, a follow-ups table whose columns neither layout writes or a row that does
-   not hold as many cells as its columns name, a promise in a call's header that does not say
-   what was promised (step 5), and a model or changes page that cannot be read. If one
-   applies, stop, name the step, and say the desk is as it was. A later step can still stop,
-   on a page whose header cannot be read or a changes page that names a word nothing holds:
-   what keeps the desk as it was then is item 3, working every change out on a copy first. So
-   never skip it, and if a step ever stops on the desk itself, say which pages had already
-   changed rather than that nothing did.
-3. Work out every change on a scratch copy first, and show the person the preview: one plain
-   line per kind of change, then "N files change. Nothing is deleted: X pages before, Y
-   after.", then each thing they must decide, each starting "Decide:". If nothing would
-   change, the preview is one line, "No file changes: the desk is already up to date.", and
+2. Call `update_desk` with the seat's `handle`, and `apply` left out. It works out every
+   change on a scratch copy and changes nothing on the desk. It checks every stop below before
+   writing anything: a link (a file or folder that points somewhere else) as `.gitignore`, as
+   `celorus/` or anywhere under it, since the update never writes through one; a page already
+   sitting where a page would move (step 1), a desk whose stamps would have to be made up
+   (step 2), a missing `log.md` or follow-ups queue, a follow-ups table whose columns neither
+   layout writes or a row that does not hold as many cells as its columns name, a promise in a
+   call's header that does not say what was promised (step 5), and a model or changes page
+   that cannot be read. When one applies it refuses, names the step or the link, and ends
+   "Nothing was changed.": say its sentence and stop. A later step can still stop, on a page
+   whose header cannot be read or a changes page that names a word nothing holds: what keeps
+   the desk safe then is this preview on a copy, which meets the same stop first, names the
+   step, and ends "Nothing was changed." too, since only its copy had changed. So never skip
+   it.
+3. Show the person the answer's `preview` as it came: one plain line per kind of change, then
+   "N files change. Nothing is deleted: X pages before, Y after.", then each thing they must
+   decide, each starting "Decide:". If nothing would change, the preview is one line,
+   "No file changes: the desk is already up to date.", and then
    the update ends there: nothing else runs, not even `check-desk`, which would write views
    and a log line on a desk the person was just told nothing would change. Change nothing
-   until they say yes.
+   until they say yes. On a yes, call `update_desk` again with the same `handle`,
+   `apply: true`, and the preview's `plan` as it came. The update then works the plan out
+   again and runs only if it is the one the person saw; if the desk changed since, it refuses,
+   changing nothing, and you preview again and ask again. Every number you say is one the tool
+   returned.
 
 ## The steps
 
@@ -100,14 +111,21 @@ checks whether it is already done and skips if so, so a second run changes nothi
 10. **Stamping the versions.** Set `model_version`, and `pack` and `pack_version` when there
     is a pack, in `desk.md`.
 11. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
-    `check-desk` does.
+    `render_views` does.
 12. **Logging the update.** Only if something changed: one line under today's heading,
     `* <time> · <handle> · install-desk · updated the desk to model version <N> · yours`.
 
 ## After
 
-If the desk is a git repository, commit with the message `update to model version <N>`. Run
-`check-desk` and read its list out. The update never deletes a page and never sends anything.
-If any step stops, say which step and why in one sentence, say the desk is as it was, and say
-what would let it go on (for a page in the way, move or rename one of the two, then say
-"update my desk" again). After a stop, `check-desk` does not run.
+The answer names each file it changed in `changed`, and `model_version` is the version the desk
+now stands at. Say its `summary`, and each of its `flags` in a sentence. If the desk is a git
+repository, commit with the message `update to model version <N>`. Run `check-desk` and read
+its list out. The update never deletes a page and never sends anything. If any step stops,
+say which step and why in one sentence, and then what the stop says about the desk: when it
+ends "Nothing was changed.", say the desk is as it was; when it names files the desk "has
+already changed" (only an apply that stopped part-way on the desk itself does), name them as
+it lists them, say what it says of `log.md` (that it records where the update stopped, or
+that it could not be written), and never say the desk is as it was. Then say what would let it go on (for a page
+in the way, move or rename one of the two, then say "update my desk" again; after a part-way
+stop, the copy or commit taken before the update holds every page as it was). After a stop,
+`check-desk` does not run.

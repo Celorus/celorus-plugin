@@ -1,5 +1,5 @@
 "use strict";
-// The desk check, rules C01 to C15. It lists; it never blocks. It reads the desk's own model
+// The desk check, rules C01 to C16. It lists; it never blocks. It reads the desk's own model
 // pages under celorus/model/, so a desk one model version behind is checked against its own
 // words. A finding is { page, rule, message }: the page under celorus/, the rule's id, and what
 // is wrong, in words the person can act on.
@@ -10,6 +10,7 @@ const { readPage, NO_HEADER, NOT_UTF8, STAMP_NOT_ONE_VALUE } = require("../lib/d
 const values = require("./values.js");
 const text = require("./text.js");
 const model = require("./model.js");
+const { checkCitations } = require("../cite/cite.js");
 
 const { own, hasOwn, truthy, isEmpty, show, same, items, holds, strip, splitLines, head, compareText, sortedText } =
   values;
@@ -31,6 +32,7 @@ const RULES = {
   C13: "evidence link drawn as a line",
   C14: "no Connections section",
   C15: "connections on a page that draws no line",
+  C16: "cited line that is not there",
 };
 const NO_SECTION = "no `## Connections` heading; connection lines are read only there";
 const SECOND_SECTION = "a second `## Connections` heading; only the first is read";
@@ -547,6 +549,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
       for (const p of kinded) add("C11", p.rel, `the file name ${stem} is used by ${kinded.length} pages`);
     }
   }
+  for (const f of checkCitations(desk, pages).findings) add(f.rule, f.page, f.message);
 
   // One hop: the pages a page links, read when a scope asks. A page no rule reads (under views/
   // or merges/, or in a folder below model/) is in the same read of the desk, `readPages`, and

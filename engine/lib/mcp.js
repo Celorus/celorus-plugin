@@ -5,6 +5,7 @@
 // message and resolves to the reply, or to null when the message was a notification.
 
 const { findTool } = require("./tools.js");
+const { inspect } = require("node:util");
 const { Refusal } = require("./refusal.js");
 
 // Newest first. A client asking for one of these gets it back; any other gets the newest.
@@ -14,6 +15,15 @@ const PARSE_ERROR = -32700;
 const INVALID_REQUEST = -32600;
 const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
+
+// The answer to an error a tool has no words for. It claims nothing about the desk: the tool
+// stopped somewhere it cannot name, so it cannot say what it changed.
+function unexpected(toolName) {
+  return (
+    `The desk tool ${toolName} stopped on an error it has no words for, so it cannot say what it ` +
+    "did or did not change. The error is in the desk server's log."
+  );
+}
 
 function reply(id, result) {
   return { jsonrpc: "2.0", id, result };
@@ -47,10 +57,13 @@ function createHandler({ tools, name, version, log = () => {} }) {
         isError: false,
       });
     } catch (err) {
-      if (!(err instanceof Refusal)) log(`${tool.name} failed: ${err && err.stack ? err.stack : err}`);
-      const message =
-        err instanceof Refusal ? err.message : `The desk tool ${tool.name} failed: ${err && err.message}`;
-      return reply(id, { content: [{ type: "text", text: message }], isError: true });
+      // A refusal is the engine's own words, and passes as it is. Anything else is an error the
+      // tool has no words for: its text can carry an absolute path or the system's own message,
+      // so the answer is one fixed sentence naming the tool, and the error itself goes only to
+      // the server's log (its stderr, never the answer).
+      if (err instanceof Refusal) return reply(id, { content: [{ type: "text", text: err.message }], isError: true });
+      log(`${tool.name} failed: ${err instanceof Error && err.stack ? err.stack : inspect(err)}`);
+      return reply(id, { content: [{ type: "text", text: unexpected(tool.name) }], isError: true });
     }
   }
 

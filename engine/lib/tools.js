@@ -5,7 +5,7 @@
 // counts itself) or throws a Refusal naming the valid values.
 //
 // Tool names are the demo's or the checker oracle's, so each port is testable against them.
-// `check_desk` reads the desk through the shared reader and runs rules C01 to C15
+// `check_desk` reads the desk through the shared reader and runs rules C01 to C16
 // (check/rules.js) over it. It is read-only unless asked to record (`record: true`): then a
 // whole-desk check writes `checked_with: <version>` and `checked_findings: <n>` into desk.md
 // (lib/stamp.js), clean or not.
@@ -16,18 +16,20 @@ const {
   findDesk,
   resolveDesk,
   readDesk,
-  isDesk,
-  refuseCelorusFolder,
   PAGE_UNREAD,
   NO_HEADER,
   HEADER_UNREAD,
   NOT_UTF8,
   STAMP_NOT_ONE_VALUE,
+  LINK_FOLDER,
+  comparePaths,
 } = require("./desk.js");
 const { Refusal } = require("./refusal.js");
 const { pluginVersion } = require("./version.js");
 const { RULES, checkDesk: runRules, narrowFindings } = require("../check/rules.js");
 const { stampCheckedWith } = require("./stamp.js");
+const paths = require("../paths/index.js");
+const { TOOLS: VIEW_TOOLS } = require("../views/tools.js");
 
 // Refuses an argument the tool does not take, naming the ones it does.
 function onlyArguments(tool, args, allowed) {
@@ -60,24 +62,20 @@ const NAME_IT_IN_FULL =
   "full path, or set CELORUS_DESK to its full path.";
 
 // The desk CELORUS_DESK names, when the server started in the plugin folder and that setting
-// is all it has to go on: honoured when it is a full path to a desk folder, and otherwise
-// refused naming the setting and what is wrong with it (the desk's celorus folder included,
-// as findDesk refuses it from any other folder).
-function deskFromEnv(named) {
+// is all it has to go on: a full path is read by findDesk, as from any other folder, so both
+// doors give one answer (the desk, or the refusal naming what is wrong with that folder); a
+// relative one is refused, since there is no working folder to read it from.
+function deskFromEnv(named, writes) {
   if (!path.isAbsolute(named)) {
     throw new Refusal(`CELORUS_DESK is ${JSON.stringify(named)}, not a full path. ${NAME_IT_IN_FULL}`);
   }
-  const folder = path.resolve(named);
-  if (isDesk(folder)) return folder;
-  refuseCelorusFolder(named, folder);
-  throw new Refusal(
-    `CELORUS_DESK is ${named}, and there is no desk there: a desk is a folder that holds ` +
-      "celorus/index.md. Set CELORUS_DESK to that folder's full path, or name it as `desk`.",
-  );
+  return findDesk({ start: null, env: { CELORUS_DESK: named }, writes });
 }
 
 // The desk a tool works on: the one named, or the one found from where the work started.
-function deskFor(named, { cwd = process.cwd(), env = process.env } = {}) {
+// `writes` says the tool writes on it (for a recorded check, only when asked to record): a live
+// link to a folder with no readable index.md is then refused in the linked-root words.
+function deskFor(named, { cwd = process.cwd(), env = process.env, writes = false } = {}) {
   const base = workingFolder(cwd);
   if (named !== undefined && named !== null) {
     if (typeof named !== "string" || named.trim() === "") {
@@ -88,14 +86,19 @@ function deskFor(named, { cwd = process.cwd(), env = process.env } = {}) {
     }
     return resolveDesk(named, base === null ? PLUGIN_ROOT : base);
   }
-  if (base === null && env.CELORUS_DESK) return deskFromEnv(env.CELORUS_DESK);
-  const found = findDesk({ start: base, env });
+  if (base === null && env.CELORUS_DESK) return deskFromEnv(env.CELORUS_DESK, writes);
+  const found = findDesk({ start: base, env, writes });
   if (found) return found;
   if (base === null) throw new Refusal(`No desk was named. ${NAME_IT_IN_FULL}`);
+  // The working folder is named in words, never by its path; CELORUS_DESK as the person set it
+  // (a set one that names no desk is refused by findDesk before this). The sentence is true: the
+  // walk stops at the first folder holding a `celorus` entry, so it ended here only because no
+  // folder on it holds one.
+  const setting = env.CELORUS_DESK === undefined ? "is not set" : `is ${JSON.stringify(env.CELORUS_DESK)}`;
   throw new Refusal(
-    "No desk was named and none was found: CELORUS_DESK does not name one, and no folder " +
-      `above ${base} holds celorus/index.md. Name the desk folder as \`desk\`, ` +
-      "or set CELORUS_DESK to it.",
+    `No desk was named and none was found: CELORUS_DESK ${setting}, and the walk up from the ` +
+      "working folder found no folder that holds celorus/index.md. Name the desk folder as " +
+      "`desk`, or set CELORUS_DESK to it.",
   );
 }
 
@@ -236,6 +239,28 @@ function linksUnknown(page) {
   return said[page.problem] || `the reader says of it "${page.problem}"`;
 }
 
+// A folder link the reader met under celorus/ (readDesk's `links`), as the check names it: its
+// path under celorus/ with a slash after it, what it is, and why, naming it by its path under the
+// desk. A link to a folder: its pages were read through it, and a tool that writes refuses to
+// change one (lib/linkedroot.js). A link to a folder already read: read there, once.
+function linkRow(link) {
+  const shown = `celorus/${link.rel}`;
+  if (link.kind === LINK_FOLDER) {
+    return {
+      page: link.rel,
+      problem: link.kind,
+      why: `${shown} is a link, and the pages under it were read through it; a desk tool that writes changes no page under it, and refuses a change that would`,
+      remedy: "Put a plain folder in its place, so the desk tools can write the pages under it.",
+    };
+  }
+  return {
+    page: link.rel,
+    problem: link.kind,
+    why: `${shown} leads to ${link.readAt}, whose pages were read there, so it was not read again`,
+    remedy: "Move the link out of the desk folder.",
+  };
+}
+
 // The summary's clause for a scope that was not applied because the links of some page it names
 // are not all known (path under celorus/ to why): the pages, and why for each.
 function linksUnknownLine(unknown) {
@@ -344,7 +369,7 @@ function checkDesk(args = {}) {
   onlyArguments("check_desk", args, ["desk", "scope", "record"]);
   const asked = scopeOf(args.scope);
   const record = recordOf(args.record);
-  const read = readDesk(deskFor(args.desk));
+  const read = readDesk(deskFor(args.desk, { writes: record }));
   // One read of the desk and one run of the rules: the rules' own list of the pages they read,
   // and where its findings land, are what a scope entry is held to, and a scope then narrows
   // that same run's findings. rules_run, the pages and the summary all describe this one run.
@@ -362,13 +387,19 @@ function checkDesk(args = {}) {
   // see these pages too (C12), but a rule's message does not carry the reader's why. A page
   // with no header is not among them: whether it should have one is the rules' to say (log.md
   // and an index below the root must not; any other page gets the C12 "no header").
-  const problems = read.pages
-    .filter((page) => page.problem && page.problem !== NO_HEADER)
-    .map((page) => {
-      const row = { page: page.rel, problem: page.problem };
-      if (page.why) Object.assign(row, { why: page.why, remedy: page.remedy });
-      return row;
-    });
+  // Each folder link the reader met is named here too, by its path under celorus/ with a slash
+  // after it, as a folder that cannot be listed is (the base's ruling R64): the check reads the
+  // pages under it, and says that a tool that writes changes none of them.
+  const problems = [
+    ...read.pages
+      .filter((page) => page.problem && page.problem !== NO_HEADER)
+      .map((page) => {
+        const row = { page: page.rel, problem: page.problem };
+        if (page.why) Object.assign(row, { why: page.why, remedy: page.remedy });
+        return row;
+      }),
+    ...read.links.map(linkRow),
+  ].sort((a, b) => comparePaths(a.page, b.page));
   // A page the scope names that no rule reads carries no finding of its own, and the findings on
   // the pages it links are kept, from the links the same read holds (check/rules.js).
   const kept = scope === null ? whole : narrowFindings(whole, [...scope.pages, ...scope.skipped.keys()], byRules.linked);
@@ -436,7 +467,7 @@ const TOOLS = [
   {
     name: "check_desk",
     description:
-      "Check a desk against rules C01 to C15 and list what to look at, each finding with its " +
+      "Check a desk against rules C01 to C16 and list what to look at, each finding with its " +
       "page, rule and message. It lists; it never blocks. Only when record is true, a " +
       "whole-desk check writes checked_with: <version> and checked_findings: <n> into desk.md.",
     inputSchema: {
@@ -475,6 +506,8 @@ const TOOLS = [
     },
     run: checkDesk,
   },
+  ...paths.TOOLS,
+  ...VIEW_TOOLS,
 ];
 
 // The tool with this name, or a refusal naming every tool there is.

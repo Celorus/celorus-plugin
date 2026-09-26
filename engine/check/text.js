@@ -11,9 +11,9 @@ const {
   show,
 } = require("./values.js");
 
-// A desk link, `[[name]]`, `[[name|label]]` or `[[name#part]]`; the name is group 1.
-const LINK_SOURCE = "\\[\\[([^\\]|#]+)(?:[|#][^\\]]*)?\\]\\]";
-const LINK = new RegExp(LINK_SOURCE, "u");
+// A desk link, `[[name]]`, `[[name|label]]` or `[[name#part]]`; the name is group 1. It is named
+// in linkSpans and nowhere else: linkSpans is the engine's one link reader.
+const LINK = "\\[\\[([^\\]|#]+)(?:[|#][^\\]]*)?\\]\\]";
 
 // A proof line: a list item, its bullet a dash and one plain space, then the connection, the
 // far end, how it is known, whose register, the date, and the rest. A blank inside the line is
@@ -44,18 +44,36 @@ const WORD = "[\\p{L}\\p{N}_";
 const EMAIL = new RegExp(`${WORD}.+-]+@${WORD}-]+\\.${WORD}.-]+`, "u");
 const PHONE = /(?<![\p{Nd}:-])\+?\p{Nd}(?:[ -]?\p{Nd}){9,12}(?![\p{Nd}:-])/u;
 
-// The desk links in a header value: in a text, or in a list of them however deep; a mapping's
-// links are its own business and are not read.
+// The one link reader: every desk link in `text`, in order, as { start, end, name, tail }: where
+// the link starts and ends in `text`, its name as written, and its tail, the `|label` or `#part`
+// after the name as written ("" when it has none). Every other reading of a link is read off
+// this one: linksIn and hasLink below, and the views' and the merge's (a repoint keeps the tail).
+function linkSpans(text) {
+  return [...text.matchAll(new RegExp(LINK, "gu"))].map((m) => ({
+    start: m.index,
+    end: m.index + m[0].length,
+    name: m[1],
+    tail: m[0].slice(2 + m[1].length, -2),
+  }));
+}
+
+// The page a link names: its name as written, its blanks around it cut off, so `[[ b ]]` and
+// `[[b |x]]` name page b. The one answer to which page a link names: linksIn below, and the views'
+// and the merge's, read a span's page through it and never compare its name as written.
+function linkName(span) {
+  return strip(span.name);
+}
+
+// The desk links in a header value, by name (linkName over linkSpans): in a text, or in a list
+// of them however deep; a mapping's links are its own business and are not read.
 function linksIn(value) {
-  if (typeof value === "string") {
-    return [...value.matchAll(new RegExp(LINK_SOURCE, "gu"))].map((m) => strip(m[1]));
-  }
+  if (typeof value === "string") return linkSpans(value).map(linkName);
   if (Array.isArray(value)) return value.flatMap(linksIn);
   return [];
 }
 
 function hasLink(text) {
-  return LINK.test(text);
+  return linkSpans(text).length > 0;
 }
 
 // A proof line's parts, or null. Every reader of a proof line comes through here.
@@ -227,7 +245,8 @@ function holdsContactDetails(page) {
 }
 
 module.exports = {
-  LINK,
+  linkSpans,
+  linkName,
   linksIn,
   hasLink,
   proofMatch,
