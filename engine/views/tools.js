@@ -6,7 +6,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { readDesk, PAGE_UNREAD } = require("../lib/desk.js");
+const { readDesk, PAGE_UNREAD, deskShown, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
 const V = require("../check/values.js");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot, refuseLinkedFolders } = require("../lib/linkedroot.js");
@@ -26,12 +26,6 @@ function registry() {
   return require("../lib/tools.js");
 }
 
-const DESK = {
-  type: "string",
-  description:
-    "The desk folder (the one holding celorus/index.md), as a full path. Leave it out to use " +
-    "CELORUS_DESK, or the desk found above the working folder when this server knows it.",
-};
 const HANDLE = {
   type: "string",
   description:
@@ -48,12 +42,15 @@ const NOW = {
 
 // The desk, its reading, and the moment and seat of a change, each checked before any write.
 // The desk folder is resolved through any link once, here at the door, so every path a tool
-// compares is a resolved one.
+// compares is a resolved one; the answer names the desk as the caller did (`shown`, R72), never
+// by the resolved form, which the caller never gave.
 function change(tool, args, allowed) {
   const { deskFor, onlyArguments } = registry();
   onlyArguments(tool, args, allowed);
   const moment = H.momentOf(args.now);
-  const desk = fs.realpathSync(deskFor(args.desk, { writes: true }));
+  const found = deskFor(args.desk, { writes: true });
+  const shown = deskShown(args.desk, found);
+  const desk = fs.realpathSync(found);
   // A celorus/, celorus/views/ or celorus/log.md that is a link is refused here, before anything
   // is read for writing (lib/linkedroot.js).
   refuseLinkedRoot(desk);
@@ -68,7 +65,7 @@ function change(tool, args, allowed) {
   } catch {
     // A desk with no celorus/ folder is refused by the tool that needs one.
   }
-  return { read, root: read.root, celorus, moment, handle };
+  return { read, root: read.root, celorus, moment, handle, shown };
 }
 
 function unreadableModel(err) {
@@ -356,8 +353,10 @@ function pathPagesSaid(rels) {
   return `Rebuilt ${plural(rels.length, "path page", "path pages")} as who_can_introduce writes ${them}: ${rels.join(", ")}. `;
 }
 
-function withPaths(celorus, rels) {
-  return rels.map((rel) => ({ page: rel, path: path.join(celorus, ...rel.split("/")) }));
+// Pages under celorus/, each with the path to show it from, in the answer's form (R72: the
+// caller's `desk` extended, or desk-relative; lib/desk.js deskShown).
+function withPaths(shown, rels) {
+  return rels.map((rel) => ({ page: rel, path: shown.at(`celorus/${rel}`) }));
 }
 
 function plural(n, one, many) {
@@ -393,11 +392,11 @@ function renderViewsTool(args = {}) {
   return {
     tool: "render_views",
     plugin_version: pluginVersion(),
-    root: c.root,
-    views: withPaths(c.celorus, wrote.views),
-    sent_lists: withPaths(c.celorus, wrote.sent),
-    path_pages: withPaths(c.celorus, wrote.paths),
-    path_pages_unchanged: withPaths(c.celorus, same),
+    root: c.shown.root,
+    views: withPaths(c.shown, wrote.views),
+    sent_lists: withPaths(c.shown, wrote.sent),
+    path_pages: withPaths(c.shown, wrote.paths),
+    path_pages_unchanged: withPaths(c.shown, same),
     findings: wrote.findings,
     citations_checked: cited.checked,
     citations_not_checked: cited.notChecked,
@@ -422,7 +421,7 @@ function mergePagesTool(args = {}) {
       throw new Refusal(`${key} is the file name of a page on the desk, without .md, as text. ${H.NOTHING}`);
     }
   }
-  const log = () => H.logChange(c.celorus, c.moment, c.handle, "check-desk", `merged ${args.merge} into ${args.keep}`);
+  const log = () => H.logChange(c.celorus, c.moment, c.handle, "check-desk", `merged ${require("../render/screen.js").pathsSaid(args.merge)} into ${require("../render/screen.js").pathsSaid(args.keep)}`);
   const done = mergePages(c.root, args.keep, args.merge, c.moment, {
     sent: true,
     after: viewsAfterChange(c.celorus, "merge_pages"),
@@ -432,7 +431,7 @@ function mergePagesTool(args = {}) {
     return {
       tool: "merge_pages",
       plugin_version: pluginVersion(),
-      root: c.root,
+      root: c.shown.root,
       already_merged: true,
       summary: `${args.merge} was merged already, as a record under merges/ says. ${H.NOTHING}`,
     };
@@ -446,17 +445,17 @@ function mergePagesTool(args = {}) {
   return {
     tool: "merge_pages",
     plugin_version: pluginVersion(),
-    root: c.root,
+    root: c.shown.root,
     already_merged: false,
-    kept: withPaths(c.celorus, [done.changed.find((rel) => path.posix.basename(rel, ".md") === args.keep)].filter(Boolean)),
-    changed: withPaths(c.celorus, done.changed),
+    kept: withPaths(c.shown, [done.changed.find((rel) => path.posix.basename(rel, ".md") === args.keep)].filter(Boolean)),
+    changed: withPaths(c.shown, done.changed),
     removed: done.removed,
-    record: withPaths(c.celorus, [done.record])[0],
+    record: withPaths(c.shown, [done.record])[0],
     still_named: done.stillNamed,
     points_at_itself: done.pointsAtItself,
     named_only_holds_details: done.namedOnlyHoldsDetails,
-    views: withPaths(c.celorus, views.views),
-    path_pages: withPaths(c.celorus, views.paths),
+    views: withPaths(c.shown, views.views),
+    path_pages: withPaths(c.shown, views.paths),
     views_not_rebuilt: views.not_rebuilt,
     logged,
     summary:
@@ -492,7 +491,7 @@ function undoMergeTool(args = {}) {
   // The views and the log line run inside the undo, before its last step puts back the mode of
   // each page it made again (merge/merge.js); a stop at the undo's own page writes logs it too.
   const log = ({ kept, merged }) => () =>
-    H.logChange(c.celorus, c.moment, c.handle, "check-desk", `undid the merge of ${merged} into ${kept}`);
+    H.logChange(c.celorus, c.moment, c.handle, "check-desk", `undid the merge of ${require("../render/screen.js").pathsSaid(merged)} into ${require("../render/screen.js").pathsSaid(kept)}`);
   const done = undoMerge(c.root, { record: args.record, kept: args.kept, merged: args.merged }, c.moment, {
     after: viewsAfterChange(c.celorus, "undo_merge"),
     rest: (wrote, names) => guarded(c.celorus, wrote, (so) => viewsAfter(c.celorus, c.root, c.moment, so, "undo_merge"), log(names)),
@@ -503,12 +502,12 @@ function undoMergeTool(args = {}) {
   return {
     tool: "undo_merge",
     plugin_version: pluginVersion(),
-    root: c.root,
-    record: withPaths(c.celorus, [done.record])[0],
-    restored: withPaths(c.celorus, done.restored),
-    log_not_put_back: notBack.map((when) => ({ ...withPaths(c.celorus, ["log.md"])[0], logged: when })),
-    views: withPaths(c.celorus, views.views),
-    path_pages: withPaths(c.celorus, views.paths),
+    root: c.shown.root,
+    record: withPaths(c.shown, [done.record])[0],
+    restored: withPaths(c.shown, done.restored),
+    log_not_put_back: notBack.map((when) => ({ ...withPaths(c.shown, ["log.md"])[0], logged: when })),
+    views: withPaths(c.shown, views.views),
+    path_pages: withPaths(c.shown, views.paths),
     views_not_rebuilt: views.not_rebuilt,
     modes_not_set: done.modesNotSet.map(({ rel, mode }) => ({ page: rel, mode: octal(mode) })),
     logged,
@@ -551,7 +550,7 @@ function updateDeskTool(args = {}) {
     return {
       tool: "update_desk",
       plugin_version: pluginVersion(),
-      root: c.root,
+      root: c.shown.root,
       applied: false,
       preview: p.text,
       plan: p.plan,
@@ -575,7 +574,7 @@ function updateDeskTool(args = {}) {
   return {
     tool: "update_desk",
     plugin_version: pluginVersion(),
-    root: c.root,
+    root: c.shown.root,
     applied: true,
     changed: r.changed,
     flags: r.flags,

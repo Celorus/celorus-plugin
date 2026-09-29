@@ -7,6 +7,7 @@
 const { findTool } = require("./tools.js");
 const { inspect } = require("node:util");
 const { Refusal } = require("./refusal.js");
+const { screenAtDoor } = require("./door.js");
 
 // Newest first. A client asking for one of these gets it back; any other gets the newest.
 const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
@@ -46,22 +47,26 @@ function createHandler({ tools, name, version, log = () => {} }) {
     try {
       tool = findTool(toolName);
     } catch (err) {
-      return failure(id, INVALID_PARAMS, err.message);
+      return failure(id, INVALID_PARAMS, screenAtDoor(null, null, err.message).answer);
     }
     const args = params.arguments === undefined ? {} : params.arguments;
     try {
-      const result = await tool.run(args);
+      // The door screen (lib/door.js, 0.19.0 K4h): the answer as the tool built it, screened
+      // before it is serialized; a pinned field off the desk as given makes it the door's refusal.
+      const door = screenAtDoor(tool.name, args, await tool.run(args));
+      if (door.held !== null) return reply(id, { content: [{ type: "text", text: door.held }], isError: true });
       return reply(id, {
-        content: [{ type: "text", text: JSON.stringify(result) }],
-        structuredContent: result,
+        content: [{ type: "text", text: JSON.stringify(door.answer) }],
+        structuredContent: door.answer,
         isError: false,
       });
     } catch (err) {
-      // A refusal is the engine's own words, and passes as it is. Anything else is an error the
-      // tool has no words for: its text can carry an absolute path or the system's own message,
-      // so the answer is one fixed sentence naming the tool, and the error itself goes only to
-      // the server's log (its stderr, never the answer).
-      if (err instanceof Refusal) return reply(id, { content: [{ type: "text", text: err.message }], isError: true });
+      // A refusal is the engine's own words, and passes through the door screen, which says any
+      // path in them as "(a path)". Anything else is an error the tool has no words for: its text
+      // can carry an absolute path or the system's own message, so the answer is one fixed
+      // sentence naming the tool, and the error itself goes only to the server's log (its
+      // stderr, never the answer).
+      if (err instanceof Refusal) return reply(id, { content: [{ type: "text", text: screenAtDoor(null, null, err.message).answer }], isError: true });
       log(`${tool.name} failed: ${err instanceof Error && err.stack ? err.stack : inspect(err)}`);
       return reply(id, { content: [{ type: "text", text: unexpected(tool.name) }], isError: true });
     }
@@ -97,8 +102,7 @@ function createHandler({ tools, name, version, log = () => {} }) {
         return failure(
           id,
           METHOD_NOT_FOUND,
-          `This server does not answer ${message.method}. It answers initialize, ping, ` +
-            "tools/list and tools/call.",
+          screenAtDoor(null, null, `This server does not answer ${message.method}. It answers initialize, ping, ` + "tools/list and tools/call.").answer,
         );
     }
   }

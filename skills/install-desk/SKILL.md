@@ -131,8 +131,8 @@ than make its stamps up. Otherwise:
 - each required file present or missing: `index.md`, `desk.md`, `log.md`, `desk-log.md`,
   `motion-spec.md`, `register.md`, `marks.md`, the three queues, the three context files,
   `crm/README.md`, `rules/rulebook.md`, `model/model.md`, `model/connections.md`,
-  `model/own-words.md`, and `.gitignore` carrying `.celorus/` and
-  `celorus/.obsidian/workspace*.json`;
+  `model/own-words.md`, and `.gitignore` carrying `.celorus/`,
+  `celorus/.obsidian/workspace*.json` and `celorus/.views/`;
 - `index.md` has a header holding only `okf_version: "0.2"`; `log.md` has no header: it
   holds `# Log`, then `## YYYY-MM-DD` day headings with lines `* HH:MM · ...` under them;
 - `desk.md` carries `layout_version: 2`, a `model_version`, and a non-empty `desk` and `desk_id`;

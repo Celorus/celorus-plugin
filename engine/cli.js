@@ -21,6 +21,7 @@ require("./lib/guard.js").install();
 const { TOOLS, findTool } = require("./lib/tools.js");
 const { Refusal } = require("./lib/refusal.js");
 const { pluginVersion } = require("./lib/version.js");
+const { screenAtDoor } = require("./lib/door.js");
 
 const USAGE = `Usage:
   node engine/cli.js check [<desk>] [--json] [--record]
@@ -36,6 +37,14 @@ function print(text) {
 
 function refuse(message) {
   throw new Refusal(message);
+}
+
+// A tool's answer as this door says it (lib/door.js, 0.19.0 K4h): screened before it is printed,
+// or, where a pinned field is off the desk as given, the door's refusal (exit 2).
+function atDoor(name, args, result) {
+  const door = screenAtDoor(name, args, result);
+  if (door.held !== null) refuse(door.held);
+  return door.answer;
 }
 
 function describeCheck(result) {
@@ -81,7 +90,7 @@ async function check(rest) {
   if (positional.length > 1) refuse(`check takes one desk folder, not ${positional.length}.\n${USAGE}`);
   const args = positional.length ? { desk: positional[0] } : {};
   if (record) args.record = true;
-  const result = await findTool("check_desk").run(args);
+  const result = atDoor("check_desk", args, await findTool("check_desk").run(args));
   print(json ? JSON.stringify(result, null, 2) : describeCheck(result));
 }
 
@@ -100,7 +109,7 @@ async function call(rest) {
       refuse('The input is one JSON object, for example {"desk": "<folder>"}.');
     }
   }
-  print(JSON.stringify(await tool.run(args), null, 2));
+  print(JSON.stringify(atDoor(tool.name, args, await tool.run(args)), null, 2));
 }
 
 async function main(argv) {
@@ -133,7 +142,8 @@ main(process.argv.slice(2)).then(
   },
   (err) => {
     if (err instanceof Refusal) {
-      process.stderr.write(`${err.message}\n`);
+      // a refusal's words through the door screen: a path in them is said "(a path)"
+      process.stderr.write(`${screenAtDoor(null, null, err.message).answer}\n`);
       process.exitCode = 2;
     } else {
       // An error the command has no words for: its text can carry an absolute path or the

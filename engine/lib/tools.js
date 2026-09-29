@@ -23,6 +23,8 @@ const {
   STAMP_NOT_ONE_VALUE,
   LINK_FOLDER,
   comparePaths,
+  deskShown,
+  DESK_ARGUMENT: DESK_ARGUMENT_SHARED,
 } = require("./desk.js");
 const { Refusal } = require("./refusal.js");
 const { pluginVersion } = require("./version.js");
@@ -30,6 +32,9 @@ const { RULES, checkDesk: runRules, narrowFindings } = require("../check/rules.j
 const { stampCheckedWith } = require("./stamp.js");
 const paths = require("../paths/index.js");
 const { TOOLS: VIEW_TOOLS } = require("../views/tools.js");
+const { RENDER_TOOLS } = require("../render/index.js");
+const { TOOLS: WRITE_TOOLS } = require("../write/tools.js");
+const { TOOLS: READ_TOOLS } = require("../read/tools.js");
 
 // Refuses an argument the tool does not take, naming the ones it does.
 function onlyArguments(tool, args, allowed) {
@@ -102,12 +107,7 @@ function deskFor(named, { cwd = process.cwd(), env = process.env, writes = false
   );
 }
 
-const DESK_ARGUMENT = {
-  type: "string",
-  description:
-    "The desk folder (the one holding celorus/index.md), as a full path. Leave it out to use " +
-    "CELORUS_DESK, or the desk found above the working folder when this server knows it.",
-};
+const DESK_ARGUMENT = DESK_ARGUMENT_SHARED;
 
 // The pages a check is narrowed to: a list of page paths under celorus/, or absent.
 function scopeOf(scope) {
@@ -203,8 +203,14 @@ function skippedLine(skipped) {
 // page the rules read: no rule reads that page, so a scope must also name one they read. It
 // makes no claim about what a check narrowed to the page would hold: named beside a page the
 // rules read, it keeps the findings on the pages it links.
+const { pathsSaid } = require("../render/screen.js");
+// A scope entry (text, :115): a full path, as the reader reads one (pageNamed), or a path whole, as "a path"; any other through the ONE pathsSaid (R72, R73; K4b; R101 (b), K4g).
+function entrySaid(entry) {
+  return typeof entry !== "string" ? JSON.stringify(entry) : path.isAbsolute(entry) || path.win32.isAbsolute(entry) || pathsSaid(entry) === "(a path)" ? "a path" : JSON.stringify(pathsSaid(entry));
+}
+
 function notReadByRules(entry, rel) {
-  const named = `\`scope\` names ${JSON.stringify(entry)}`;
+  const named = `\`scope\` names ${entrySaid(entry)}`;
   const folder = folderOf(rel);
   const remedy = "a scope must also name a page the rules read. Name one beside it, or leave scope out to check the whole desk.";
   if (unreadKind(rel) === "generated") {
@@ -308,9 +314,11 @@ function scopePages(scope, read, byRules, found) {
       skipped.set(unread, unreadKind(unread));
       continue;
     }
+    // The folder the check read is said as the desk's celorus folder, never by its path (0.19.0
+    // K4b), and the entry by entrySaid.
     throw new Refusal(
-      `\`scope\` names ${JSON.stringify(entry)}, which matches no page path this check read ` +
-        `under ${dir}, spelled as given, nor a required page the check found missing. Name each ` +
+      `\`scope\` names ${entrySaid(entry)}, which matches no page path this check read ` +
+        "under the desk's celorus folder, spelled as given, nor a required page the check found missing. Name each " +
         'page by its path under the desk\'s celorus folder, as "people/meera-sample.md" (with ' +
         "celorus/ in front, or as its full path, is taken too); leave scope out to check the " +
         "whole desk.",
@@ -369,7 +377,8 @@ function checkDesk(args = {}) {
   onlyArguments("check_desk", args, ["desk", "scope", "record"]);
   const asked = scopeOf(args.scope);
   const record = recordOf(args.record);
-  const read = readDesk(deskFor(args.desk, { writes: record }));
+  const found = deskFor(args.desk, { writes: record });
+  const read = readDesk(found);
   // One read of the desk and one run of the rules: the rules' own list of the pages they read,
   // and where its findings land, are what a scope entry is held to, and a scope then narrows
   // that same run's findings. rules_run, the pages and the summary all describe this one run.
@@ -444,7 +453,8 @@ function checkDesk(args = {}) {
     desk_id: unread ? null : read.stamps.desk_id || null,
     layout: read.layout,
     stamps_unread: unread ? unread.rel : null,
-    root: read.root,
+    // The desk as the caller named it, or its folder's name (R72).
+    root: deskShown(args.desk, found).root,
     pages_read: read.pages.length,
     pages_with_problems: problems,
     rules_run: byRules.rules.length,
@@ -508,6 +518,9 @@ const TOOLS = [
   },
   ...paths.TOOLS,
   ...VIEW_TOOLS,
+  ...RENDER_TOOLS,
+  ...READ_TOOLS,
+  ...WRITE_TOOLS,
 ];
 
 // The tool with this name, or a refusal naming every tool there is.
@@ -520,4 +533,15 @@ function findTool(name) {
   );
 }
 
-module.exports = { TOOLS, findTool, deskFor, onlyArguments };
+// The desk as the caller gave it, for the paths an answer names (R72, lib/desk.js deskShown): the
+// `desk` argument; else the CELORUS_DESK findDesk read the desk from (lib/desk.js envDesk, from
+// the same working folder deskFor reads it from), which counts as passed, in the form the
+// variable gave it (0.19.0 K1k, the base's ruling R101 (C); R75: the hook's desk path is the
+// caller's own context); else undefined, for a desk the walk found.
+function deskNamed(named, { cwd = process.cwd(), env = process.env } = {}) {
+  if (named !== undefined && named !== null) return named;
+  const { envDesk } = require("./desk.js");
+  return envDesk(env, workingFolder(cwd));
+}
+
+module.exports = { TOOLS, findTool, deskFor, deskNamed, onlyArguments, linksUnknown };

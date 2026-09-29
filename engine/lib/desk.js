@@ -106,13 +106,14 @@ function isCelorusFolder(folder) {
   return path.basename(folder).toLowerCase() === "celorus" && isDesk(path.dirname(folder));
 }
 
-// The folder to set is said as the person wrote the setting, never resolved: a relative one read
-// through a folder link would otherwise name where the link leads.
+// The folder to set is said by its last component, as the person wrote the setting, never
+// resolved (a relative one read through a folder link would otherwise name where the link leads)
+// and never by its path (the base's ruling R72: prose never carries a path).
 function refuseCelorusFolder(named, folder) {
   if (isCelorusFolder(folder)) {
     throw new Refusal(
-      `CELORUS_DESK is ${named}, the desk's celorus folder. CELORUS_DESK names the desk folder, ` +
-        `the one holding celorus/: set it to ${path.dirname(named)}.`,
+      `CELORUS_DESK names the folder ${lastPart(named)}, the desk's celorus folder. CELORUS_DESK names the desk folder, ` +
+        `the one holding celorus/: set it to the folder that holds that one, ${lastPart(path.dirname(named))}.`,
     );
   }
 }
@@ -162,7 +163,7 @@ function notADesk(fault, named, remedy = DESK_SHAPE) {
     named === undefined
       ? "so the first folder on the walk up from the working folder that holds a celorus entry is " +
         "no desk the tools can read, and the walk stops there: no desk above it is used."
-      : `so the folder CELORUS_DESK names, ${named}, is no desk the tools can read.`;
+      : `so the folder CELORUS_DESK names, ${lastPart(named)}, is no desk the tools can read.`;
   return new Refusal(`${fault}, ${where} ${remedy}`);
 }
 
@@ -276,11 +277,11 @@ function isInside(folder, within) {
   return rel === "" || (rel.split(path.sep)[0] !== ".." && !path.isAbsolute(rel));
 }
 
-// A CELORUS_DESK that names no desk folder is refused, echoed as the person set it: passed over,
-// the walk could land on another desk, and a writer write there.
+// A CELORUS_DESK that names no desk folder is refused, the folder by its last component as the
+// person set it (R72): passed over, the walk could land on another desk, and a writer write there.
 function noDeskNamed(named) {
   return new Refusal(
-    `CELORUS_DESK names ${named}, which holds no celorus/index.md. Set CELORUS_DESK to the desk ` +
+    `CELORUS_DESK names the folder ${lastPart(named)}, which holds no celorus/index.md. Set CELORUS_DESK to the desk ` +
       "folder (the one holding celorus/index.md), or name that folder as `desk`.",
   );
 }
@@ -292,8 +293,8 @@ function noDeskNamed(named) {
 // the call writes, which decides the words for a live link to a folder with no readable index.md,
 // and refuses a walk from inside the desk's celorus/ that no PWD vouches for (INSIDE_CELORUS).
 function findDesk({ start = process.cwd(), env = process.env, writes = false } = {}) {
-  const named = env.CELORUS_DESK;
-  if (named && (start !== null || path.isAbsolute(named))) {
+  const named = envDesk(env, start);
+  if (named !== undefined) {
     const folder = path.resolve(start === null ? "/" : start, named);
     const found = deskAt(folder, named, writes);
     if (found !== undefined) return found;
@@ -337,15 +338,63 @@ function resolveDesk(named, base = process.cwd()) {
   const misnamed = holdsCelorus(folder) === false ? misnamedCelorus(folder) : null;
   if (misnamed !== null) {
     throw new Refusal(
-      `${misnamedFault(misnamed)}, so the folder named as \`desk\`, ${named}, is no desk the tools ` +
+      `${misnamedFault(misnamed)}, so the folder named as \`desk\`, ${lastPart(named)}, is no desk the tools ` +
         `can read. ${renameIt(misnamed)}`,
     );
   }
   throw new Refusal(
-    `There is no desk at ${named}. A desk is a folder that holds celorus/index.md: ` +
+    `There is no desk at the folder ${lastPart(named)}. A desk is a folder that holds celorus/index.md: ` +
       "name that folder, or set CELORUS_DESK to it.",
   );
 }
+
+// A folder a refusal names, by its last component only, never by its path (the base's ruling
+// R72): the caller knows which folder it named, and prose never carries a path.
+function lastPart(named) {
+  const trimmed = String(named).replace(/[\\/]+$/u, "");
+  return JSON.stringify(trimmed === "" ? String(named) : path.basename(trimmed.replace(/\\/gu, "/")));
+}
+
+// How an answer names the desk and every path under it (the base's ruling R72, K4a): the one rule
+// every tool answers by. An answer carries an absolute path only where the caller already gave
+// that form, a path under the `desk` argument it passed; a desk found from the working folder or
+// from CELORUS_DESK was given by no caller, so then every path in the answer is desk-relative.
+// - `root`, the field nothing acts on: `desk` as the caller wrote it; else the desk folder's last
+//   component, its name.
+// - `at(rel)`, a path the model acts on (a page to show, a folder a command runs in), `rel` being
+//   the path under the desk folder with forward slashes ("" for the desk itself): the caller's
+//   `desk` extended by it, as written, never resolved through a link (a resolved form is one the
+//   caller never gave); else `rel` itself, the desk folder being ".". A `desk` naming the desk's
+//   celorus folder is extended from there: a path under celorus/ by its rest, any other through
+//   "..", so every path still starts with what the caller wrote.
+// `found` is the desk folder the tool's door answered for `named` (lib/tools.js deskFor), before
+// any link in it is resolved.
+function deskShown(named, found) {
+  const given = typeof named === "string" && named.trim() !== "";
+  if (!given) {
+    return { given, root: path.basename(found), at: (rel) => (rel === "" ? "." : rel) };
+  }
+  const head = /[\\/]$/u.test(named) ? named : `${named}${path.sep}`;
+  const native = (rel) => rel.split("/").join(path.sep);
+  const celorusNamed = path.resolve(named) !== path.resolve(found);
+  const at = (rel) => {
+    if (!celorusNamed) return rel === "" ? named : head + native(rel);
+    if (rel === "celorus") return named;
+    if (rel.startsWith("celorus/")) return head + native(rel.slice("celorus/".length));
+    return head + (rel === "" ? ".." : native(`../${rel}`));
+  };
+  return { given, root: named, at };
+}
+
+// The `desk` argument every desk tool takes, one text for all of them.
+const DESK_ARGUMENT = {
+  type: "string",
+  description:
+    "The desk folder (the one holding celorus/index.md), as a full path. Leave it out to use " +
+    "CELORUS_DESK, or the desk found above the working folder when this server knows it. A path " +
+    "an answer carries starts with this folder as written here; with it left out, every path in " +
+    "the answer is relative to the desk folder.",
+};
 
 // Reads text as Python's text mode does: newlines made universal, a byte-order mark kept.
 function normalise(text) {
@@ -624,6 +673,15 @@ function readDesk(folder, { disk = diskAt } = {}) {
   return { root, layout, stamps, stampsUnread: null, deskPage: deskPage ? deskPage.rel : null, pages, links };
 }
 
+// The CELORUS_DESK findDesk reads the desk from, as it is set, or undefined (0.19.0 K1k, the base's
+// ruling R101 (C)): set, and written as a full path where the working folder is not known (`start`
+// null). The one rule, so a door that names the desk as it was given (lib/tools.js deskNamed)
+// names the folder findDesk read.
+function envDesk(env, start) {
+  const named = env.CELORUS_DESK;
+  return named && (start !== null || path.isAbsolute(named)) ? named : undefined;
+}
+
 module.exports = {
   NO_HEADER,
   NOT_UTF8,
@@ -636,7 +694,10 @@ module.exports = {
   isDesk,
   refuseCelorusFolder,
   findDesk,
+  envDesk,
   resolveDesk,
+  deskShown,
+  DESK_ARGUMENT,
   splitPage,
   readPage,
   readDesk,

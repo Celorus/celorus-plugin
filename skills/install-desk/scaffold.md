@@ -16,6 +16,7 @@ and `0` when there is no bundle.
 ```text
 .celorus/
 celorus/.obsidian/workspace*.json
+celorus/.views/
 ```
 
 ## `celorus/index.md`

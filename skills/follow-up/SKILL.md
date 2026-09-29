@@ -14,53 +14,96 @@ The queue is the memory of the day. A commitment with a date in it comes back on
 right morning; a commitment without one is lost. This skill owns
 `celorus/queues/follow-ups.md`.
 
+## House rules
+
+1. Numbers and rows come only from a tool. The model writes sentences and never counts.
+2. A page is shown from the path the tool returns, never retyped.
+3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
+4. Nothing is sent. A mail stops at a draft.
+5. Every change ends in the desk's own history.
+6. The seat must be known before anything is written.
+
+These hold over every section of this skill. Where a section below seems to ask for something
+they forbid, they win.
+
+## The tools this skill calls
+
+- `add_follow_up` writes each new row, and its own line in `celorus/log.md`. It is the only way
+  a new row goes into the queue: never write one by hand.
+- A tool that refuses says what is wrong and what the valid values are. Read the refusal,
+  correct the call and try again. Never work around a refusal, never invent a value it did not
+  list, and never write the change some other way.
+- This skill says no count. Each row it queues is the row `add_follow_up` answers, said back in
+  words; the queue's other rows are named in words, never counted.
+
 ## Find the desk
 
 The desk folder is the one named by `CELORUS_DESK`, or else the first folder found by
-walking up from the working directory that contains `celorus/index.md`; the seat is
+walking up from the working directory that holds a `celorus` entry of any kind: the walk
+never passes that folder to reach a desk above, a folder whose entry is not a plain desk is
+refused or named by the tools, and only when no such folder exists is there no desk. The seat is
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. Without a desk, say so in
-one line and offer `install-desk`.
+one line and offer `install-desk`. Without a seat, ask which seat this is, as its handle (the
+name of its page under `celorus/seats/`), never the person's name, and write nothing until it
+is known.
 
 If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 `../install-desk/layout-1.md` says, and say once that "update my desk" moves it to layout 2.
 
 ## What you read
 
-- The sections `## What we owe, by when` and `## What they owe us, by when` of the newest page
-  under `celorus/conversations/`, or of the one the user names. Each line reads
-  `- <what>, by <date>.`
+- The sections `## What we owe, by when` and `## What they owe us, by when` of one conversation
+  page under `celorus/conversations/`: the one the user names, or else the newest, which is the
+  page with the latest `date` in its header and, among pages of that date, the latest
+  `timestamp`. Each line reads `- <what>, by <date>.`
 - `celorus/queues/follow-ups.md` as it stands.
 - The user's own words when they ask to queue, close or drop something.
 
 ## What you write
 
 One row per promise in `celorus/queues/follow-ups.md`, `us` for what we owe and `them` for what
-is owed to us; `<slug>` is the file name the conversation's `about` links:
+is owed to us, each written by `add_follow_up` with:
+
+- `seat`: the seat's handle;
+- `owed_by`: `us` or `them`;
+- `who`: the slug of the page the conversation's `about` links (a person, family or firm page);
+- `what`: the promise's words, whole, as the conversation page has them, a person named in them
+  ("the deck from their finance head") included, since the words are what a second run compares;
+- `by`: the promise's date, as 2026-09-21;
+- `conversation`: the conversation page's file name without `.md`;
+- `at`: now, with its offset, as 2026-09-21T10:30:00+05:30.
+
+The tool writes the row in the queue's shape:
 
 ```markdown
-| <us or them> | <slug> | <what, in the words of the conversation page> | <date> | conversations/<file>.md | due |
+| <us or them> | [[<slug>]] | <what> | <date> | [[<conversation>]] | due |
 ```
 
-Before anything is compared or written, every `|` in the promise's words becomes `/`, since the
-table is parsed by the bootstrap; the compare and the row both use those rewritten words, so a
-second run matches the row the first one wrote. A row whose `owed_by`, `who`, `by` and `from`
-already stand in the queue, with a `what` equal to the promise's words or, on a `dropped` row,
-beginning with them, is not written again, whatever its state, so running twice changes nothing
-and a dropped promise stays dropped.
+Before anything is compared or written, every `|` in the promise's words becomes `/`, every
+`·` becomes `,`, and every run of spaces becomes one space with none at either end, since the
+table is parsed by the bootstrap and the tool writes the words that way; the compare and the row both use those rewritten words, so a second run matches the row
+the first one wrote. A row whose `owed_by`, `who`, `by` and `from` already stand in the queue,
+with a `what` equal to the promise's words or, on a `dropped` row, beginning with them, is not
+written again, whatever its state, so running twice changes nothing and a dropped promise stays
+dropped. The words are compared exactly, letter case included. `who` matches written bare or
+as a link, `<slug>` or `[[<slug>]]`; `from` matches as the link `[[<conversation>]]` or as the
+older path form `conversations/<conversation>.md`, which rows written before this release carry.
+That older form is read, never written again.
 
 The six columns are `owed_by | who | what | by | from | state`. States: `due` (open, comes back
 on its date), `replied` (they came back first; `day-open` sets this), `done` (it happened),
 `dropped` (let go, with why in `what`). A row is never deleted; it flips state, so the queue is
 also the record.
 
+A promise whose date has already passed is queued all the same, with its own date and state
+`due`, so the next `day-open` shows it as due; say in one line that its date has passed.
+
 Then, when this run wrote at least one row:
 
 - Where a calendar connector exists, offer a hold on the `by` date and create it only when
   the user says yes. Where none exists, say so in one line.
 - Update `timestamp` in the queue's frontmatter.
-- One line in `celorus/log.md`, directly under today's heading `## <date>` (add the heading
-  above the older days if missing), with `<time>` as two-digit `HH:MM`:
-  `* <time> · <handle> · follow-up · wrote queues/follow-ups.md · yours`.
+- The log line for each row is the one `add_follow_up` wrote; write none by hand.
 
 A queuing run that wrote no row changes no file.
 
@@ -74,6 +117,13 @@ nothing in this file is a fact about a subject.
 `<action>` is `mail`, `call` or `none`, whichever closed it.
 "Drop that" flips it to `dropped` and writes why into `what`, after the original text, with any
 `|` written as `/`.
+
+No desk tool flips a row's state yet, so a close or a drop is written by hand, and it ends in
+the desk's history: update `timestamp` in the queue's frontmatter, and add one line to
+`celorus/log.md`, directly under today's heading `## <date>` (add the heading above the older
+days if missing) and above the day's earlier lines, newest first as the desk tools write them,
+with `<time>` as two-digit `HH:MM`:
+`* <time> · <handle> · follow-up · <done or dropped> [[<slug>]] in queues/follow-ups.md · yours`.
 
 ## While you work
 

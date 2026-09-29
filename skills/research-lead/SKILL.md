@@ -11,27 +11,58 @@ description: >-
 
 # Research a lead
 
-Fifteen to thirty minutes of manual digging per lead is the drudgery this skill removes.
+The manual digging each lead takes is the drudgery this skill removes.
 You produce one page the day can reuse, in the house format, with every line carrying
 its register: `record`, `web` or `yours`. What the web could not establish is listed at
 the end, plainly, because that list is the honest close and it is what the record holds.
 
+## House rules
+
+1. Numbers and rows come only from a tool. The model writes sentences and never counts.
+2. A page is shown from the path the tool returns, never retyped.
+3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
+4. Nothing is sent. A mail stops at a draft.
+5. Every change ends in the desk's own history.
+6. The seat must be known before anything is written.
+
+These hold over every section of this skill. Where a section below seems to ask for something
+they forbid, they win.
+
+## The tools this skill calls
+
+- `family_facts`, for a family already on the desk: its people, their pages and CRM ids, and
+  what the desk already holds on it, so step 1 starts from the desk's own facts.
+- `check_desk`, over the pages written, at the end.
+- The record's tools and the check, as step 3 says: every figure from the record is the one
+  its tool returned, verbatim.
+- A tool that refuses says what is wrong and what the valid values are. Read the refusal,
+  correct the call and try again. Never work around a refusal, never invent a value it did not
+  list, and never write the change some other way.
+- A figure from the web is the source's, written with its URL and date; it is never a number
+  of yours. No desk tool yet measures the minutes a research took, so this skill says and
+  writes no minutes of its own (below).
+
 ## Find the desk
 
 The desk folder is the one named by `CELORUS_DESK`, or else the first folder found by
-walking up from the working directory that contains `celorus/index.md`; the seat is
+walking up from the working directory that holds a `celorus` entry of any kind: the walk
+never passes that folder to reach a desk above, a folder whose entry is not a plain desk is
+refused or named by the tools, and only when no such folder exists is there no desk. The seat is
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. With no desk, still do the
 research and present the page in the conversation, then offer `install-desk`; a page is
-written to disk only inside a desk.
+written to disk only inside a desk. Inside a desk without a seat, ask which seat this is, as
+its handle (the name of its page under `celorus/seats/`), never the person's name, and write
+nothing until it is known.
 
 If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 `../install-desk/layout-1.md` says, and say once that "update my desk" moves it to layout 2.
 
 ## Start the clock
 
-Note the time you start. The minutes from here to the written page go into the desk log
-as `minutes`. This number is the instrument the desk is measured with; keep it honest,
-and never round it down.
+Note the time you start, with its offset. The minutes from here to the written page are the
+instrument the desk is measured with, and they are a number: until a desk tool measures them
+from that start and the page's `timestamp`, the desk log's `minutes` cell is `·`, and you never
+work the minutes out yourself or say a guess at them.
 
 ## Step 1: what the desk already holds (`yours`)
 
@@ -108,7 +139,8 @@ hour, ask again. Every time kept in the cache, a case's, a "Refused" retry time,
 not read" time and a "Not found" time, is an ISO 8601 timestamp with its offset. Ask through
 the harness's connection, never through anything the plugin runs itself. It answers whether
 the name is on the record and how much it holds: counts only, never a figure. The counts
-pick the case and go no further. Write to the cache the case and the time it was asked, as
+pick the case and go no further: the case goes to the seat, and on a firm page, in the check's
+own words and never as a number. Write to the cache the case and the time it was asked, as
 an ISO 8601 timestamp with its offset, and nothing else: never the counts. The case is one
 of: "Depth on record" when the answer is `on_record` and the record holds returns the
 company has filed (its count of returns filed is not zero); "Only the identity and the board
@@ -136,7 +168,7 @@ not take the query, keep nothing, and say in one line the check's own error word
 them. The case is then "The record was not asked by this name". But a "Refused" or "Could
 not read" written under a key that holds the case "On the record, counts not available"
 asked less than a day ago keeps that the company is on the Celorus record, so a failed ask
-does not lose that fact, and the case is then "On the record, counts not available". The six
+does not lose that fact, and the case is then "On the record, counts not available". The
 record skills read and write this same cache under the same key and ask only when it holds
 nothing current for that key, so on a desk a company has at most one answered ask a day, and
 with no desk it is asked at most once a session. A failed read is held on the desk for an
@@ -186,7 +218,7 @@ prove, its heading stands with nothing under it). The path is `celorus/people/<s
 `wealth` pack or no pack; the slug is the canonical name, lowercase, hyphenated, and no other
 page on the desk may already use it. A family is the page unit for a wealth desk: the family
 page lists its principals, each with their own person page carrying `member_of`, and carries
-the household aggregate only.
+only the household figures a connected record tool answers, each with its source.
 
 Before writing a new person page, look for a person page with the same title or alias. If one
 exists and neither lists the other in `not_same_as`, ask "same person?", naming each page's firm
@@ -220,16 +252,19 @@ a contradiction on two lines with the record winning, bump `timestamp`, and add 
 Then:
 
 - Append the research row to `celorus/desk-log.md`:
-  `| <date> | <handle> | <slug> | <source> | <minutes> | research | not-yet | · | research-lead |`.
+  `| <date> | <handle> | <slug> | <source> | · | research | not-yet | · | research-lead |`.
   `<source>` is one of `supplied-<list>`, `supplied-ask-<date>`, `book`, `follow-up` or
-  `inbound`.
+  `inbound`. The `minutes` cell is `·`, as "Start the clock" says.
 - Update the lead's reason line on today's board if the research changed it.
-- Mark the queue row `researched` in `celorus/queues/supplied.md`.
+- Mark the queue row `researched` in `celorus/queues/supplied.md`: the row whose `lead` is the
+  page's slug, written bare or as `[[<slug>]]`. With no such row, change nothing there.
 - Append one line to `celorus/log.md`, directly under today's heading `## <date>` (add the
-  heading above the older days if missing), with `<time>` as two-digit `HH:MM`:
+  heading above the older days if missing) and above the day's earlier lines, newest first as
+  the desk tools write them, with `<time>` as two-digit `HH:MM`:
   `* <time> · <handle> · research-lead · wrote <the page's path under celorus/> · <registers used>`,
   one line for each page written.
-- Run `check-desk` over the pages you wrote, and say its count in one line.
+- Call `check_desk` with `scope` naming the pages you wrote, and say its `summary` in one line,
+  as it came: never a count of your own.
 
 ## When no account is connected
 

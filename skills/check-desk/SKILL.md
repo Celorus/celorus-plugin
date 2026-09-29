@@ -28,13 +28,19 @@ generated part.
 5. Every change ends in the desk's own history.
 6. The seat must be known before anything is written.
 
+A tool answers a full path only when it was called with `desk` as one; called without `desk`,
+every path it answers is relative to the desk folder (found as below), so show the page from
+there.
+
 These hold over every section of this skill, the walk and the merge included. Where a section
 below seems to ask for something they forbid, they win.
 
 ## Find the desk
 
 The check finds the desk: the folder named by `CELORUS_DESK`, or else the first folder found
-by walking up from the working directory that contains `celorus/index.md`. When it cannot, it
+by walking up from the working directory that holds a `celorus` entry of any kind, which the
+walk never passes to reach a desk above; a folder whose entry is not a plain desk is refused or
+named by the tools, and only when no such folder exists is there no desk. When it cannot, it
 refuses and says what a desk is and how to name one: say its sentence, offer `install-desk`,
 and stop. The seat is `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`, where
 `desk_id` is the one the check returns. When the check returns layout 1, the desk has no
@@ -68,7 +74,8 @@ Its answer is the whole of what this skill knows about the desk's rules:
 - `pages_with_problems`: each page the check could not read, or whose stamps it could not
   read, with why and the remedy. A page with no header is not one of them; the rules say
   whether it should have one.
-- `root`: the desk folder the check read, and `layout`, `desk` and `desk_id` from its stamps.
+- `root`: the desk folder the check read, as `desk` named it, or only the folder's name when the
+  desk was found without one; and `layout`, `desk` and `desk_id` from its stamps.
 - `checked_with`: the lines the check wrote into `celorus/desk.md`, or null and the reason none
   is reported written. A whole-desk check asked to record writes two lines there, clean or not:
   `checked_with: <version>` and `checked_findings: <n>`. They say which release checked the
@@ -87,8 +94,8 @@ one the check returned. A refusal from the check names what it takes; say it, an
 that.
 
 Then write `celorus/views/needs-attention.md` from the check's rows, as "What you write"
-below says, and show that page from its path under the `root` the check returned, never
-retyped into the answer.
+below says, and show that page from its path under the desk folder, never retyped into the
+answer.
 
 One thing it does not do: when a row's message is `the model cannot be read from this page`,
 the model cannot be read, so list the page and stop. Do not rebuild a view or write a path

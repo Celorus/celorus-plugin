@@ -37,7 +37,6 @@ const {
   ahead,
   previousTail,
   endWithTail,
-  codeOf,
   folderShown,
 } = require("./history.js");
 
@@ -95,7 +94,9 @@ const REQUIRED_FILES_V2 = [
   "celorus/model/connections.md",
   "celorus/model/own-words.md",
 ];
-const GITIGNORE_V2 = [".celorus/", "celorus/.obsidian/workspace*.json"];
+// celorus/.views/ (0.19.0 round 1, K1): render_view's pages and saved sentences are one seat's,
+// never the desk history's; desk_sync keeps them out by itself too (sync/sync.js).
+const GITIGNORE_V2 = [".celorus/", "celorus/.obsidian/workspace*.json", "celorus/.views/"];
 const SKIP_TOP = new Set(["model", "views", "merges"]);
 
 const WHITE = `[${V.BLANK_CLASS.slice(1, -1)}\\n]`;
@@ -122,6 +123,12 @@ const OBSIDIAN_CHURN = /^\.obsidian\/workspace[^/]*\.json$/u;
 // desk the update had already written, moved or removed when it stopped: empty means the desk
 // is as it was.
 class UpdateStopped extends Refusal {}
+
+// A fault the update met, in the update's own words: a Refusal, so a stop says its words as they
+// are (step, saidOf), and the answer-path check (desk_engine/refusal_reader.js) reads them as a
+// refusal site, driven or proved. Any other error, a system error or a plain Error (ownPath's),
+// is said by its code alone (the base's ruling R77).
+class UpdateFault extends Refusal {}
 
 function stopped(message, changed = []) {
   const err = new UpdateStopped(message);
@@ -164,16 +171,16 @@ const UTF8 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
 function readText(file) {
   let bytes;
   try {
-    if (!fs.statSync(file).isFile()) throw new Error(`${path.basename(file)} is missing`);
+    if (!fs.statSync(file).isFile()) throw new UpdateFault(`${path.basename(file)} is missing`);
     bytes = fs.readFileSync(file);
   } catch (err) {
-    if (err && err.code === "ENOENT") throw new Error(`${path.basename(file)} is missing`);
+    if (err && err.code === "ENOENT") throw new UpdateFault(`${path.basename(file)} is missing`);
     throw err;
   }
   try {
     return UTF8.decode(bytes).replace(/\r\n?/gu, "\n");
   } catch {
-    throw new Error(`${path.basename(file)} is not readable as UTF-8`);
+    throw new UpdateFault(`${path.basename(file)} is not readable as UTF-8`);
   }
 }
 
@@ -186,7 +193,7 @@ function readHead(file) {
   try {
     head = parseHeader(m[1]);
   } catch (err) {
-    if (err instanceof HeaderError) throw new Error(`the header of ${path.basename(file)} does not parse: ${err.message}`);
+    if (err instanceof HeaderError) throw new UpdateFault(`the header of ${path.basename(file)} does not parse: ${pathsSaid(err.message)}`);
     throw err;
   }
   return { head: V.isMapping(head) ? head : null, body: text.slice(m[0].length), text, raw: m[1] };
@@ -333,11 +340,11 @@ function guard(desk, fn) {
       // its own: its words by its path under the desk ride along (`readOnly`), for the preview's
       // scratch run, whose copy keeps the desk's modes (runUpdate's step).
       const said = readOnlySaid(desk, err);
-      throw Object.assign(new Error(`a write stopped (${codeOf(err)})`), { pathless: faultOf(err) }, said === null ? {} : { readOnly: said });
+      throw Object.assign(new UpdateFault(`a write stopped (${codeShown(err)})`), { pathless: faultOf(err) }, said === null ? {} : { readOnly: said });
     }
     const rel = under(desk, err.file);
     const said = err.told(rel, DESK_FOLDER);
-    const stop = new Error(err.link ? `${said}, and the update never writes through one` : said);
+    const stop = new UpdateFault(err.link ? `${said}, and the update never writes through one` : said);
     if (faultOf(err) !== null) stop.pathless = faultOf(err);
     if (typeof err.previous === "string") Object.assign(stop, { rel, previous: err.previous });
     // A page on the desk as written, then not closed: a change the stop names (history.js NotClosed).
@@ -360,8 +367,8 @@ function faultOf(err) {
   if (err instanceof NotOwnFolder && err.link) return "a folder on the way was no longer the copy's own";
   if (err instanceof NotWritable || err instanceof FolderNotWritable) return READ_ONLY.has(err.code) ? null : `a write stopped (${err.code})`;
   if (err instanceof NotOwnFolder) return null;
-  if (READ_ONLY.has(codeOf(err))) return null;
-  return `a write stopped (${codeOf(err)})`;
+  if (READ_ONLY.has(codeShown(err))) return null;
+  return `a write stopped (${codeShown(err)})`;
 }
 
 // A write's own error with a read-only code, in the words the desk's read-only faults are said in,
@@ -523,7 +530,7 @@ function pyInt(value) {
   if (typeof value === "string" && /^[ \t\n\r\f\v]*[+-]?[0-9](?:_?[0-9])*[ \t\n\r\f\v]*$/u.test(value)) {
     return Number(value.replace(/_/gu, ""));
   }
-  throw new Error(`invalid literal for int() with base 10: ${V.show([value]).slice(1, -1)}`);
+  throw new UpdateFault(`invalid literal for int() with base 10: ${pathsSaid(V.show([value]).slice(1, -1))}`);
 }
 
 // json.dumps(value, default=str, ensure_ascii=False), Python's spelling.
@@ -719,7 +726,7 @@ function fill(template, values) {
   let text = template;
   for (const [key, value] of Object.entries(values)) text = text.split(`{{${key}}}`).join(value);
   const left = PLACEHOLDER.exec(text);
-  if (left) throw new Error(`the template needs ${left[0]}, which the desk does not record`);
+  if (left) throw new UpdateFault(`the template needs ${left[0]}, which the desk does not record`);
   return text;
 }
 
@@ -771,7 +778,7 @@ class Run {
 
   read(rel) {
     const file = at(this.desk, rel);
-    if (!isFile(file)) throw new Error(`${rel} is missing`);
+    if (!isFile(file)) throw new UpdateFault(`${rel} is missing`);
     return readText(file);
   }
 
@@ -832,10 +839,10 @@ function oldStamps(run) {
   const read = isFile(index) ? readHead(index) : null;
   const head = read ? read.head : null;
   const cel = V.own(head || {}, "celorus");
-  if (!V.isMapping(cel)) throw new Error(NO_STAMPS);
-  if (!V.truthy(V.own(cel, "desk_id"))) throw new Error("index.md holds no desk_id; the update never makes one up");
+  if (!V.isMapping(cel)) throw new UpdateFault(NO_STAMPS);
+  if (!V.truthy(V.own(cel, "desk_id"))) throw new UpdateFault("index.md holds no desk_id; the update never makes one up");
   if (!(V.truthy(V.own(cel, "desk")) || V.truthy(V.own(head, "title")))) {
-    throw new Error("index.md holds no name for the desk; the update never makes one up");
+    throw new UpdateFault("index.md holds no name for the desk; the update never makes one up");
   }
   return { head, cel, raw: read.raw };
 }
@@ -863,7 +870,7 @@ function checkMoves(run) {
       const file = at(src, rel);
       const target = at(path.join(run.root, now), rel);
       if (isFile(file) && !noise(file) && lexists(target)) {
-        throw new Error(
+        throw new UpdateFault(
           `moving ${path.relative(run.desk, file).split(path.sep).join("/")}: ` +
             `${path.relative(run.desk, target).split(path.sep).join("/")} already exists`,
         );
@@ -946,9 +953,9 @@ function moveFolders(run, made = []) {
         } catch (err) {
           // A page that may not leave its folder is what the desk holds (faultOf); any other code
           // is the write's own.
-          const code = codeOf(err);
+          const code = codeShown(err);
           throw Object.assign(
-            new Error(`${where(file)} could not be moved to ${where(target)} (${code})`),
+            new UpdateFault(`${where(file)} could not be moved to ${where(target)} (${code})`),
             READ_ONLY.has(code) ? {} : { pathless: `a page could not be moved (${code})` },
           );
         }
@@ -968,7 +975,7 @@ function moveFolders(run, made = []) {
     // On the preview's scratch copy, what is left is the copy's, never the desk's: said with no
     // path, a read-only move too (stoppedPartWay).
     throw Object.assign(
-      new Error(`${err.message}; putting the moves back failed too, so ${left.join(", ")} ${left.length === 1 ? "is" : "are"} left`),
+      new UpdateFault(`${saidOf(err)}; putting the moves back failed too, so ${left.join(", ")} ${left.length === 1 ? "is" : "are"} left`),
       { pathless: `${typeof err.pathless === "string" ? err.pathless : "a move stopped"}, and the moves could not be put back` },
     );
   }
@@ -984,7 +991,7 @@ function moveFolders(run, made = []) {
       remove(file);
     } catch (err) {
       const shown = folder ? folderShown(where(file), DESK_FOLDER) : where(file);
-      run.leftInPlace.push(`${shown} was left in place (${err instanceof NotOwnFolder ? "a folder on its way is a link" : codeOf(err)}).`);
+      run.leftInPlace.push(`${shown} was left in place (${err instanceof NotOwnFolder ? "a folder on its way is a link" : codeShown(err)}).`);
       continue;
     }
     if (folder) run.folders.add(where(file));
@@ -1092,7 +1099,7 @@ function promisesOn(run) {
       const commitments = V.own(block2, "commitments");
       for (const promise of V.truthy(commitments) ? V.items(commitments) : []) {
         if (!V.isMapping(promise) || promise instanceof Moment || !Object.hasOwn(promise, "what")) {
-          throw new Error(
+          throw new UpdateFault(
             `the promise on ${path.relative(run.desk, at(src, rel)).split(path.sep).join("/")} does not say what was promised`,
           );
         }
@@ -1103,34 +1110,34 @@ function promisesOn(run) {
   return out;
 }
 
-function checkQueue(run) {
-  const lines = run.read("celorus/queues/follow-ups.md").split("\n");
+// The follow-ups queue's lines, its table and its columns, each row checked against them: one
+// reading for the up-front check and the write alike, so each stop has one site.
+function followUps(run, rel) {
+  const lines = run.read(rel).split("\n");
   const [table, header] = queueTable(lines);
   if (!knownHeader(header)) {
-    throw new Error(`the follow-ups table has the columns ${V.show(header)}, which neither layout writes`);
+    throw new UpdateFault(`the follow-ups table has the columns ${pathsSaid(V.show(header))}, which neither layout writes`);
   }
   for (const i of table.slice(2)) {
     const row = cells(lines[i]);
     if (row.length < header.length) {
-      throw new Error(`the follow-ups row ${V.strip(lines[i])} has ${row.length} cells, not the ${header.length} its columns name`);
+      throw new UpdateFault(`the follow-ups row ${pathsSaid(V.strip(lines[i]))} has ${row.length} cells, not the ${header.length} its columns name`);
     }
   }
+  return [lines, table, header];
+}
+
+function checkQueue(run) {
+  followUps(run, "celorus/queues/follow-ups.md");
   promisesOn(run);
 }
 
 function queuePromises(run) {
   const rel = "celorus/queues/follow-ups.md";
-  const lines = run.read(rel).split("\n");
-  const [table, header] = queueTable(lines);
-  if (!knownHeader(header)) {
-    throw new Error(`the follow-ups table has the columns ${V.show(header)}, which neither layout writes`);
-  }
+  const [lines, table, header] = followUps(run, rel);
   const rows = [];
   for (const i of table.slice(2)) {
     let row = cells(lines[i]);
-    if (row.length < header.length) {
-      throw new Error(`the follow-ups row ${V.strip(lines[i])} has ${row.length} cells, not the ${header.length} its columns name`);
-    }
     if (sameHeader(header, FOLLOW_UP_HEADER_V1)) {
       const [who, state, source, by] = [row[0], row[row.length - 1], row[row.length - 2], row[row.length - 3]];
       row = ["us", who, row.slice(1, -3).join(" | "), by, repoint(source), state];
@@ -1258,7 +1265,7 @@ function modelView(modelDir, packDir, left) {
     try {
       return fn();
     } catch (err) {
-      throw new Error(`the model could not be set out in the engine's working folder (${codeOf(err)})`);
+      throw new UpdateFault(`the model could not be set out in the engine's working folder (${codeShown(err)})`);
     }
   };
   const tmp = working(() => fs.mkdtempSync(path.join(os.tmpdir(), "celorus-model-")));
@@ -1326,7 +1333,7 @@ function fieldLists(modelDir) {
   for (const entry of V.truthy(lists) ? V.items(lists) : []) {
     const text = V.show(entry);
     const cut = text.indexOf(" <- ");
-    if (cut === -1) throw new Error(`dictionary update sequence element has length 1; 2 is required`);
+    if (cut === -1) throw new UpdateFault(`dictionary update sequence element has length 1; 2 is required`);
     out.set(text.slice(0, cut), text.slice(cut + 4));
   }
   return out;
@@ -1502,7 +1509,7 @@ function rebuildViews(run) {
 // is so (views/tools.js updating, stoppedPartWay).
 function retold(run, err) {
   if (err instanceof NotOwnFolder) {
-    return Object.assign(new Error(err.told(under(run.root, err.file))), typeof err.pathless === "string" ? { pathless: err.pathless } : {});
+    return Object.assign(new UpdateFault(err.told(under(run.root, err.file))), typeof err.pathless === "string" ? { pathless: err.pathless } : {});
   }
   if (err instanceof Refusal) {
     const tail = typeof err.tail === "string" && err.message.endsWith(err.tail) ? err.tail : "";
@@ -1528,18 +1535,31 @@ function logUpdate(run, target, time, handle) {
 // own log.md write fails and log.md does not read back as it was, the stop says log.md may be
 // incomplete, lists it as changed, and carries its previous text as an item of its own
 // (`log_previous_text`), apart from the first error's (`previous_text`).
+// A stop's words as the answer says them (the base's ruling R72: no answer mints a path; R77:
+// every Error class shows only its code): the engine's own words, a Refusal's, as they are; any
+// other error, of the system's or of the engine's (a plain Error, one with a code and no call,
+// ownPath's), by its code alone, in fixed words, never by its message, which can name any path.
+function codeShown(err) {
+  const code = err && typeof err === "object" && typeof err.code === "string" ? err.code : null;
+  return code !== null && /^[A-Z][A-Z0-9_]{0,39}$/u.test(code) ? code : "an error with no code";
+}
+
+function saidOf(err) {
+  return err instanceof Refusal ? err.message : `a write stopped (${codeShown(err)})`;
+}
+
 function stoppedPartWay(run, err, where, time, handle) {
   if (run.scratch) {
     // Said already as the scratch run's stop (runUpdate's step), or said now.
     if (typeof err.scratch === "string") return err;
-    return typeof err.pathless === "string" ? scratchStop(err.pathless, where) : stopped(err.message);
+    return typeof err.pathless === "string" ? scratchStop(err.pathless, where) : stopped(saidOf(err));
   }
   const touched = run.touched();
   const told = (stop) => {
     if (typeof err.previous === "string") stop.previous_text = err.previous;
     return stop;
   };
-  if (!touched.length) return told(endWithTail(stopped(err.message), previousTail(err, err.rel)));
+  if (!touched.length) return told(endWithTail(stopped(saidOf(err)), previousTail(err, err.rel)));
   const LOG = "celorus/log.md";
   let said;
   let torn = null;
@@ -1565,7 +1585,7 @@ function stoppedPartWay(run, err, where, time, handle) {
   const changed = torn && !touched.includes(LOG) ? [...touched, LOG] : touched;
   const stop = told(
     endWithTail(
-      stopped(`${err.message}; the desk has already changed: ${changed.join(", ")}, ${said}`, changed),
+      stopped(`${saidOf(err)}; the desk has already changed: ${changed.join(", ")}, ${said}`, changed),
       previousTail(err, err.rel) + previousTail(torn, LOG),
     ),
   );
@@ -1668,7 +1688,11 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
         err.message.endsWith(err.tail)
           ? err.tail
           : "";
-      const words = err && err.message ? err.message.slice(0, err.message.length - carried.length) : String(err);
+      // Only a Refusal's words are the engine's own: any other error, a system error (its message
+      // names the call and the file it failed on) or a plain Error (ownPath's names the file), is
+      // said by its code alone (saidOf), before its words are ever read (0.19.0 K4b and K4c; the
+      // base's rulings R72 and R77).
+      const words = err instanceof Refusal ? err.message.slice(0, err.message.length - carried.length) : saidOf(err);
       const stop = stopped(`${name}: ${words}`);
       if (err && typeof err.previous === "string") Object.assign(stop, { rel: err.rel, previous: err.previous });
       else if (carried) Object.assign(stop, { rel: err.rel, previous: carried.replace(/^\n\n/u, "") });
@@ -1690,7 +1714,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
   step("queueing promises", () => checkQueue(run));
   const target = step("stamping the versions", () => {
     const head = readHead(path.join(modelDir, "model.md")).head || {};
-    if (!Object.hasOwn(head, "model_version")) throw new Error("'model_version'");
+    if (!Object.hasOwn(head, "model_version")) throw new UpdateFault("'model_version'");
     return pyInt(head.model_version);
   });
   const have = step("stamping the versions", () => {
@@ -1817,3 +1841,10 @@ module.exports = {
   applyUpdate,
   previewUpdate,
 };
+
+// A stop that quotes a page's text says it through the ONE pathsSaid (the base's ruling R101 (b),
+// K4g): the header's parse error (readHead), an int() of a page's value (pyInt), the follow-ups
+// columns and row (followUps). Required when a stop is said.
+function pathsSaid(text) {
+  return require("../render/screen.js").pathsSaid(text);
+}

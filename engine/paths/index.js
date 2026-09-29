@@ -6,8 +6,7 @@
 // a link and never over a page it did not write (write.js), and returns its path, so the skill
 // shows the page from that path and never retypes it.
 
-const path = require("node:path");
-const { readDesk } = require("../lib/desk.js");
+const { readDesk, deskShown, DESK_ARGUMENT } = require("../lib/desk.js");
 const { Refusal } = require("../lib/refusal.js");
 const { pluginVersion } = require("../lib/version.js");
 const { strip, isMapping, compareText } = require("../check/values.js");
@@ -87,7 +86,9 @@ function whoCanIntroduce(args = {}, { now = localNow() } = {}) {
   const { deskFor, onlyArguments } = require("../lib/tools.js");
   onlyArguments(TOOL, args, ["desk", "to"]);
   // who_can_introduce writes the path page, so it finds its desk as a writer does.
-  const read = readDesk(deskFor(args.desk, { writes: true }));
+  const found = deskFor(args.desk, { writes: true });
+  const shown = deskShown(args.desk, found);
+  const read = readDesk(found);
   const target = targetOf(args.to, rules.checkPages(read.pages));
   let page;
   try {
@@ -100,25 +101,25 @@ function whoCanIntroduce(args = {}, { now = localNow() } = {}) {
     );
   }
   const rel = `celorus/views/path-to-${target}.md`;
-  const file = path.join(read.root, ...rel.split("/"));
   writePathPage(read.root, rel, page.text);
-  const shown = Math.min(page.kept, SHOWN_PATHS);
+  const kept = Math.min(page.kept, SHOWN_PATHS);
   return {
     tool: TOOL,
     plugin_version: pluginVersion(),
-    root: read.root,
-    page: file,
+    // The desk as the caller named it, and the page's path from there, or both desk-relative (R72).
+    root: shown.root,
+    page: shown.at(rel),
     rel,
     to: target,
     title: page.title,
     paths_found: page.found,
     paths_kept: page.kept,
     paths_folded: page.folded,
-    paths_shown: shown,
+    paths_shown: kept,
     summary:
       `Wrote ${rel}: ${page.kept} ${page.kept === 1 ? "path" : "paths"} to ${page.title}` +
       (page.folded ? `, ${page.folded} more folded into the shorter ${page.folded === 1 ? "path it restates" : "paths they restate"}` : "") +
-      (page.kept > shown ? `, ${shown} shown` : "") +
+      (page.kept > kept ? `, ${kept} shown` : "") +
       ". Show the page from its path.",
   };
 }
@@ -135,12 +136,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        desk: {
-          type: "string",
-          description:
-            "The desk folder (the one holding celorus/index.md), as a full path. Leave it out to use " +
-            "CELORUS_DESK, or the desk found above the working folder when this server knows it.",
-        },
+        desk: DESK_ARGUMENT,
         to: {
           type: "string",
           description:

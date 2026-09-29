@@ -17,22 +17,52 @@ we quoted is written down with whether it was measured or estimated, and every p
 firm named becomes a page the desk can find again. The write-up comes before the follow-up
 mail, always.
 
+## House rules
+
+1. Numbers and rows come only from a tool. The model writes sentences and never counts.
+2. A page is shown from the path the tool returns, never retyped.
+3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
+4. Nothing is sent. A mail stops at a draft.
+5. Every change ends in the desk's own history.
+6. The seat must be known before anything is written.
+
+These hold over every section of this skill. Where a section below seems to ask for something
+they forbid, they win.
+
+## The tools this skill calls
+
+- `family_facts`, before the review, when the call was about a family: the people already on
+  the desk, their pages and their CRM ids, so the review names them as the desk does.
+- `log_action` writes the call's row in `celorus/desk-log.md`, and its own line in
+  `celorus/log.md`: the row the desk's consoles count.
+- `check_desk`, over the pages written, at the end.
+- A tool that refuses says what is wrong and what the valid values are. Read the refusal,
+  correct the call and try again. Never work around a refusal, never invent a value it did not
+  list, and never write the change some other way.
+- The only numbers this skill says are the ones those tools answer. A figure the person quoted
+  on the call is their words, written down, never a number of yours.
+
 ## Find the desk
 
 The desk folder is the one named by `CELORUS_DESK`, or else the first folder found by
-walking up from the working directory that contains `celorus/index.md`; the seat is
+walking up from the working directory that holds a `celorus` entry of any kind: the walk
+never passes that folder to reach a desk above, a folder whose entry is not a plain desk is
+refused or named by the tools, and only when no such folder exists is there no desk. The seat is
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. Without a desk, say so in
-one line and offer `install-desk`.
+one line and offer `install-desk`. Without a seat, ask which seat this is, as its handle (the
+name of its page under `celorus/seats/`), never the person's name, and write nothing until it
+is known.
 
 If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 `../install-desk/layout-1.md` says, and say once that "update my desk" moves it to layout 2.
 
 ## What you read
 
-- The desk's capture: a sixty-second voice note the harness transcribes, typed notes, or
+- The desk's capture: a short voice note the harness transcribes, typed notes, or
   a transcript the user pastes or points you to.
 - The page of whoever the call was about, under `celorus/people/`, `celorus/families/` or
-  `celorus/firms/`, and the pages of the people and firms the call named.
+  `celorus/firms/`, and the pages of the people and firms the call named. When it was about a
+  family, `family_facts` with the family's slug answers its people as the desk writes them.
 - What we sent them: their pages under `celorus/sent/`, `celorus/drafts/` for them, and the
   newest page under `celorus/conversations/` whose `about` links them.
 - `celorus/motion-spec.md`: `crm_field_stage`, `crm_field_owner` and `crm_field_last_touch`,
@@ -45,6 +75,15 @@ A recording with timestamps and one channel per speaker can be reviewed minute b
 minute. One without cannot: say which parts are not fillable (pace, who said what) rather
 than guessing. An unrecorded call is summarised as the desk's own account and says so in
 its first line. Nothing is ever quoted from a call that was not recorded.
+
+A recording names its speakers as the people who joined it. Write every line with the desk's
+own names: the seat for our side, and for theirs the person as the desk's page (or
+`family_facts`) names them. Never copy a speaker label, an attendee name or an address from
+the recording or its tool onto the desk.
+
+A review is best within a day of the call, and a later one still runs. A promise whose date
+has already passed is written with its own date all the same; `follow-up` queues it and says
+the date has passed.
 
 ## What you write
 
@@ -99,7 +138,7 @@ speakers_separated: <true | false>
 ## The CRM proposal
 
 ```text
-<the desk's stage field>: <value>
+<the desk's stage field>: <stage>
 <the desk's owner field>: <handle>
 <the desk's last-touch field>: <date> call, <outcome>; <what was promised, by when>
 ```
@@ -120,7 +159,7 @@ desk's system, and write-back is not something the pack does.
 ## Who and what was named
 
 After the write-up, list every person and firm named in the conversation, and every family on a
-wealth desk or a desk with no pack, in one numbered proposal:
+wealth desk or a desk with no pack, in one proposal, each item under the name it is about:
 
 1. **Match.** Look for a page with the same title or alias. One match that `not_same_as` does
    not rule out: propose linking it. More than one, or a near match such as a first name
@@ -130,7 +169,7 @@ wealth desk or a desk with no pack, in one numbered proposal:
    `description`, `timestamp`, `standing: named-only` (or `standing: in-conversation` for
    someone who attended), and `name_source: <this conversation's file name>`, the plain file
    name without `.md`, never a link. Nothing invented: no role, firm or contact detail that
-   was not said. A firm named with no page gets `celorus/firms/<slug>.md` with `type`,
+   was not said, so a person whose role was not said carries no `role_title`. A firm named with no page gets `celorus/firms/<slug>.md` with `type`,
    `title`, `description` and `timestamp` only. Every new page has a body of its title and a
    `## Connections` heading, with nothing under it when nothing was said.
 3. **Connections.** For each connection said in the conversation (who works where, who worked
@@ -146,8 +185,9 @@ wealth desk or a desk with no pack, in one numbered proposal:
    person and firm pages, never on the conversation page.
 4. **This conversation's header.** `attended` and `named` list every page confirmed.
 
-Show the whole proposal once and ask for one answer: yes to all, or the numbers to change or
-drop. Write only what the person confirms. On "not the same" for a pair, add each file name to
+Show the whole proposal once and ask for one answer: yes to all, or the names to change or
+drop. Write only what the person confirms. A page that already exists and is changed gets its
+`timestamp` moved to now. On "not the same" for a pair, add each file name to
 the other's `not_same_as`. On "same person" for a name with no page of its own, its lines go on
 the page it matched. On "same person" for two pages that both exist, merge them as
 `check-desk` says in "Merge two pages".
@@ -160,17 +200,44 @@ one.
 
 - One row per named signal in `celorus/register.md`:
   `| <signal, in their words> | <name> | <date> | unbuilt | unreviewed |`.
-- One row in `celorus/marks.md` when the seat gives a mark: `| <date> | <handle> | <slug> | <mark> | <why, in words> |`. `<mark>` is one of `pursue`, `ignore` or `wrong`.
-- The call row in `celorus/desk-log.md`:
-  `| <date> | <handle> | <slug> | <source from the page> | · | <action> | <outcome> | <mark or ·> | call-review |`.
-  `<action>` is `call` or `meeting`; `<outcome>` is one of `reached`, `no-answer`, `meeting-set`, `met`, `declined` or `not-yet`.
-- Move the lead's row to state `contacted` or `met` in `celorus/queues/supplied.md`.
-- A line under "Done" on today's board.
-- One line in `celorus/log.md`, directly under today's heading `## <date>` (add the heading
-  above the older days if missing), with `<time>` as two-digit `HH:MM`:
+- Ask the seat once for a mark on the lead, `pursue`, `ignore` or `wrong`, with why in a few
+  words. When they give one, one row in `celorus/marks.md`:
+  `| <date> | <handle> | <slug> | <mark> | <why, in words> |`. When they give none, no row.
+- The call row in `celorus/desk-log.md`, written by `log_action` with the seat's handle, `family`
+  set to `<slug>` (the page the call was about, whichever folder it is in), and `at` the time of
+  the call with its offset. The `action` and `outcome` are a pair the desk's consoles count: a
+  contact or a meeting set on the `rep` view of the seat that logged it, and in the team's, and
+  a meeting held on the `rm` view of the seat that logged it, and on no other seat's view. Whichever
+  seat logs it, an `rm` seat too, a `mail`, `call` or `meeting-set` row marks its family touched:
+  the family's row on the to-reach list, and its backlog row for an assignment left untouched, go
+  from the `rep` view of the seat that owns the family, and so from the `to_reach` and `backlog`
+  of that seat's brief. That row, or a `meeting-held` row, is read as a touch for the family's
+  last touch in `family_facts` and `book_query`. Never say a contact an `rm` seat logs is on no
+  console.
+  A meeting that was set writes the contact as it happened, then the meeting: two rows, in that
+  order. They are these, and no others:
+  a call that reached the person and set a meeting: `action` `call`, `outcome` `reached`, then
+  `action` `meeting-set`, with the `outcome` saying when the meeting is, in a few words;
+  a meeting set on a mail thread: `action` `mail`, with the `outcome` saying what the mail was
+  about, in a few words, then `action` `meeting-set`, with the `outcome` saying when the meeting
+  is;
+  a call that reached the person and set no meeting: `action` `call`, `outcome` `reached`;
+  a call that did not reach them: `action` `call`, `outcome` `no-answer`;
+  a meeting that was held: `action` `meeting-held`, `outcome` `met`, `declined` or `not-yet`.
+  The tool writes the lead as `[[<slug>]]` and the source as `desk`, so one lead has one id in
+  the log. It writes its own line in `celorus/log.md`; write no second one for the row.
+- In `celorus/queues/supplied.md`, the row whose `lead` is `<slug>`, written bare or as
+  `[[<slug>]]`, moves to state `contacted` (or `met`, when they met). With no such row, change
+  nothing there.
+- When today's board `celorus/today/<date>.md` exists, a line under its "Done" block. With no
+  board, write none; `day-open` makes the board.
+- One line in `celorus/log.md` for each page this skill wrote by hand, directly under today's
+  heading `## <date>` (add the heading above the older days if missing) and above the day's
+  earlier lines, newest first as the desk tools write them, with `<time>` as two-digit `HH:MM`:
   `* <time> · <handle> · call-review · wrote <the page's path under celorus/> · yours`,
-  one line for each page written: the conversation page first, then each person and firm page.
-- Run `check-desk` over the pages you wrote, and say its count in one line.
+  the conversation page first, then each person and firm page.
+- Call `check_desk` with `scope` naming the pages you wrote, and say its `summary` in one line,
+  as it came: never a count of your own.
 
 A `|` in a free-text cell of the register row or the marks row is written as `/`.
 

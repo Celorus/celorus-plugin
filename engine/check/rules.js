@@ -11,6 +11,7 @@ const values = require("./values.js");
 const text = require("./text.js");
 const model = require("./model.js");
 const { checkCitations } = require("../cite/cite.js");
+const { pathsSaid } = require("../render/screen.js");
 
 const { own, hasOwn, truthy, isEmpty, show, same, items, holds, strip, splitLines, head, compareText, sortedText } =
   values;
@@ -157,8 +158,11 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
 
   // `fromModel` marks a finding that reads a part of the model kept on its own page; when a
   // page under model/ cannot be read, that part is missing, not empty, and says nothing.
-  function add(rule, rel, message, fromModel = false) {
+  // A finding quotes a page's line as the page holds it, but for a path in it, said as "(a path)"
+  // (R73: no answer repeats a path; 0.19.0 K4b): the page, the rule and the rest of the line stay.
+  function add(rule, rel, raw, fromModel = false) {
     if (fromModel && modelShort) return;
+    const message = pathsSaid(raw);
     const finding = { page: rel, rule, message };
     found.set(JSON.stringify([rel, rule, message]), finding);
   }

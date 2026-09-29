@@ -46,6 +46,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { readPage, splitPage } = require("./desk.js");
 const { parseHeader, HeaderError } = require("./header.js");
+const { codeOf, readWhole, stillNamed, putBack, rewrite } = require("./inplace.js");
 const { rootFault } = require("./linkedroot.js");
 
 const VERSION_KEY = "checked_with";
@@ -178,102 +179,6 @@ function stamped(text, want) {
     return { reason: "desk.md's checked_with or checked_findings is not one value on one line, so the stamp was not written." };
   }
   return { text: `---\n${header}\n---\n${split.body}`, lines: [line(VERSION_KEY), line(COUNT_KEY)] };
-}
-
-const codeOf = (err) => (err && typeof err.code === "string" ? err.code : "an unknown error");
-
-// The bytes of the file open as `fd`, from its first byte to its length.
-function readWhole(fd) {
-  const size = fs.fstatSync(fd).size;
-  const bytes = Buffer.alloc(size);
-  let at = 0;
-  while (at < size) {
-    const got = fs.readSync(fd, bytes, at, size - at, at);
-    if (got === 0) break;
-    at += got;
-  }
-  return bytes.subarray(0, at);
-}
-
-// Writes `bytes` over the file open as `fd` from its first byte, cuts it to their length,
-// flushes it to disk, and says whether it reads back as exactly those bytes.
-function putWhole(fd, bytes) {
-  let at = 0;
-  while (at < bytes.length) {
-    const put = fs.writeSync(fd, bytes, at, bytes.length - at, at);
-    if (put <= 0) throw new Error("the write took no bytes");
-    at += put;
-  }
-  fs.ftruncateSync(fd, bytes.length);
-  fs.fsyncSync(fd);
-  return readWhole(fd).equals(bytes);
-}
-
-// Whether `file` still names the file open as `fd`: true for the same device and inode, false
-// when it names another file or nothing, or the error's code when that cannot be told.
-function stillNamed(fd, file) {
-  let now;
-  let held;
-  try {
-    try {
-      now = fs.lstatSync(file);
-    } catch (err) {
-      if (err && (err.code === "ENOENT" || err.code === "ENOTDIR")) return false;
-      throw err;
-    }
-    held = fs.fstatSync(fd);
-  } catch (err) {
-    return codeOf(err);
-  }
-  return now.dev === held.dev && now.ino === held.ino;
-}
-
-// Runs `write` on the file open as `fd`, then puts its mode back when the write changed it: a
-// write by a user who is not root clears the setuid and setgid bits.
-function keepingMode(fd, write) {
-  const mode = fs.fstatSync(fd).mode & 0o7777;
-  try {
-    return write();
-  } finally {
-    try {
-      if ((fs.fstatSync(fd).mode & 0o7777) !== mode) fs.fchmodSync(fd, mode);
-    } catch {
-      // Only desk.md's owner can put the setuid and setgid bits back; without them the file
-      // allows less than it did, never more.
-    }
-  }
-}
-
-// Writes `bytes` back over the file open as `fd`, and says whether it reads back as them.
-function putBack(fd, bytes) {
-  try {
-    return keepingMode(fd, () => putWhole(fd, bytes));
-  } catch {
-    return false;
-  }
-}
-
-// Rewrites desk.md, open as `fd` and holding `before`, as `after`. Returns null when it holds
-// `after`; otherwise the old text has been written back, and the answer is what went wrong, with
-// no subject ("could not be written (EIO)"), and whether the file is known to hold its old text
-// again.
-function rewrite(fd, before, after) {
-  return keepingMode(fd, () => {
-    let fault = null;
-    try {
-      if (!putWhole(fd, after)) fault = "did not read back as it was written";
-    } catch (err) {
-      fault = `could not be written (${codeOf(err)})`;
-    }
-    if (fault === null) return null;
-    let restored = false;
-    try {
-      restored = putWhole(fd, before);
-    } catch {
-      // Not restored: the answer carries the old text instead.
-    }
-    return { fault, restored };
-  });
 }
 
 // Why the stamp is not kept when desk.md no longer names the file the stamp went into (false),

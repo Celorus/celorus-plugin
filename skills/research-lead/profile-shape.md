@@ -24,11 +24,9 @@ not_same_as: [<file name without .md>]             # plain file names, never lin
 member_of: "[[<family slug>]]"                     # person only, on a wealth desk or a desk with no pack
 segments: []                                       # the segments the record or the web support
 band: D                                            # a band, never a point estimate; absent when unknown
-readiness: 62                                      # coverage of the fields the brief needs, 0 to 100
 clock: money-in-motion                             # money-in-motion · reason-to-call · handle-with-care
 source_list: supplied-l1                           # or book · follow-up · inbound
 registers_used: [record, web, yours]
-research_minutes: 9
 last_touch: <date>
 as_of: <date>
 provenance: on-request
@@ -40,6 +38,10 @@ sources:                                           # record register only; never
 `supplied-ask-<date>` is the name the user gave you in the ask itself, on that date, when it
 came from no list, book, export or conversation page.
 
+The header carries no readiness score and no research minutes. Each is a number, and a number
+on the page comes only from a tool; no desk tool gives either yet. A page written earlier with
+`readiness` or `research_minutes` keeps them as they stand.
+
 ## Body
 
 A `web` line is always written in full: `· web · unverified · <source url> · <date read>`.
@@ -50,9 +52,8 @@ The short form `· <register> · <date>` below stands for `record` and `yours` l
 
 ## Why they matter
 
-- <level, function, employer, tenure; the trajectory in one line> · <register> · <date>
+- <level, function, employer; the trajectory in one line> · <register> · <date>
 - Wealth band: <band> (<confidence>) · record · <as of>            (bands only)
-- Made it through: <the top two composition sources, as percentages> · record · <as of>
 
 ## Background
 
@@ -62,8 +63,8 @@ As of the day researched.
 
 ## What just happened
 
-- <up to three dated events by salience, each with its liquidity direction> · <register> · <date>
-- <a locked-until warning where value is illiquid>
+- <the dated events by salience, each with its liquidity direction> · <register> · <date>
+- <the locked-until warning on an illiquid holding>
 
 ## The angle
 
@@ -114,7 +115,8 @@ Every claim traceable on request.
   is an audited event through the connected tools. The desk's own contact rails stay in
   `celorus/crm/` and are linked, never copied.
 - **The family is the page unit.** A family page lists the principals, each linked to a
-  person page, and carries the household aggregate and the composition split only.
+  person page, and carries only the household figures a connected record tool answers,
+  each with its source.
   Declaration-only relatives are never itemised, never given a page, never given
   coordinates. A minor is never named.
 - **Never from inference.** No line infers a family relationship, a community or anything
@@ -162,8 +164,9 @@ as a proof line. A connection you inferred, and no source showed, is a `guessed`
 
 ## A firm page
 
-Same frame, with the company's sections: what the record holds (the documents and years,
-as counts) · record · <date of the check>, the web ladder's findings (events, funding,
+Same frame, with the company's sections: what the record holds, as the case the record check
+picked, in the check's own words and never as a number · record · <date of the check>, the web
+ladder's findings (events, funding,
 leadership, disputes), the people
 behind it linked to their pages, the KFI-style layout the record skills use where the
 record was read, and "Not established" for the rest.

@@ -842,7 +842,7 @@ function pointsAtItself(before, merge, keep) {
   const was = V.splitLines(before);
   const out = [];
   V.splitLines(repointed(before, merge, keep)).forEach((line, i) => {
-    if (line !== was[i]) out.push(`${i + 1}: ${V.strip(line)}`);
+    if (line !== was[i]) out.push(`${i + 1}: ${require("../render/screen.js").pathsSaid(V.strip(line))}`);
   });
   return out;
 }
@@ -1052,7 +1052,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   if (keep === merge) refuse(`${keep} cannot be merged into itself`);
   const a = pages.get(keep);
   const b = pages.get(merge);
-  if (a.type !== b.type) refuse(`${keep} is a ${V.show(a.type)} and ${merge} is a ${V.show(b.type)}`);
+  if (a.type !== b.type) refuse(require("../render/screen.js").pathsSaid(`${keep} is a ${V.show(a.type)} and ${merge} is a ${V.show(b.type)}`));
   if (notSameAs(a.head).includes(merge) || notSameAs(b.head).includes(keep)) {
     refuse(`${keep} and ${merge} are remembered as not the same`);
   }
@@ -1137,7 +1137,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   const noteRel = `merges/${folderName}/merge.md`;
   // Each before/ copy holds the page's bytes as the merge read them up front.
   const beforeBytes = new Map(
-    befores.map(([, rel]) => [rel, bytesOn.has(rel) ? bytesOn.get(rel) : readGuarded(root, rel, MERGE_PAGE, { need: true })]),
+    befores.map(([, rel]) => [rel, bytesOn.get(rel)]),
   );
   // Every folder a file of the call is made in is made here, the record's and views/ when it is
   // not there, and probed from inside (history.js ahead), after every page already on the desk
@@ -1179,7 +1179,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   const changed = [...toChange.keys()].sort(V.compareText);
   const note = {
     type: "merge-record",
-    title: `Merge of ${merge} into ${keep}`,
+    title: `Merge of ${require("../render/screen.js").pathsSaid(merge)} into ${require("../render/screen.js").pathsSaid(keep)}`,
     description: "Both originals and every changed page, so the merge can be undone",
     timestamp: new Moment(now),
     kept: keep,
@@ -1191,8 +1191,8 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   };
   const noteText =
     `---\n${dumpLines(note, { sortKeys: false, flow: false, momentSep: "T" }).join("\n")}\n---\n\n` +
-    `# Merge of ${merge} into ${keep}\n\n` +
-    `Say "undo the merge of ${merge} into ${keep}" to put every page back.\n`;
+    `# Merge of ${require("../render/screen.js").pathsSaid(merge)} into ${require("../render/screen.js").pathsSaid(keep)}\n\n` +
+    `Say "undo the merge of ${require("../render/screen.js").pathsSaid(merge)} into ${require("../render/screen.js").pathsSaid(keep)}" to put every page back.\n`;
   // The record, then the merged page taken off the desk. A stop at either removes what this call
   // made of the record, and the merge is refused with nothing changed.
   let takingOff = false;

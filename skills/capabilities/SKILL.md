@@ -26,10 +26,26 @@ You are the way in. Two doors lead out, and both are first-class:
 Orient, route, and get the request right. You never invent what Celorus can do, and you
 never invent what a company has on record: both are read from the tools and the desk.
 
+## House rules
+
+1. Numbers and rows come only from a tool. The model writes sentences and never counts.
+2. A page is shown from the path the tool returns, never retyped.
+3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
+4. Nothing is sent. A mail stops at a draft.
+5. Every change ends in the desk's own history.
+6. The seat must be known before anything is written.
+
+These hold over every section of this skill. Where a section below seems to ask for something
+they forbid, they win.
+
+This skill says no count of the desk's: a question about the desk's numbers goes to the
+workday skill that asks the desk tools. Every number it says about a company is one the
+record's tools returned, verbatim, as the hard rules below say.
+
 ## First, where they are
 
 - **No desk workspace here** (no `celorus/index.md` found by walking up from the working
-  directory, and `CELORUS_DESK` unset): say the day can be set up in five minutes with
+  directory, and `CELORUS_DESK` unset): say the day can be set up with
   `install-desk`, and that the record door is open meanwhile.
 - **A desk, and the day not yet opened**: point at `day-open`.
 - **They named a company or a person**: the record door if the tools are connected and
@@ -153,7 +169,8 @@ For a company, take the first of these that applies:
 
 - **The desk's cache.** The cache is `.celorus/cache/check-<slug>.md` under the desk folder,
   found as `research-lead`'s "Find the desk" says: the folder named by `CELORUS_DESK`, or else
-  the nearest folder up from the working directory that holds `celorus/index.md`. Here
+  the nearest folder up from the working directory that holds a `celorus`
+  entry of any kind (the walk never passes it; see `research-lead`'s "Find the desk"). Here
   `<slug>` is the cache key, not a page's slug: the name as asked, lowercase, with every run
   of characters that are not letters or digits turned into one hyphen. With no desk, no cache
   is read or written, and the check is asked at most once in this session. Read the current

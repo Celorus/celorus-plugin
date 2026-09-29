@@ -149,7 +149,8 @@ For a company, take the first of these that applies:
 
 - **The desk's cache.** The cache is `.celorus/cache/check-<slug>.md` under the desk folder,
   found as `research-lead`'s "Find the desk" says: the folder named by `CELORUS_DESK`, or else
-  the nearest folder up from the working directory that holds `celorus/index.md`. Here
+  the nearest folder up from the working directory that holds a `celorus`
+  entry of any kind (the walk never passes it; see `research-lead`'s "Find the desk"). Here
   `<slug>` is the cache key, not a page's slug: the name as asked, lowercase, with every run
   of characters that are not letters or digits turned into one hyphen. With no desk, no cache
   is read or written, and the check is asked at most once in this session. Read the current
