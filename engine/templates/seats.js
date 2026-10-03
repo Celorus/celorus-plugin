@@ -14,11 +14,9 @@ const W = require("../render/words.js");
 
 const { e, G } = { e: W.e, G: P.G };
 
-// The words a pill's line opens with, read off parts.js's own pill, never written a second time
-// here: the name the lines are said to is one value, and a later row moves it (base ruling R43).
-const SAID_TO = /data-say="([^"]*)x"/.exec(P.pill("go", "X"))[1];
-// the name alone, as a sentence on a page names who to ask
-const NAME = SAID_TO.replace(/, $/, "");
+// The name the pills' lines are said to and a sentence names who to ask is the page's
+// `ctx.persona.name`, from the persona the render tools hand over (lib/persona.js): never written here, and
+// never held between pages (base rulings R43 and R65).
 
 function css(name) {
   return PAGE_CSS[name] || "";
@@ -51,7 +49,7 @@ function signals(ctx, rows) {
       out +=
         `<tr><td class="fam">${e(r.title)}</td><td class="s">${P.signalLine(ctx, r.why)}</td>` +
         `<td class="seen">${e(W.splitLast(r.why_today)[1])}</td>` +
-        `<td class="act">${P.pill("yes", "Make them a prospect", `${SAID_TO}yes, make the ${r.title} a prospect`)}</td></tr>`;
+        `<td class="act">${P.pill(ctx.persona.name, "yes", "Make them a prospect", `yes, make the ${r.title} a prospect`)}</td></tr>`;
     }
     out += "</tbody></table></div>\n";
   } else {
@@ -258,7 +256,7 @@ function weekBlock(ctx, rows, first, links = {}) {
       } else if (k.room) {
         go = `<a class="go" href="${e(k.room)}">Room brief<span class="sr"> for ${e(r.title)}</span><span aria-hidden="true"> ${e(G.go)}</span></a>`;
       } else if (!r.ref) {
-        go = P.pill("card", "Make the room brief", `${SAID_TO}make the room brief for the ${r.title}`);
+        go = P.pill(ctx.persona.name, "card", "Make the room brief", `make the room brief for the ${r.title}`);
       }
       out +=
         `<article class="mt ${r.ref ? "k-ok" : "k-due"}" style="top: ${e(ev.top)}px">\n` +
@@ -488,13 +486,19 @@ function leadGen(v, prose, ctx) {
 // A snapshot's record of the desk-log rows it read, as the page carries it (base ruling R56): how
 // many rows, a whole number, and one digest in lowercase hex over those rows and the page's
 // moment, so nothing in it can close the block or be read as markup, and no row has an identity
-// on the page.
+// on the page. A sealed record (DESK-147, render/key.js) carries two more, each lowercase hex too:
+// its seal, and the id of the key that sealed it, never the key.
 const DIGEST = /^[0-9a-f]{64}$/;
+const KEY_ID = /^[0-9a-f]{16}$/;
 function readRecord(read) {
   if (!read || !Number.isSafeInteger(read.rows) || read.rows < 0 || !DIGEST.test(read.digest)) {
     throw new Error("A snapshot's record of the rows it read is a count of rows and one digest in hex.");
   }
-  return JSON.stringify({ rows: read.rows, digest: read.digest });
+  if (read.seal === undefined && read.key_id === undefined) return JSON.stringify({ rows: read.rows, digest: read.digest });
+  if (!DIGEST.test(read.seal) || !KEY_ID.test(read.key_id)) {
+    throw new Error("A sealed snapshot's record also carries its seal and its key's id, each in hex.");
+  }
+  return JSON.stringify({ rows: read.rows, digest: read.digest, seal: read.seal, key_id: read.key_id });
 }
 
 // Where the desk stands at the moment the page is taken: the week step by step, every seat's
@@ -604,7 +608,8 @@ function snapshot(v, prose, ctx) {
 }
 
 // The summary card: who, the bracket, why now and one contact, all read off the family's page, so
-// the card takes no sentence from the model and is the same page every time it is drawn.
+// the card takes no sentence from the model and is the same page every time it is drawn. With the
+// CRM not counted, the "Not counted" block says the hole as a seat's page says it (holesOf).
 function summaryCard(v, prose, ctx) {
   const people = [...v.members, ...v.contacts];
   const lead = people.find((p) => W.truthy(p.decision_maker)) || null;
@@ -629,7 +634,7 @@ function summaryCard(v, prose, ctx) {
   } else if (route) {
     contact = `${ctx.delink(route.how)}<span class="sub">${route.register === "yours" ? "From your own records" : "From the public record"}</span>`;
   } else {
-    contact = `<span class="nil">No contact held yet. Ask ${e(NAME)} to look for one.</span>`;
+    contact = `<span class="nil">No contact held yet. Ask ${e(ctx.persona.name)} to look for one.</span>`;
   }
   const content =
     `${P.ladder("summary")}\n` +
@@ -639,7 +644,8 @@ function summaryCard(v, prose, ctx) {
     row("Why now", why) +
     row("Contact", contact) +
     "</section>\n" +
-    '<p class="summary-foot">The summary is the first of three tiers. The reach-out profile adds the family, every route in and the opener; the family profile is the brief for the meeting.</p>\n';
+    '<p class="summary-foot">The summary is the first of three tiers. The reach-out profile adds the family, every route in and the opener; the family profile is the brief for the meeting.</p>\n' +
+    holesOf(v);
   return {
     page_name: "Summary card",
     theme: "At a glance",
@@ -654,6 +660,7 @@ function summaryCard(v, prose, ctx) {
 }
 
 module.exports = {
+  holesOf,
   repConsole,
   rmConsole,
   leadGen,
@@ -665,5 +672,5 @@ module.exports = {
   STALL_COUNTS,
   seamSaid,
   week,
-  SAID_TO,
+  readRecord,
 };

@@ -1,12 +1,12 @@
 "use strict";
-// The desk check, rules C01 to C16. It lists; it never blocks. It reads the desk's own model
+// The desk check, rules C01 to C19. It lists; it never blocks. It reads the desk's own model
 // pages under celorus/model/, so a desk one model version behind is checked against its own
 // words. A finding is { page, rule, message }: the page under celorus/, the rule's id, and what
 // is wrong, in words the person can act on.
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { readPage, NO_HEADER, NOT_UTF8, STAMP_NOT_ONE_VALUE } = require("../lib/desk.js");
+const { readPage, NO_HEADER, NOT_UTF8, PAGE_UNREAD, STAMP_NOT_ONE_VALUE } = require("../lib/desk.js");
 const values = require("./values.js");
 const text = require("./text.js");
 const model = require("./model.js");
@@ -16,6 +16,7 @@ const { pathsSaid } = require("../render/screen.js");
 const { own, hasOwn, truthy, isEmpty, show, same, items, holds, strip, splitLines, head, compareText, sortedText } =
   values;
 const { Page, linksIn, hasLink, proofMatch, headingOf, isHeading, sectionSpan, sectionOf } = text;
+const { persona } = require("../lib/persona.js");
 
 const RULES = {
   C01: "unknown kind",
@@ -34,7 +35,25 @@ const RULES = {
   C14: "no Connections section",
   C15: "connections on a page that draws no line",
   C16: "cited line that is not there",
+  C17: "the soul and manner pages are the desk's own",
+  C18: "soul text that is not read",
+  C19: "assistant name the pages cannot say",
 };
+// C18 (DESK-156, F7): the page the soul's written copy is on, and what the check says when its text
+// is not the soul the assistant speaks from. `name` is the desk's assistant name as lib/persona.js
+// answers it. The founder's words (c/5908751152).
+const SOUL_COPY = "soul.md";
+const soulNotRead = (name) =>
+  "soul.md's text differs from the soul this plugin ships, so it is not read: " +
+  `${name} speaks from the shipped soul. Its text is a copy for reading. To change how ${name} ` +
+  "speaks, give feedback in your own words.";
+// C19 (DESK-156, done-when 10): what the check says when desk.md sets an assistant_name the pages
+// cannot say. `reason` is the persona's `refused`, in words, never the value; `name` is the name
+// every page says instead. The founder's words (c/5910700954).
+const nameNotSaid = (reason, name) =>
+  `desk.md sets assistant_name to a value the pages cannot say (${reason}), so every page says ${name}; ` +
+  "write a name a reader can see, with no control or invisible characters, markup, slashes or line " +
+  "breaks, and at most 40 characters.";
 const NO_SECTION = "no `## Connections` heading; connection lines are read only there";
 const SECOND_SECTION = "a second `## Connections` heading; only the first is read";
 const UNCLOSED_FENCE = "a fenced block was opened and never closed, so the lines after it were not read";
@@ -280,10 +299,10 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
   for (const page of pages) if (model.isKind(m, page.type)) kindOf.set(page.stem, page.type);
   const namedFor = model.namedFor(m);
   const drawn = model.drawnKinds(m);
-  const isSystem = (type) => holds(m.systemTypes, type === undefined ? null : type);
+  const isSystem = (page) => model.furniture(m, page);
   // The file names only furniture answers to: the walk reaches no page of that name.
   const furniture = new Set();
-  for (const [stem, group] of byStem) if (group.every((p) => isSystem(p.type))) furniture.add(stem);
+  for (const [stem, group] of byStem) if (group.every((p) => isSystem(p))) furniture.add(stem);
   // The walk's view of the desk: the file names a path may run through, and each one's kind.
   const reached = new Map();
   for (const page of pages) if (model.walked(m, page)) reached.set(page.stem, page.type);
@@ -399,7 +418,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     const t = page.type;
     if (!truthy(t)) continue;
     const kind = model.isKind(m, t) ? m.kinds.get(t) : null;
-    if (kind === null && !isSystem(t)) {
+    if (kind === null && !isSystem(page)) {
       add("C01", page.rel, `${show(t)} is not a kind of page`, true);
       continue;
     }
@@ -554,6 +573,27 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     }
   }
   for (const f of checkCitations(desk, pages).findings) add(f.rule, f.page, f.message);
+
+  // C17 lists nothing: the soul's page and each manner page are known to the model by path and
+  // type (check/model.js furniture), so the rules above read those pages as furniture.
+  // C18 and C19 read the persona as the one reader answers it (lib/persona.js), from this desk on
+  // this call: its name, why a set name was refused, and the soul the assistant speaks from.
+  const deskHeadRaw = readPage(root, "desk.md").head;
+  const stamps = deskHeadRaw !== null && typeof deskHeadRaw === "object" && !Array.isArray(deskHeadRaw) ? deskHeadRaw : null;
+  const who = persona({ desk: { root: desk, stamps, pages: readPages } });
+  // C18: soul.md's body is a copy for reading, never the soul (F7); one that is not the shipped
+  // soul is named, once. The comparison allows the name substitution (F6): the copy may say the
+  // desk's own name where the shipped soul says the default, or the default as the set-up wrote
+  // it before the desk was named (the persona of this desk read with no name set). A desk with no
+  // soul.md has nothing here.
+  const unnamed = persona({ desk: { root: desk, stamps: null, pages: readPages } }).soul;
+  const copy = readPages.find((page) => page.rel === SOUL_COPY);
+  if (copy && copy.problem !== PAGE_UNREAD && copy.body !== who.soul && copy.body !== unnamed) {
+    add("C18", SOUL_COPY, soulNotRead(who.name));
+  }
+  // C19: a set name the pages cannot say, so the fall back to the default is never silent. An
+  // absent, empty or blank field is no refusal and draws nothing.
+  if (who.refused) add("C19", "desk.md", nameNotSaid(who.refused, who.name));
 
   // One hop: the pages a page links, read when a scope asks. A page no rule reads (under views/
   // or merges/, or in a folder below model/) is in the same read of the desk, `readPages`, and

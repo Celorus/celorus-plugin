@@ -42,11 +42,11 @@ const OVERNIGHT = ["celorus/families", "celorus/people", "celorus/firms"];
 const VIEWS = "celorus/.views";
 const NOTHING = "Nothing was committed.";
 
-// The writers' table: every file the 18 tools write on a desk, and the scaffold they write into,
+// The writers' table: every file the registry's tools write on a desk, and the scaffold they write into,
 // by where it sits from the desk folder, with what it holds. Each row is [glob, class, holds]:
 // - seat: one seat's own, or drawn for one seat: never staged. First, so no other row can take a
 //   file of one.
-// - overnight: every seat's, but only the overnight changes and commits these pages: not staged here.
+// - overnight: every seat's, but only the overnight changes and commits these: staged for it alone (`overnight: true`, and then the pages, *.md, and the merge record only: tableOf), held back from every other caller.
 // - shared: every seat should have it: staged, one glob pathspec per row the desk holds a file of.
 // In a glob, `*` is any name within one folder, as git's glob pathspec reads it, and `**` any
 // depth (seat rows only, which never reach git).
@@ -62,19 +62,21 @@ const SEAT = [
   ["celorus/.obsidian/app.json", "Obsidian's app settings: beside the fixed link settings, the folder for new pages and the excluded files, typed by the seat, which can name any page"],
   ["celorus/.obsidian/appearance.json", "the seat's theme, fonts and the snippets it switches on, by the names it gives them"],
   ["celorus/.obsidian/snippets/**", "CSS the seat writes, any text in its comments"],
-  [".celorus/**", "the seat's scratch, which may be deleted at any time (install-desk)"],
+  [".celorus/**", "the seat's scratch, which may be deleted at any time. Deleting it also deletes this seat's snapshot key, and snapshots taken before then can no longer be checked. (install-desk)"],
   ["**/.DS_Store", "the Finder's record of how this machine shows a folder"],
 ];
-const OVERNIGHT_ROWS = OVERNIGHT.map((folder) => [`${folder}/*`, "the family, person and firm pages: merge_pages and undo_merge change them; the overnight commits them"]);
+const OVERNIGHT_ROWS = [...OVERNIGHT.map((folder) => [`${folder}/*`, "the family, person and firm pages: merge_pages and undo_merge change them; the overnight commits them"]), ["celorus/merge-record.md", "overnight_reconcile's record of the conversations it merged: the overnight commits it"]];
 const SHARED = [
   [".gitignore", "the desk's ignore lines: update_desk adds each one it lacks"],
   ["celorus/desk.md", "the desk's stamps: check_desk (record: true), update_desk"],
   ["celorus/log.md", "the desk's history: a line from every tool that writes"],
-  ["celorus/desk-log.md", "log_action's rows; update_desk"],
+  ["celorus/desk-log.md", "log_action's rows; update_desk"], ["celorus/scheduled.md", "register_routine's register of the routines set up for the desk"],
   ...["index", "motion-spec", "register", "marks"].map((name) => [`celorus/${name}.md`, "a page of the layout: update_desk"]),
   ["celorus/queues/*.md", "the queues: add_follow_up (follow-ups.md), assign_lead (supplied.md), update_desk (book.md)"],
   ["celorus/conversations/*.md", "write_conversation's pages; update_desk moves layout 1's calls here"],
   ["celorus/briefs/*.md", "write_brief's pages"],
+  ["celorus/soul.md", "scaffold_desk: the assistant's soul"],
+  ["celorus/manner/*.md", "soul_feedback: each seat's manner"],
   ["celorus/views/*.md", "render_views' views and who_can_introduce's path pages, drawn again by merge_pages, undo_merge and update_desk: drawn from the shared pages alone, the same on every seat"],
   ["celorus/merges/*/merge.md", "merge_pages' record; undo_merge marks it undone"],
   ["celorus/merges/*/before/*/*.md", "merge_pages' copies of the pages as they were"],
@@ -268,11 +270,11 @@ function ignoredBy(rules, rel) {
 // tracks it. Where every file of its row is ignored, no pathspec names the row, so none of its
 // files is committed, a tracked one's change included: it is named under not_committed (0.19.0
 // K1d; K1c named both as ignored, as if git staged the tracked ones).
-function sorted(root) {
+function sorted(root, overnight = false) {
   const { files, odd } = entries(root);
   const rules = ignoreRules(root, files);
   for (const rel of odd) {
-    const reached = TABLE.some((row) => row.cls === "shared" && (row.pattern.test(rel) || row.glob.startsWith(`${rel}/`)));
+    const reached = tableOf(overnight).some((row) => (row.cls === "shared" || (overnight && row.cls === "overnight")) && (row.pattern.test(rel) || row.glob.startsWith(`${rel}/`)));
     if (reached) {
       throw new Refusal(
         `${rel} is a link or not a plain file, where desk_sync stages what every seat shares: git would commit it as a link or stop on it. ` +
@@ -286,13 +288,13 @@ function sorted(root) {
   const unnamed = [...odd];
   const ignored = [];
   for (const rel of files) {
-    const row = rowOf(rel);
+    const row = tableOf(overnight).find((one) => one.pattern.test(rel)) || null;
     if (row === null) {
       unnamed.push(rel);
       continue;
     }
     named.push(rel);
-    if (row.cls === "shared") {
+    if (row.cls === "shared" || (overnight && row.cls === "overnight")) {
       const by = ignoredBy(rules, rel);
       if (by === null) shared.add(row.glob);
       else ignored.push([by, row.glob]);
@@ -300,11 +302,11 @@ function sorted(root) {
   }
   const namedIn = (inRow) => [...new Set(ignored.filter(([, glob]) => shared.has(glob) === inRow).map(([by]) => by))].sort();
   return {
-    shared: TABLE.filter((row) => shared.has(row.glob)).map((row) => row.glob),
+    shared: tableOf(overnight).filter((row) => shared.has(row.glob)).map((row) => row.glob),
     seat: TABLE.filter((row) => seat.has(row.glob)).map((row) => ({ path: row.glob, files: seat.get(row.glob), holds: row.holds })),
-    unclassified: shortest(unnamed, named),
+    unclassified: [...new Set([...shortest(unnamed, named), ...holesIn(tableOf(overnight).filter((row) => shared.has(row.glob)), files, odd)])].sort(),
     ignored: namedIn(true),
-    notCommitted: namedIn(false),
+    notCommitted: namedIn(false), holes: holesIn(tableOf(overnight).filter((row) => shared.has(row.glob)), files, odd),
   };
 }
 
@@ -684,7 +686,22 @@ function urlChecks(git, step, use, url, key, name, printUrl, loopbackStop, formS
   ];
 }
 
-function deskSync(ctx, { seat, message, push }) {
+// 0.20.0 DESK-119 (R134, R138): a `desk` naming the desk's celorus folder is answered at resolution.
+// The other tools take that form (every path they answer extends the desk as given); desk_sync's
+// commands run in the desk folder, the folder above the one given, off the desk as the caller named
+// it (R102), so it is refused here, before anything is read or answered, naming by last parts only
+// (R72) the folder to give instead. A CELORUS_DESK in that form never reaches here: findDesk
+// refuses it (lib/desk.js refuseCelorusFolder).
+function celorusGiven(shown) {
+  const { folder, holder } = shown.celorus;
+  return new Refusal(
+    `\`desk\` names the folder ${folder}, the desk's celorus folder. desk_sync's commands run in the desk folder, ` +
+      `the one holding celorus/: set \`desk\` to the folder that holds that one, ${holder}. ${NOTHING}`,
+  );
+}
+
+function deskSync(ctx, { seat, message, push, overnight }) {
+  if (ctx.shown.celorus) throw celorusGiven(ctx.shown);
   if (typeof message !== "string" || message.trim() === "") {
     throw new Refusal(`message is the commit message, as text: what changed on the desk, in a sentence. ${NOTHING}`);
   }
@@ -698,6 +715,13 @@ function deskSync(ctx, { seat, message, push }) {
   if (push !== undefined && push !== null && typeof push !== "boolean") {
     throw new Refusal(`push is true or false: true only when the person has just asked, in words, for the desk to go up. ${NOTHING}`);
   }
+  // The overnight's own commit (the base's ruling on E9's item 8): the overnight skill alone passes
+  // it, after its run, and the rows of the table's overnight class are then staged with the shared
+  // ones. For every other caller they are held back, and the answer's held_back names them.
+  if (overnight !== undefined && overnight !== null && typeof overnight !== "boolean") {
+    throw new Refusal(`overnight is true or false: true only when the overnight commits the pages its own run changed. ${NOTHING}`);
+  }
+  const nightly = overnight === true;
   // The desk must be a git repository of its own: without one, git would work on the
   // repository around the folder. Only the entry is looked at, never read: a .git folder, or a
   // .git file that names the git folder elsewhere (a worktree's or a submodule's), is the desk's
@@ -717,7 +741,7 @@ function deskSync(ctx, { seat, message, push }) {
         `Make the desk folder a git repository first. ${NOTHING}`,
     );
   }
-  const desk = sorted(ctx.root);
+  const desk = sorted(ctx.root, nightly);
   // With no pathspec, git would stage nothing and commit everything staged: never answered.
   if (!desk.shared.length) {
     if (desk.notCommitted.length) {
@@ -730,7 +754,7 @@ function deskSync(ctx, { seat, message, push }) {
     }
     throw new Refusal(`The desk holds no file of a shared row of desk_sync's table, so there is nothing to commit. ${NOTHING}`);
   }
-  const specs = staging.pathspecs(desk.shared);
+  const specs = [...staging.pathspecs(desk.shared), ...desk.holes.map((rel) => `:(exclude,literal)${rel}`)];
   // The folder each command runs in, as the answer names it (R72, lib/desk.js deskShown): the
   // caller's `desk` as written, or, for a desk found from the working folder, the desk folder
   // itself, ".", and the summary says to run the commands from there.
@@ -742,7 +766,10 @@ function deskSync(ctx, { seat, message, push }) {
     command(
       "stage",
       [...git, "add", "--", ...specs],
-      "Stage what every seat shares, the rows of desk_sync's table the desk holds a file of, and nothing else. A row whose every " +
+      (nightly ? "Stage what every seat shares and what the overnight changed (the family, person and firm pages, and the merge record), " : "Stage what every seat shares, ") +
+        "the rows of desk_sync's table the desk holds a file of, and nothing else. " +
+        (nightly ? "A file in families/, people/ or firms/ that is not a page (.md) is in no row: it is not staged, and unclassified names it. " : "") +
+        "A row whose every " +
         "file the desk's own .gitignore files ignore is in no pathspec, so none of its files is staged, a change to one the " +
         "desk already tracks included (not_committed); a file ignored in a row another file brings in is staged only when " +
         "the desk already tracks it (ignored). desk_sync does not read .git/info/exclude or git's own excludes " +
@@ -977,19 +1004,20 @@ function deskSync(ctx, { seat, message, push }) {
       ...pushPages(git),
       // 0.19.0 K1l-d (R116 (4)): the push's own words, from git's exit and its words alone. K1l-e
       // (R117 (1)): they say where git's push goes without knowing the arm, never that the upstream's
-      // repository moved (where the push goes elsewhere, it did not).
+      // repository moved (where the push goes elsewhere, it did not). 0.20.0 DESK-104: where it goes is
+      // the remote's push as git resolves it, never a claim that it is the remote's url as written (a
+      // plain insteadOf sends it elsewhere too); DESK-103: the exits claim only that git did not send it, and git's words name the
+      // refuser, as pushStop's do (a pre-push hook on this machine exits 1 too).
       command(
         "push",
         [...git, "push", "-q", "--", REMOTE, `HEAD:${MERGE}`],
-        "Send the desk up, as the person asked, by the push of the upstream's remote, to where that remote's push " +
-          "goes: its own url, unless the desk's config sets a push url or a push rewrite for it. " +
-          "Exits 0 when git sent it. Exits 1 when the remote refused it (for one, where the upstream gained a commit " +
-          "after the pull fetched it, which git refuses as not a fast-forward), and 128 when git could not reach the " +
-          "remote: the run stops here.",
+        "Send the desk up, as the person asked, by the push of the upstream's remote, to where git resolves that " +
+          "remote's push. Exits 0 when git sent it. Exits 1 or 128 when git did not send it: the cause is a hook on " +
+          "this machine, the remote, or no reach, and git's own words name it only where they say more than that the " +
+          "push failed (for one, where the upstream gained a commit " +
+          "after the pull fetched it, git refuses the push as not a fast-forward): the run stops here.",
         {
-          0:
-            "git sent the desk up, by the push of the upstream's remote, to where that remote's push goes: its own " +
-            "url, unless the desk's config sets a push url or a push rewrite for it",
+          0: "git sent the desk up, by the push of the upstream's remote, to where git resolves that remote's push",
         },
         { 1: pushStop(), 128: pushStop() },
         { ...FILL_BRANCH, ...FILL_UPSTREAM },
@@ -1003,11 +1031,12 @@ function deskSync(ctx, { seat, message, push }) {
     desk: head.name,
     seat,
     commands,
-    held_back: command(
-      "held back",
-      [...git, "status", "--porcelain", "--", ...OVERNIGHT],
-      "Run after the commit: each line is a page held back, to name to the seat.",
-    ),
+    // What only the overnight commits, held back from every other caller: the pages and the merge
+    // record. The overnight's own commit stages them, so it holds nothing back.
+    held_back: nightly
+      ? null
+      : command("held back", [...git, "status", "--porcelain", "--", ...HELD_BACK], "Run after the commit: each line is a page held back, to name to the seat."),
+    overnight: nightly,
     // 0.19.0 K1c: a pull that fails before it rebases anything leaves no rebase to undo, and git
     // says so with exit 128: that exit is listed. K1f (R84, R86): its words name no cause of their
     // own (K1e said the remote went out of reach, where a file another seat sent up stops the pull
@@ -1085,7 +1114,7 @@ function deskSync(ctx, { seat, message, push }) {
           "only where the commit step made a commit (it exited 0), which stays on this machine, nothing else moved, " +
           "and pointing the branch at a remote is the desk owner's act; " +
           "when every url leads to another repository, the fetch, the pull and the push name that remote and " +
-          "that branch, and no other remote is contacted; when the fetch cannot bring the branch in (the remote holds no " +
+          "that branch, and each goes where git resolves that remote's url for it; when the fetch cannot bring the branch in (the remote holds no " +
           "such branch, or cannot be reached), it stops the run: a commit made exists on this machine, on its branch, " +
           "which moved only where the commit step made one, nothing else moved, and the stop's words give the next step; " +
           "when it brings it in, fetched before or not, and the " +
@@ -1101,7 +1130,9 @@ function deskSync(ctx, { seat, message, push }) {
           "push where one adds, changes or removes a seat's page: the pull moved the desk's own branch, a commit made is " +
           "on it, nothing was pushed, the remote is unchanged, and taking the pages out, or dropping the push url or the " +
           "push rewrite, is the desk owner's act; otherwise the push sends the desk up, as the person asked in words; " +
-          "when the remote refuses the push, or git cannot reach it, the push stops the run: nothing was pushed, the " +
+          "when git does not send it (exit 1 or 128), the push stops the run; the cause is a hook on this machine, the " +
+          "remote, or no reach, and git's own words name it only where they say more than that the push failed: " +
+          "nothing was pushed, the " +
           "remote is unchanged, a commit made and what the pull brought in are on the desk's own branch, and the next " +
           "step is desk_sync again, never a pull by hand; "
         : "on a branch, a commit made stays on this machine; ") +
@@ -1531,12 +1562,14 @@ function afterPullArm(said, drop) {
 }
 
 // The words the push stops with (0.19.0 K1l-d, R116 (4)), from git's exit and its words alone; K1l-e
-// (R117 (2)): they name no refuser, git's own words do (a hook on this machine, the remote, or no
-// reach). The next step is desk_sync again, never a
+// (R117 (2)): they name no refuser (a hook on this machine, the remote, or no reach), and claim git
+// named it only where git's words say more than that the push failed (round 2, F2, ruling A: a
+// silent pre-push hook exits 1 with no words). The next step is desk_sync again, never a
 // pull by hand, which skips the checks, whatever git's own hint says.
 function pushStop() {
   return (
-    "git did not send the desk up, and git's own words name why: a hook on this machine, the remote, or no reach. " +
+    "git did not send the desk up: the cause is a hook on this machine, the remote, or no reach, and git's own words " +
+    "name it only where they say more than that the push failed. " +
     "Run nothing more, and tell the person so, with git's words: nothing was pushed, and the remote is unchanged; a " +
     "commit this run's commit step made (where it exited 0) and what the pull brought in are on the desk's own branch, " +
     `refs/heads/${BRANCH} (the ref the branch check printed), on this machine. The next step is to run desk_sync ` +
@@ -1750,4 +1783,43 @@ function detachedStop(asked) {
   );
 }
 
-module.exports = { deskSync, TABLE, rowOf, globPattern, staging, VIEWS, OVERNIGHT, ignoreRules, ignoredBy };
+// What the answer's held_back reads: every path of the table's overnight class (OVERNIGHT_ROWS),
+// the three folders and the merge record. Here, below deskSync, which reads it when it runs.
+const HELD_BACK = [...OVERNIGHT, "celorus/merge-record.md"];
+
+// The table the overnight's own commit reads (E9 fix round 2, item 1). TABLE's overnight rows take
+// any file name in the three folders: that is what a plain desk_sync holds back, and its held_back
+// lists. As a pathspec that glob would stage every file there (an export, a scan, a swap file, a
+// .DS_Store the seat row calls never staged), so with the flag each folder row is its pages alone
+// (*.md, as every shared row is). A file there that is no page is then in no row: it is in no
+// pathspec, and the answer names it under unclassified, as it names any file no row takes. TABLE
+// itself is as it was, so a plain desk_sync answers as before.
+const NIGHTLY = TABLE.map((row) => (row.cls === "overnight" && row.glob.endsWith("/*") ? { ...row, glob: `${row.glob}.md`, pattern: globPattern(`${row.glob}.md`) } : row));
+function tableOf(overnight) {
+  return overnight ? NIGHTLY : TABLE;
+}
+
+module.exports = { deskSync, TABLE, rowOf, globPattern, staging, VIEWS, OVERNIGHT, HELD_BACK, ignoreRules, ignoredBy };
+
+// The folders a staged row's glob would take whole (E9 fix round 3, item 2). git reads a glob
+// pathspec as the table reads its row, file by file, but for one thing: a pathspec that matches a
+// folder takes everything under it, so a folder named as a page (people/x.md/, or one named
+// literally *.md) would bring in every file it holds, which no row names and unclassified names as
+// not staged. Each such folder, by its exact path, is taken back out of the stage, the staged
+// check and the commit by a literal pathspec (:(exclude,literal)), which git reads as the path
+// itself, whatever it holds. The rows stay globs, so a page taken off the desk (merge_pages takes
+// the merged page off, and only the overnight commits people/) is still staged as gone. A desk
+// with no such folder answers as before.
+// A page that stood at such a folder's path, committed before and gone now (round 4, item 2), is a
+// removal the exclude also keeps out: git cannot commit it with the folder there (a commit of
+// named paths stops on a folder where a file was). desk_sync reads nothing of git's index, so it
+// cannot tell whether one stood there: the path itself (the folder's, without its slash) is named
+// under unclassified, as not staged, beside the folder.
+function holesIn(rows, files, odd) {
+  const folders = new Set();
+  for (const rel of [...files, ...odd]) {
+    const parts = rel.split("/");
+    for (let i = 1; i < parts.length; i += 1) folders.add(parts.slice(0, i).join("/"));
+  }
+  return [...folders].filter((folder) => rows.some((row) => row.pattern.test(folder))).sort();
+}

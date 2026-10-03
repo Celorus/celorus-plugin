@@ -52,11 +52,15 @@ function deskText(desk) {
 }
 
 // The start of a path that names a place from a root, not from the desk: a separator (or two, a
-// server's) before a name, the home's tilde and a separator before a name, or a drive and a
-// separator. A separator before no name (a pattern's `/[`) starts none.
-const FROM_ROOT = /^(?:[\\/]{1,2}[\p{L}\p{N}_.~-]|~[\\/][\p{L}\p{N}_.~-]|[A-Za-z]:[\\/])/u;
-// A character a path's token ends at, at any bracket depth: a blank or a quote.
-const TOKEN_END = /[\s"'`]/u;
+// server's) before a name; the home's tilde and a separator before any character the screen's
+// tilde form takes (render/screen.js:475 TILDE_PATH, a character that is no blank, quote, bracket
+// of an angle or bar: DESK-125); a drive and a separator; or a file url whose root comes before a
+// name, as the screen reads one (render/screen.js:66 URL_ROOT: "file:", two separators and a host
+// or none, or an editor's url whose host is the word file, then a separator; DESK-124), so a file
+// url naming a place from a root is held as that place is. A separator before no name (a pattern's
+// `/[`, a file url whose separators come before no name) starts none.
+const FROM_ROOT =
+  /^(?:[\\/]{1,2}[\p{L}\p{N}_.~-]|~[\\/][^\s"'`<>|]|[A-Za-z]:[\\/]|(?:[Ff][Ii][Ll][Ee]:[\\/]{2}[^\\/\s"'`<>]*|[A-Za-z][A-Za-z0-9+.-]*:[\\/]{2}[Ff][Ii][Ll][Ee])[\\/]+[\p{L}\p{N}_.~-])/u;
 
 // Whether the ONE finder reports a path in `text` (render/screen.js findings, its rule "home-path",
 // which pathsSaid says a path by, read with every other rule skipped; R101 (A) 1b, no second
@@ -91,11 +95,12 @@ const heldWords = (field) => `The door held back this answer: its field ${field}
 // scratch form inside a group is held (and pathsSaid says it too).
 const CLOSER = { "(": ")", "[": "]", "{": "}" };
 // A scheme's colon (R142): the screen's own grammar reads a word's colon before two separators as a
-// link's scheme, and a file: url carries its scheme as part of its path (render/screen.js:61-65).
+// link's scheme, and a file: url carries its scheme as part of its path (render/screen.js:62-66).
 // So a colon that closes a scheme, with two separators after it, does not end a place: the url is
-// ONE place, read by UP, by FROM_ROOT at its start (which a scheme fails) and by the finder inside
-// it. A scheme mirrors screen.js:65's: a letter, then letters, digits, "+", "." or "-", with no name
-// character or "+" before it. A single letter is a drive's (screen.js:62, AT_DRIVE), and its colon
+// ONE place, read by UP, by FROM_ROOT at its start (a file url's root before a name is rooted,
+// DESK-124; any other scheme's is a host) and by the finder inside it. A scheme mirrors
+// screen.js:66's: a letter, then letters, digits, "+", "." or "-", with no name character or "+"
+// before it. A single letter is a drive's (screen.js:63 AT_ROOT, :92 DRIVE_PATH), and its colon
 // stays a mark, as does every other colon (R141), a word's colon before ONE separator too: there
 // the door is stricter than the screen, never weaker (R129). `from` is where the place's own text
 // starts (past the desk as given, in the desk's place), so a scheme never reaches into the desk.
@@ -137,12 +142,17 @@ function screenAtDoor(tool, args, answer) {
   // of a pinned path, so a root, a tilde, a home or a scratch form after one is a place of its own,
   // held unless it starts the desk as given. A mark ends a place only at bracket depth zero (R143,
   // placeEnd): a group is part of its token. A scheme's colon before two separators is no mark (R142,
-  // closesScheme): the url is one place. So a foreign root that is no family, inside a relative token
-  // (after a scheme, "file:///srv/x", or a balanced group, "{x}/srv/y"), is answered as the screen
-  // passes it: DESK-124, a named limit (0.20.0 changes the screen and the door together).
+  // closesScheme): the url is one place, and a file url whose root comes before a name is rooted at
+  // its start (FROM_ROOT, DESK-124). Of the forms answered together before 0.20.0
+  // (after a scheme, a file url naming /srv/x, or a balanced group, "{x}/srv/y"),
+  // the file url is now held as "/srv/x" is; a foreign root that is no family inside a token, after
+  // another scheme's host or in a balanced group, is still answered, as the screen passes it: a group
+  // is part of its token (DESK-124, by design; the class table,
+  // engineering/tests/desk_engine/path_grammar_table.js).
   // A place is on the desk when:
   // - the desk as given starts there as a folder: its place then reads on through a separator to
-  //   the first character that ends a path (ENDS), the desk's own extension (R102), and in it, with
+  //   the first character that ends a place (a blank, a quote or an `=` at any depth, DESK-126; a
+  //   mark at depth zero), the desk's own extension (R102), and in it, with
   //   the desk read as a name, the finder reports no path (saysPath: a home or scratch form in a
   //   page's name is held, DESK-122);
   // - or it is a relative name: no path from a root starts there (FROM_ROOT: a separator, a tilde,
@@ -161,7 +171,9 @@ function screenAtDoor(tool, args, answer) {
       if (STARTS_AFTER.test(text[at]) || (at !== from && !STARTS_AFTER.test(text[at - 1]))) continue;
       let end = at;
       if (deskStartsAt(text, bare, at)) {
-        end = placeEnd(text, at + bare.length, at + bare.length, TOKEN_END);
+        // the desk's own place ends where any place does (DESK-126): at a blank, a quote or an
+        // option's `=`, so what follows an `=` is a place of its own in every mode
+        end = placeEnd(text, at + bare.length, at + bare.length, STARTS_AFTER);
         const extension = text.slice(at + bare.length, end);
         if (UP.test(extension) || saysPath(`d${extension}`)) return false;
       } else {

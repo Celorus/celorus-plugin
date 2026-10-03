@@ -7,6 +7,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { readPage } = require("../lib/desk.js");
+const { isSoulPage } = require("../lib/persona.js");
 const { own, truthy, items, holds, show, strip, splitLines, splitWords, isSpace, compareText, sortedText, asPython } =
   require("./values.js");
 
@@ -23,6 +24,19 @@ const MODEL_KEYS = [
   "field_lists",
   "spine",
 ];
+// Rule C17 (DESK-156, check/rules.js RULES): the two pages the engine itself writes for the soul
+// and the manner, celorus/soul.md and celorus/manner/<seat>-manner.md, are the desk's own
+// furniture, as a page of a type its model/model.md lists under system_types is: no kind, never
+// walked, never drawn. They are known by path and type both (lib/persona.js isSoulPage), never by
+// type alone, so a page saying type soul or manner anywhere else is read as any other page. A desk
+// set up before the soul shipped has a model that names neither, and the engine is the one that
+// knows them, so a clean desk stays clean. It lists nothing.
+
+// Whether `page` is the desk's own furniture: a page of a system type, or one of the soul's pages.
+function furniture(model, page) {
+  return holds(model.systemTypes, page.type === undefined ? null : page.type) || isSoulPage(page);
+}
+
 // The same, for a kind page and a list page.
 const KIND_KEYS = ["kind", "folder", "must_have"];
 const LIST_KEYS = ["list"];
@@ -273,7 +287,7 @@ function parentsOf(folder) {
 // Whether a path may run through this page: not the desk's own furniture, and, for a page that
 // names no type, only a page lying where some kind's pages live.
 function walked(model, page) {
-  if (holds(model.systemTypes, page.type === undefined ? null : page.type)) return false;
+  if (furniture(model, page)) return false;
   if (truthy(page.type)) return true;
   const home = purePath(page.folder);
   const above = new Set(parentsOf(home));
@@ -323,6 +337,7 @@ module.exports = {
   ModelUnreadable,
   MODEL_KEYS,
   KIND_KEYS,
+  furniture,
   FIRM,
   loadDeskModel,
   proseEntries,

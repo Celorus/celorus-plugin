@@ -3,10 +3,10 @@ name: call-review
 description: >-
   Review a sales call within a day of it, before any follow-up mail goes out: who was
   there, what they said, what we said, what we owe by when, and a CRM record to paste.
-  Use when someone says "log the call", "review the call", "I just spoke to", pastes a
-  voice note or drops in a transcript. Writes the conversation page, proposes pages and
-  connections for who and what was named, and writes the register, the marks and the desk
-  log. Runs with no Celorus account.
+  Use when someone says "log the call", "review the call", "review this call", "I just
+  spoke to", pastes a voice note or drops in a transcript. Writes the conversation page,
+  proposes pages and connections for who and what was named, and writes the register, the
+  marks and the desk log. Runs with no Celorus account.
 ---
 
 # Review the call
@@ -245,6 +245,19 @@ Every line under "Who was there", "What they said" and "What we said" is the des
 and carries `yours` and the date of the call; a figure the person quoted about themselves is
 `yours` too (the desk heard it), never `record` and never `web`. The promise lines keep the shape
 `follow-up` reads, `- <what>, by <date>.`, with nothing after the date.
+
+## The hold
+
+When the call set a meeting and a calendar connector exists, offer a hold for it on the seat's
+own calendar. On the user's yes, ask what time it starts and ends where the call did not say,
+and never pick a time for them. List the seat's own calendar for that day through the
+connector, never another's and never a listing of calendars. Pass its events, each as its start
+and end alone, to `propose_hold`, with `seat`, `about` (the page the call was about), `start`,
+`end` and `day`, the day the listing was for; when the listing came back empty, pass an empty
+list and `listing_empty` as true. Create the event only as `propose_hold` answers it, straight
+after: its title, start and end exactly, on the seat's own calendar, with no guest, since a
+guest is an invitation sent. A clash or an unsaid time is refused: ask the person again, and
+never move the time yourself. Where no calendar connector exists, say so, and write no hold.
 
 ## The rule this skill enforces
 

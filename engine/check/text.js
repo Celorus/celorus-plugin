@@ -244,6 +244,13 @@ function holdsContactDetails(page) {
   return coordinatesFilled(page) || contactInText(page);
 }
 
+// Whether a short value holds a square bracket, which a page reads as part of a link: every link
+// shape, `[[`, `]]` and a markdown link's `](`, holds one. The manner's name forms are refused for
+// it (lib/persona.js formRefusalOf, DESK-156), asked here, where links are read.
+function holdsLinkBracket(text) {
+  return typeof text === "string" && /[[\]]/u.test(text);
+}
+
 module.exports = {
   linkSpans,
   linkName,
@@ -260,5 +267,6 @@ module.exports = {
   coordinatesFilled,
   contactInText,
   holdsContactDetails,
+  holdsLinkBracket,
   Page,
 };

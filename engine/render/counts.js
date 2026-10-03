@@ -12,7 +12,7 @@
 const { Refusal } = require("../lib/refusal.js");
 const { linkSpans, linkName } = require("../check/text.js");
 const { unlink, readTable } = require("./desk.js");
-const { crmExport, nameKey } = require("./export.js");
+const { crmExport, nameKey, NO_EXPORT } = require("./export.js");
 const S = require("./systems.js");
 const { asDate, daysBetween, addDays, dateLabel, shortDate } = require("./words.js");
 
@@ -527,13 +527,14 @@ function linkWords(desk, text) {
 // The follow-ups in state `due` whose `by` is no date (round 2, row B2), as dueBy reads it: counted
 // as due by no page and no count, and named by each in these words, which quote the `by` cell as
 // it is written (round 3, row B4). The seat's own (by its source, R42 (a)), or with `seat` null
-// the whole desk's.
-function undatedFollowUps(desk, seat = null) {
+// the whole desk's; with `nobodys`, also those whose source names no seat, as calls_for_today
+// puts them on every seat's no_seat.
+function undatedFollowUps(desk, seat = null, nobodys = false) {
   const out = [];
   for (const f of desk.followUps) {
     if (f.state !== "due" || dueBy(f.by) !== null) continue;
     const src = followUpSource(desk, f.from);
-    if (seat !== null && src.seat !== seat) continue;
+    if (seat !== null && src.seat !== seat && !(nobodys && src.seat === null)) continue;
     const by = String(f.by === undefined || f.by === null ? "" : f.by).trim();
     const due = by ? `is due by ${by}, which is not a date` : "carries no date it is due by";
     out.push(`A follow-up is not counted as due: ${linkWords(desk, f.what)}, from ${src.ref}, ${due}.`);
@@ -806,10 +807,20 @@ function exceptionLines(rows, unassigned, crm = true) {
   return out;
 }
 
+// The connectors among `roles` whose rows are not counted, not handed over or set aside by the
+// live-row contract (live/live.js), as holes, {role, why}: one copy, read by a seat's view, by a
+// family's pages and by the read tools, so each says the same hole in the same words.
+function notHandedOver(st, roles) {
+  return roles.filter((r) => !st.given.includes(r)).map((r) => ({ role: r, why: NOT_HANDED_OVER[r] }));
+}
+
+// The connectors a family's pages and family_facts read: the CRM's records, numbers and touches.
+const FAMILY_READS = ["crm"];
+
 // The holes in a seat's view, as desk_count answers them, {role, why}: each connector the view
 // reads whose rows were not handed over, then a desk with no family pages (round 3, row A6).
 function viewUnread(desk, st, role) {
-  const out = (VIEW_READS[role] || EVERY_ROLE).filter((r) => !st.given.includes(r)).map((r) => ({ role: r, why: NOT_HANDED_OVER[r] }));
+  const out = notHandedOver(st, VIEW_READS[role] || EVERY_ROLE);
   if (!desk.of("families").length) out.push({ role: "families", why: role === "rm" ? NO_BOOK_MOMENTS : NO_FAMILIES });
   return out;
 }
@@ -1095,17 +1106,23 @@ function deskLogRows(read, count) {
 // it was taken, as its Taken-at line and its day say it, and the desk-log rows it read, together.
 // No row has a digest of its own, so the page names no row: a digest over the whole run of rows
 // cannot be guessed row by row, and the moment inside it holds the page's clock to its record.
-function recordDigest(moment, lines) {
-  return sha256Hex([String(moment).slice(0, 16), ...lines].join("\n"));
+// With the seat's snapshot key (DESK-147; render/key.js, read here alone) the digest is keyed, so
+// a guess at the rows cannot be held to it without the key; with none it is the plain digest a
+// page taken before snapshots were sealed carries.
+function recordDigest(moment, lines, key) {
+  const text = [String(moment).slice(0, 16), ...lines].join("\n");
+  return key ? require("./key.js").keyedDigest(key, text) : sha256Hex(text);
 }
 
 // What a snapshot records of the desk log at its moment: how many of its rows it read, and the
 // one digest over those rows and that moment. A writer adds a row after the last
 // (write/writers.js), so the rows a snapshot read are the desk log's first rows as long as no row
-// it read is changed or removed.
-function rowsRead(desk, now) {
+// it read is changed or removed. With the seat's snapshot key the record is sealed: it carries its
+// seal and its key's id as well (DESK-147).
+function rowsRead(desk, now, key) {
   const lines = deskLogRows(desk.read, Infinity);
-  return { rows: lines.length, digest: recordDigest(now, lines) };
+  const record = { rows: lines.length, digest: recordDigest(now, lines, key) };
+  return key ? require("./key.js").sealed(key, now, record) : record;
 }
 
 // The desk as a snapshot read it: the same pages, with the desk log holding only its first
@@ -1333,35 +1350,56 @@ function eventsToday(desk, st, seat, day) {
 // M's states: the rows not yet worked, and those researched or contacted (round 2, row B3)
 const ASKED_STATES = new Set([...NOT_WORKED_STATES, "researched", "contacted"]);
 
-// A page's names as the CRM export is matched against them: its title and each of its aliases.
-function pageNames(page) {
+// A page's names as the page writes them: its title and each of its aliases.
+function pageNameTexts(page) {
   const aliases = page.header.aliases;
   const all = [page.header.title, ...(Array.isArray(aliases) ? aliases : aliases ? [aliases] : [])];
-  return all.filter((x) => typeof x === "string").map(nameKey);
+  return all.filter((x) => typeof x === "string");
+}
+
+// A page's names as the CRM export is matched against them.
+function pageNames(page) {
+  return pageNameTexts(page).map(nameKey);
+}
+
+// queues/book.md's rows and the column that names each row's lead: `lead`, or `family` on a book
+// with no lead column.
+function bookMoments(desk) {
+  const page = desk.read.pages.find((p) => p.rel === "queues/book.md");
+  const rows = page ? readTable(page.body) : [];
+  return { rows, column: rows.length && !Object.hasOwn(rows[0], "lead") ? "family" : "lead" };
+}
+
+// What makes a supplied lead already the desk's, as a reader of one lead: `book`, a `lead` of
+// queues/book.md by slug (its `family` on a book with no lead column), and `crm-export`, the lead
+// page's title or an alias among `names`, the name column of the newest CRM export. The one
+// matching supplied_already_yours and calls_for_today both read; `names` is null where there is no
+// export to read, and the book is matched all the same.
+function deskHolds(desk, names) {
+  const { rows, column } = bookMoments(desk);
+  const book = new Set(rows.map((r) => unlink(r[column])).filter(Boolean));
+  return (lead) => {
+    const page = desk.pages.get(lead);
+    const matched = [];
+    if (book.has(lead)) matched.push("book");
+    if (names && page && pageNames(page).some((name) => names.has(name))) matched.push("crm-export");
+    return matched;
+  };
 }
 
 // supplied_already_yours: of the seat's supplied leads whose latest row is in state new, assigned,
 // researched or contacted (M), each once as suppliedLeads reads it (round 3, row B5), those
-// already the desk's (N): a `lead` of queues/book.md by slug (its `family` on a book with no lead
-// column), or the lead page's title or an alias in the name column of the newest CRM export. With
-// no export, or one with no name column or that cannot be read, it is not available, with the
-// reason, never zero.
+// already the desk's (N), as deskHolds matches them. With no export, or one with no name column or
+// that cannot be read, it is not available, with the reason, never zero.
 function suppliedAlreadyYours(desk, st, seat) {
   anySeat(desk, seat);
   const found = crmExport(desk.root);
   if (!found.available) return { available: false, reason: found.reason };
-  const bookPage = desk.read.pages.find((p) => p.rel === "queues/book.md");
-  const bookRows = bookPage ? readTable(bookPage.body) : [];
-  // the book's lead column, or its family column on a table with no lead column
-  const column = bookRows.length && !Object.hasOwn(bookRows[0], "lead") ? "family" : "lead";
-  const book = new Set(bookRows.map((r) => unlink(r[column])).filter(Boolean));
+  const held = deskHolds(desk, found.names);
   const asked = seatLeads(desk, seat).filter((lead) => ASKED_STATES.has(lead.state));
   const rows = [];
   for (const { lead, list } of asked) {
-    const page = desk.pages.get(lead);
-    const matched = [];
-    if (book.has(lead)) matched.push("book");
-    if (page && pageNames(page).some((name) => found.names.has(name))) matched.push("crm-export");
+    const matched = held(lead);
     if (matched.length) rows.push({ lead, list, matched });
   }
   return { available: true, export: found.file, n: rows.length, m: asked.length, rows };
@@ -1394,21 +1432,299 @@ function researchMinutes(desk, st, seat, day, { start, page } = {}) {
   return { minutes: Math.ceil(ms / 60000), start, written, page: rel };
 }
 
+// calls_for_today (base ruling R45 2, as E7's spec says it in words; row DESK-99): the seat's
+// calls of the day in triage's order, cut at the desk's cap. An order and a cut, not a count: each
+// row is one lead with every reason it has, and triage writes its sentence from the row's fields.
+
+// the kinds a lead is called for, in the order that places it within its clock, and the key each
+// kind's rows are answered under
+const CALL_KINDS = ["follow-up", "reply", "supplied", "book moment"];
+const CALL_KIND_KEYS = { "follow-up": "follow_up", reply: "reply", supplied: "supplied", "book moment": "book_moment" };
+// the folders a lead's own page is read from
+const LEAD_FOLDERS = new Set(["people", "families", "firms"]);
+const HANDLE_WITH_CARE = "handle-with-care";
+const REASON_TO_CALL = "reason-to-call";
+// the day's order of clocks where motion-spec.md holds no list of them that can be read, and the
+// one sentence that says so
+const BUILT_IN_CLOCKS = ["money-in-motion", REASON_TO_CALL, HANDLE_WITH_CARE];
+const NO_CLOCKS = `motion-spec.md holds no list of clocks that can be read, so today's calls are in the built-in order of clocks: ${BUILT_IN_CLOCKS.join(", ")}.`;
+// what a row with no clock says, with no page and with a page; never said of a page that carries
+// a clock
+const NO_PAGE_YET = "no page yet; research first";
+const NO_CLOCK_ON_PAGE = "no clock on the page";
+// what the rows that belong to no seat are said with, as a hole of the answer
+const NO_SEAT =
+  "The rows under no_seat are nobody's yet: each is a supplied name or a book moment with no seat named for it and no page of its own naming an owner, " +
+  "or a follow-up whose source names no seat, so it is on no seat's day, outside the order and the cap.";
+// The states of a supplied lead's latest row that put it on the day are ASKED_STATES, the set
+// supplied_already_yours reads: the not-worked states (NOT_WORKED_STATES, `new` and `assigned`),
+// and researched and contacted. A row already-yours is never a call.
+// a book moment is on the day from this many days before it through the day
+const BOOK_MOMENT_DAYS = 6;
+const DAY_IN_LINE = /\b\d{4}-\d{2}-\d{2}\b/g;
+
+// The lead's own page, under people/, families/ or firms/, or null.
+function leadPage(desk, slug) {
+  const page = desk.pages.get(slug);
+  return page && LEAD_FOLDERS.has(page.kind) ? page : null;
+}
+
+// A page header's value as the page has it, or null.
+function headerValue(page, key) {
+  const value = page ? page.header[key] : undefined;
+  return value === undefined ? null : value;
+}
+
+// The freshest dated line under the page's "## What just happened", as written, or null: a line
+// is dated by the latest day it names, and of two lines on the same day the one higher on the page
+// is taken.
+function freshestLine(desk, page) {
+  let best = null;
+  for (const line of desk.section(page.body, "What just happened")) {
+    const days = (line.match(DAY_IN_LINE) || []).map(asDateOrNull).filter((d) => d !== null);
+    if (!days.length) continue;
+    const day = days.reduce((a, b) => (b > a ? b : a));
+    if (best === null || day > best.day) best = { day, line: line.trim() };
+  }
+  return best ? best.line : null;
+}
+
+// The lines of context/never-say.md's body, a heading among them: a heading that names a lead
+// marks it as any other line does.
+function neverSayLines(desk) {
+  const page = desk.read.pages.find((p) => p.rel === "context/never-say.md");
+  if (!page) return [];
+  return String(page.body)
+    .split(/\r\n|\r|\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+const WORD_CHAR = /[a-z0-9]/;
+
+// A line or a name as the two are compared: in one letter case, its words one space apart.
+function folded(text) {
+  return String(text).toLowerCase().split(/\s+/u).filter(Boolean).join(" ");
+}
+
+// Whether a line names `name`: the name in any case, with no letter or digit either side of it.
+function lineNames(line, name) {
+  const text = folded(line);
+  const want = folded(name);
+  if (!want) return false;
+  for (let at = text.indexOf(want); at !== -1; at = text.indexOf(want, at + 1)) {
+    const before = at === 0 ? "" : text[at - 1];
+    const after = text[at + want.length] || "";
+    if (!WORD_CHAR.test(before) && !WORD_CHAR.test(after)) return true;
+  }
+  return false;
+}
+
+// Every name a never-say line may name a lead by: its slug and the slug's words, and, where it
+// has a page, the page's title and each alias the page carries.
+function leadNames(lead, page) {
+  const names = [lead, lead.split("-").join(" ")];
+  if (page) names.push(...pageNameTexts(page));
+  return names;
+}
+
+// motion-spec.md's clocks, in its order, or null where its header holds no list of them that can
+// be read (no motion spec, no `clocks`, an empty list, or a value that is no list); and its cap on
+// a day's calls as the header holds it.
+function motionSpec(desk) {
+  const page = desk.read.pages.find((p) => p.rel === "motion-spec.md");
+  const head = page && page.head && typeof page.head === "object" && !Array.isArray(page.head) ? page.head : {};
+  const listed = Array.isArray(head.clocks) ? head.clocks.map((c) => unlink(c).trim()).filter(Boolean) : [];
+  return { clocks: listed.length ? listed : null, capSet: Object.hasOwn(head, "cap_calls_per_day") && head.cap_calls_per_day !== null, cap: head.cap_calls_per_day };
+}
+
+// The clocks in the day's order: the motion spec's, or the built-in ones where it holds no list
+// that can be read; reason-to-call after them when the list does not hold it, and handle-with-care
+// last wherever the list puts it.
+function clockOrder(clocks) {
+  const out = [];
+  for (const clock of clocks || BUILT_IN_CLOCKS) if (clock !== HANDLE_WITH_CARE && !out.includes(clock)) out.push(clock);
+  if (!out.includes(REASON_TO_CALL)) out.push(REASON_TO_CALL);
+  out.push(HANDLE_WITH_CARE);
+  return out;
+}
+
+// The cap the day is cut at, or none and the one sentence that says why: a cap is a whole number
+// of 1 or more, as the header holds it, and is never guessed.
+function dayCap(spec) {
+  const cap = spec.cap;
+  if (typeof cap === "number" && Number.isInteger(cap) && cap >= 1) return { cap, no_cut: null };
+  if (!spec.capSet) return { cap: null, no_cut: "motion-spec.md sets no cap_calls_per_day, so today's calls are not cut." };
+  return {
+    cap: null,
+    no_cut: `cap_calls_per_day in motion-spec.md is ${JSON.stringify(cap)}, which is not a whole number of 1 or more, so today's calls are not cut.`,
+  };
+}
+
+// Two days as a sort reads them: a day before no day, earliest first, or newest first.
+function byDay(a, b, newest) {
+  if (a === b) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return (a < b ? -1 : 1) * (newest ? -1 : 1);
+}
+
+// One row of the answer, and its place in the order: a lead with every reason it has and its
+// clock. Handle with care is the clock of a lead a never-say line names, by any name of
+// leadNames, and of a page whose own clock says so, whatever the day's order lists. A page's
+// clock that the order does not hold places the row as reason-to-call and is said in
+// clock_not_listed; no_clock is said only of a lead with no page or a page with no clock.
+function callRow(desk, lead, kinds, order, careLines) {
+  const page = leadPage(desk, lead);
+  const title = page ? desk.title(lead) : lead;
+  const kindsHeld = CALL_KINDS.filter((k) => kinds.has(k));
+  // each kind's rows, its most pressing first: the earliest `by` or list date, the newest moment
+  for (const k of kindsHeld) kinds.get(k).sort((a, b) => byDay(a.key, b.key, k === "book moment"));
+  const first = kindsHeld[0];
+  const names = leadNames(lead, page);
+  const named = careLines.some((line) => names.some((name) => lineNames(line, name)));
+  const onPage = page ? desk.get(page, "clock").trim() : "";
+  let clock = REASON_TO_CALL;
+  let noClock = null;
+  let notListed = null;
+  // the day's order always holds handle-with-care and reason-to-call (clockOrder), so a page's own
+  // care clock is honoured whatever motion-spec.md lists
+  if (named) clock = HANDLE_WITH_CARE;
+  else if (order.includes(onPage)) clock = onPage;
+  else if (onPage) notListed = `The page's clock is ${JSON.stringify(onPage)}, which is not in the day's order of clocks, so the row is placed as ${REASON_TO_CALL}.`;
+  else noClock = page ? NO_CLOCK_ON_PAGE : NO_PAGE_YET;
+  const said = { lead, title, clock, kinds: kindsHeld, no_clock: noClock, clock_not_listed: notListed };
+  for (const k of kindsHeld) said[CALL_KIND_KEYS[k]] = kinds.get(k).map((r) => r.fields);
+  said.source = first === "supplied" ? `supplied-${kinds.get(first)[0].fields.list}` : first === "book moment" ? "book" : "follow-up";
+  if (page) said.page_as_of = headerValue(page, "timestamp");
+  else said.no_page = true;
+  said.last_touch = headerValue(page, "last_touch");
+  said.readiness = headerValue(page, "readiness");
+  said.what_just_happened = page ? freshestLine(desk, page) : null;
+  return { said, place: [order.indexOf(clock), CALL_KINDS.indexOf(first), kinds.get(first)[0].key, first === "book moment"] };
+}
+
+// Two rows in the day's order: by clock, then by kind, then by the kind's own day, then by slug.
+function byPlace(a, b) {
+  const [ca, ka, da, newest] = a.place;
+  const [cb, kb, db] = b.place;
+  if (ca !== cb) return ca - cb;
+  if (ka !== kb) return ka - kb;
+  const d = byDay(da, db, newest);
+  if (d !== 0) return d;
+  return a.said.lead < b.said.lead ? -1 : a.said.lead > b.said.lead ? 1 : 0;
+}
+
+function callsForToday(desk, st, seat, day) {
+  anySeat(desk, seat);
+  // the seat's leads, and the leads of no seat: each a map of its kinds to their rows
+  const mine = new Map();
+  const nobodys = new Map();
+  const take = (leads, lead, kind, fields, key) => {
+    if (!lead) return;
+    if (!leads.has(lead)) leads.set(lead, new Map());
+    const kinds = leads.get(lead);
+    if (!kinds.has(kind)) kinds.set(kind, []);
+    kinds.get(kind).push({ fields, key });
+  };
+  // input 1: a follow-up due by the day, and a reply; the seat by the row's source (R42 (a)), or
+  // no seat's where the source names none
+  for (const f of desk.followUps) {
+    const by = dueBy(f.by);
+    const kind = f.state === "due" && by !== null && by <= day ? "follow-up" : f.state === "replied" ? "reply" : null;
+    const from = kind === null ? null : followUpSource(desk, f.from).seat;
+    if (kind === null || (from !== seat && from !== null)) continue;
+    take(from === null ? nobodys : mine, unlink(f.who).trim(), kind, { what: f.what, by: f.by, from: f.from }, by);
+  }
+  // input 2: a supplied lead by its latest row, the seat's as the counts read it (R42 (b)), or no
+  // seat's. One the desk already holds (deskHolds, the book matched with or without a CRM export)
+  // is no call: it is named in already_yours with what matched, and spends no cap.
+  const found = crmExport(desk.root);
+  const held = deskHolds(desk, found.available ? found.names : null);
+  const alreadyYours = [];
+  for (const lead of suppliedLeads(desk).values()) {
+    const owner = effectiveOwner(desk, lead.lead);
+    if (!ASKED_STATES.has(lead.state) || (owner !== seat && owner !== null)) continue;
+    const matched = held(lead.lead);
+    if (matched.length) alreadyYours.push({ lead: lead.lead, list: lead.list, matched, ...(owner === null ? { no_seat: true } : {}) });
+    else take(owner === null ? nobodys : mine, lead.lead, "supplied", { list: lead.list, date: lead.row.date }, lead.date);
+  }
+  // input 3: a book moment of the last week, the seat's as every reader reads a lead's owner
+  // (effectiveOwner: a hand-over first, and a hand-over never rewrites the page), or no seat's
+  const book = bookMoments(desk);
+  const from = addDays(day, -BOOK_MOMENT_DAYS);
+  for (const b of book.rows) {
+    const lead = unlink(b[book.column]).trim();
+    const at = asDateOrNull(b.date);
+    if (!lead || at === null || at < from || at > day) continue;
+    const owner = effectiveOwner(desk, lead);
+    if (owner !== seat && owner !== null) continue;
+    take(owner === null ? nobodys : mine, lead, "book moment", { moment: b.moment, date: b.date }, at);
+  }
+  const spec = motionSpec(desk);
+  const order = clockOrder(spec.clocks);
+  const careLines = neverSayLines(desk);
+  const rows = [...mine].map(([lead, kinds]) => callRow(desk, lead, kinds, order, careLines)).sort(byPlace);
+  const called = rows.filter((r) => r.said.clock !== HANDLE_WITH_CARE).map((r) => r.said);
+  const care = rows.filter((r) => r.said.clock === HANDLE_WITH_CARE).map((r) => r.said);
+  // the rows of no seat: in no order and cut at no cap, by slug, the same for every seat that asks
+  const noSeat = [...nobodys]
+    .map(([lead, kinds]) => callRow(desk, lead, kinds, order, careLines).said)
+    .sort((a, b) => (a.lead < b.lead ? -1 : a.lead > b.lead ? 1 : 0));
+  const { cap, no_cut: noCut } = dayCap(spec);
+  const out = {
+    today: cap === null ? called : called.slice(0, cap),
+    later_today: cap === null ? [] : called.slice(cap),
+    handle_with_care: care,
+    cap,
+    no_cut: noCut,
+    no_clocks: spec.clocks === null ? NO_CLOCKS : null,
+    already_yours: alreadyYours,
+    no_seat: noSeat,
+  };
+  // a due follow-up whose `by` is no date is on no day: named, as due_follow_ups names it. An
+  // export that is there but cannot be read is said in supplied_already_yours' own words, so no
+  // supplied name it holds is called as new in silence; a desk with no export is the book alone.
+  const holes = [
+    ...(noSeat.length ? [{ role: "seats", why: NO_SEAT }] : []),
+    ...(!found.available && found.reason !== NO_EXPORT ? [{ role: "crm export", why: found.reason }] : []),
+    ...undatedFollowUps(desk, seat, true).map((why) => ({ role: "follow-ups", why })),
+  ];
+  return holes.length ? { ...out, holes } : out;
+}
+
 const WORKDAY_COUNTS = {
   new_supplied: newSupplied,
   due_follow_ups: dueFollowUps,
   events_today: eventsToday,
   supplied_already_yours: suppliedAlreadyYours,
   research_minutes: researchMinutes,
+  calls_for_today: callsForToday,
+};
+
+// The connectors each workday count reads beyond the desk's own pages, as VIEW_READS says a
+// view's: [] is a count that reads the desk's pages only. desk_count's holes for a count are read
+// from here. supplied_already_yours reads the CRM export kept on the desk, never the CRM
+// connector's rows, and says an export it cannot read in its own answer.
+const WORKDAY_READS = {
+  new_supplied: [],
+  due_follow_ups: [],
+  events_today: CAL,
+  supplied_already_yours: [],
+  research_minutes: [],
+  calls_for_today: [],
 };
 
 module.exports = {
   WORKDAY_COUNTS,
+  WORKDAY_READS,
   NOT_HANDED_OVER,
   NO_FAMILIES,
   NO_BOOK_MOMENTS,
   VIEW_READS,
   PAGE_READS,
+  FAMILY_READS,
+  notHandedOver,
   viewUnread,
   pageGates,
   suppliedLeads,
@@ -1436,6 +1752,7 @@ module.exports = {
   sha256Hex,
   deskLogRows,
   recordDigest,
+  rowsRead,
   deskAsRecorded,
   funnel,
   dayCalendar,

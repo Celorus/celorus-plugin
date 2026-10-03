@@ -38,7 +38,7 @@ they forbid, they win.
   its role is counted by (the `role` in `celorus/seats/<handle>.md`): `view` `rm` for a seat whose
   role is `rm`; `view` `brief` for a seat whose role is `desk-head`, and `team_rollup` for the
   team; `view` `rep` only for a seat whose role is `rep`, an SDR. The desk's install writes a
-  seat's role as one of `rm`, `desk-head`, `operator` or `other`. `desk_count` has no view for an
+  seat's role as one of `rep`, `rm`, `desk-head`, `operator` or `other`. `desk_count` has no view for an
   `operator` or `other` seat: for one, call no `desk_count`; work from `book_query` and the
   queues, and say no count for the seat.
 - Pass `systems` only when a connector's rows already come in the desk's row shape, as the
@@ -52,10 +52,14 @@ they forbid, they win.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
   list, and never write the change some other way.
-- No desk tool yet orders the day's calls, cuts them at the desk's cap, or counts the supplied
-  names already yours. Until one does, this skill orders the rows in words, names every row,
-  and says no number of its own: no count of names, no position number, no cut made by
-  counting rows.
+- `desk_count` with `count` in place of `view` answers a part of the seat's day, for a seat of
+  any role, `operator` and `other` among them. `count` `calls_for_today` answers the day's
+  calls, already in order and already cut at the desk's cap. `count` `supplied_already_yours`
+  answers the supplied names already yours: say it as the tool answers it, and where its
+  `available` is `false`, say its `reason` as it came and nothing else from that answer. This
+  skill writes the rows as answered and says no number of its own: it puts no row in order,
+  makes no cut, moves no row between the lists, and writes no position number, only what the
+  tool answered.
 
 ## Find the desk
 
@@ -88,31 +92,41 @@ If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 ## The dedupe
 
 A supplied name that also appears in the book (a row in `queues/book.md`, or a name in
-the CRM export) is already the desk's. Mark its row `already-yours` in
-`queues/supplied.md`, leave it off the list, and name it on the board, in words and with no
+the CRM export) is already the desk's. The desk tool leaves it off the list and names it
+under `already_yours` of `calls_for_today`, with what matched. Mark the row of each name
+there `already-yours` in `queues/supplied.md`, and name it on the board, in words and with no
 number: "Already yours, so left off today's list: <each name>." This is the desk's own
 feature: it never calls a client as if they were new.
 
 ## The order
 
-Three clocks, in this order, from each lead's page or, with no page, from the queue row:
+The order and the cut are the desk tool's. Call `desk_count` with `count` `calls_for_today`
+and the seat's handle as `seat`, and no `view`. It answers the day's calls under `today`, in
+order, the rows past the desk's cap under `later_today`, in order, and the handle-with-care
+rows under `handle_with_care`. Write `today` from the top as it came. Below it write
+`later_today`, under a line saying these rows are past the day's cap. Write
+`handle_with_care` last, each row with its reason: no pitch, no draft, no opener, and the
+row says what care means.
 
-1. **money in motion**: a dated event on the page inside its window (a sale, a listing, a
-   payout, an allotment; the page names it).
-2. **a reason to call**: a reply, a due follow-up, a book moment, a supplied name with a
-   page, a change of role.
-3. **handle with care**: a flag on the page (distress on the record, a suppression, a line
-   in `context/never-say.md` that names them). Listed last, with the reason. No pitch, no
-   draft, no opener, and the row says what care means.
+Each row is a lead with every reason it has. Write the row from its fields and from nothing
+else: the name from `title`; the clock from `clock`; the reason from `what_just_happened`
+and from the rows under `follow_up`, `reply`, `supplied` and `book_moment`, every kind the
+row carries; the source from `source`; the page from `page_as_of`, or, where `no_page` is
+`true`, the words the row shape below gives a lead with no page. Where `no_clock` or
+`clock_not_listed` holds words, say them as they came.
 
-Within a clock: due follow-ups by their date, then replies, then supplied names by list
-date, then book moments. A reply is a row of `queues/follow-ups.md` in state `replied`. A
-lead that stands in two queues is one row, placed by the first of them in that order, with
-both reasons. A lead with no clock on its page, or with no page, goes under a reason to call.
+`cap_calls_per_day` in `motion-spec.md` is the desk's cap on a day's calls, and the tool makes
+the cut there: `cap` is the cap it read. Where the desk sets no cap the tool can use, `cap`
+is `null`, `later_today` is empty and `no_cut` holds a sentence: say that sentence as it
+came and list every row, and no number is said for the cap.
 
-`cap_calls_per_day` in `motion-spec.md` is the desk's cap on a day's calls. Cutting the list
-there is a count of rows, and no desk tool makes that cut yet, so the list is not cut: every
-row is listed, in order, and no number is said for the cap.
+The order of clocks is the desk's list of clocks in `motion-spec.md`. Where the tool cannot
+read a list there, `no_clocks` holds a sentence: say that sentence as it came.
+
+Where `no_seat` holds rows, write them after the rest, under a line saying these rows are
+nobody's yet: no seat is named for them, so they are on no seat's day. Write each from its
+fields as any other row. A row there whose clock is handle-with-care gets no pitch, no draft
+and no opener.
 
 ## Every row
 

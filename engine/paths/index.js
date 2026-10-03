@@ -16,6 +16,8 @@ const { walkTo, namesOf: walkNamesOf } = require("./walk.js");
 const { fold } = require("./fold.js");
 const { renderPage, SHOWN_PATHS, NAME_RULE } = require("./page.js");
 const { writePathPage } = require("./write.js");
+// Check 2, the introductions a firm's conversations offered (DESK-92): answer only.
+const { TOOLS: INTRODUCTIONS } = require("./introductions.js");
 
 const TOOL = "who_can_introduce";
 
@@ -132,7 +134,8 @@ const TOOLS = [
       "celorus/views/path-to-<file name>.md, the ranked paths of up to three hops from a seat or " +
       "someone in conversation, each hop a sentence with its proofs and one drawing, and returns " +
       "the page's path to show. A path is headed qualified when its weakest hop rests only on " +
-      `lines that write their far end in their own words. ${NAME_RULE}`,
+      `lines that write their far end in their own words. ${NAME_RULE}` +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -149,6 +152,7 @@ const TOOLS = [
     },
     run: whoCanIntroduce,
   },
+  ...INTRODUCTIONS,
 ];
 
 module.exports = { TOOLS, whoCanIntroduce, pathPage, targetOf, localNow };

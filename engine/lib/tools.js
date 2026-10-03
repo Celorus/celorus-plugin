@@ -5,7 +5,7 @@
 // counts itself) or throws a Refusal naming the valid values.
 //
 // Tool names are the demo's or the checker oracle's, so each port is testable against them.
-// `check_desk` reads the desk through the shared reader and runs rules C01 to C16
+// `check_desk` reads the desk through the shared reader and runs rules C01 to C19
 // (check/rules.js) over it. It is read-only unless asked to record (`record: true`): then a
 // whole-desk check writes `checked_with: <version>` and `checked_findings: <n>` into desk.md
 // (lib/stamp.js), clean or not.
@@ -35,6 +35,10 @@ const { TOOLS: VIEW_TOOLS } = require("../views/tools.js");
 const { RENDER_TOOLS } = require("../render/index.js");
 const { TOOLS: WRITE_TOOLS } = require("../write/tools.js");
 const { TOOLS: READ_TOOLS } = require("../read/tools.js");
+const { TOOLS: SETUP_TOOLS } = require("../scaffold/tools.js");
+const { TOOLS: OVERNIGHT_TOOLS } = require("../overnight/tools.js");
+const { TOOLS: HOLD_TOOLS } = require("../hold/hold.js");
+const { TOOLS: SOUL_TOOLS } = require("../soul/tools.js");
 
 // Refuses an argument the tool does not take, naming the ones it does.
 function onlyArguments(tool, args, allowed) {
@@ -477,9 +481,10 @@ const TOOLS = [
   {
     name: "check_desk",
     description:
-      "Check a desk against rules C01 to C16 and list what to look at, each finding with its " +
+      "Check a desk against rules C01 to C19 and list what to look at, each finding with its " +
       "page, rule and message. It lists; it never blocks. Only when record is true, a " +
-      "whole-desk check writes checked_with: <version> and checked_findings: <n> into desk.md.",
+      "whole-desk check writes checked_with: <version> and checked_findings: <n> into desk.md." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -521,6 +526,10 @@ const TOOLS = [
   ...RENDER_TOOLS,
   ...READ_TOOLS,
   ...WRITE_TOOLS,
+  ...SETUP_TOOLS,
+  ...OVERNIGHT_TOOLS,
+  ...HOLD_TOOLS,
+  ...SOUL_TOOLS,
 ];
 
 // The tool with this name, or a refusal naming every tool there is.

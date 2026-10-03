@@ -16,12 +16,15 @@ const { readDesk, DESK_ARGUMENT } = require("../lib/desk.js");
 const { Desk } = require("./desk.js");
 const { systemsOf } = require("./systems.js");
 const C = require("./counts.js");
+const K = require("./key.js");
 const { deskRoot, plainFolder, plainFile, readPlain } = require("./files.js");
 const W = require("./words.js");
-const { pageContext } = require("../templates/parts.js");
+const { pageContext, fellBack } = require("../templates/parts.js");
+const { liveRows } = require("../live/live.js");
 const { PAGES } = require("../templates/pages.js");
 const { STALL_COUNTS } = require("../templates/seats.js");
 const { assemble } = require("../templates/base.js");
+const { persona, notUsed } = require("../lib/persona.js");
 const { pathsSaid } = require("./screen.js");
 
 const TOOL = "check_reconcile";
@@ -31,25 +34,9 @@ const VIEW = "snapshot";
 const KEY = "team";
 // the line a snapshot page carries under its heading (templates/seats.js snapshot)
 const TAKEN = /<p class="taken"><span>Taken at <b>([01]\d|2[0-3]):([0-5]\d)<\/b>/;
-// the record of the desk-log rows the snapshot read at its moment (round 5, row A13)
-const READ = /<script type="application\/json" id="rows-read">([^<]*)<\/script>/;
-const DIGEST = /^[0-9a-f]{64}$/;
-
-// The record a snapshot carries of the desk-log rows it read, {rows, digest}: how many, and one
-// digest over them and the page's moment (base ruling R56). Null when it carries none that reads
-// as one, as a page taken before the record held a count and a digest does.
-function recordOf(html) {
-  const m = READ.exec(html);
-  if (!m) return null;
-  let got;
-  try {
-    got = JSON.parse(m[1]);
-  } catch {
-    return null;
-  }
-  const ok = got && typeof got === "object" && Number.isSafeInteger(got.rows) && got.rows >= 0 && typeof got.digest === "string" && DIGEST.test(got.digest);
-  return ok ? { rows: got.rows, digest: got.digest } : null;
-}
+// The record a snapshot carries of the desk-log rows it read (round 5, row A13; DESK-147): read by
+// render/key.js's recordOf, which the key's undo shares to tell a page this check reads.
+const { recordOf } = K;
 
 const rowsSaid = (n) => `${n} ${n === 1 ? "row" : "rows"}`;
 
@@ -57,15 +44,20 @@ const rowsSaid = (n) => `${n} ${n === 1 ? "row" : "rows"}`;
 // the record read, digested with the moment the page says it was taken, are its digest. A writer
 // adds a row after the last, so rows logged since sit after them and are not the snapshot's; a row
 // it read and changed or removed since, a record edited by hand, or a Taken-at clock relabelled is
-// a problem, in words.
-function recordProblems(record, read, moment) {
+// a problem, in words. A sealed record's digest is made again with `key`, the key that sealed it,
+// when this machine holds it; when it does not (`key` is null), the digest cannot be made again
+// here, so the record's count alone is held and its rows are never said to have changed
+// (DESK-147). Its seal and its key's id are held with the rest of the page, which is drawn again
+// with the record made again (checkReconcileTool).
+function recordProblems(record, read, moment, key) {
   const lines = C.deskLogRows(read, record.rows);
   if (lines.length < record.rows) {
     return [
       `the snapshot read ${rowsSaid(record.rows)} of the desk log, and the desk log holds ${rowsSaid(lines.length)} now: a row it read has been removed since, or its record was edited`,
     ];
   }
-  if (C.recordDigest(moment, lines) !== record.digest) {
+  if (record.key_id !== undefined && !key) return [];
+  if (C.recordDigest(moment, lines, key) !== record.digest) {
     return [
       `the snapshot's digest of the desk log as it read it, ${rowsSaid(record.rows)} at ${moment.slice(11, 16)}, is not the digest of those rows now at that moment: a row it read has been changed since, or its record or its Taken-at clock was edited`,
     ];
@@ -222,15 +214,24 @@ function checkReconcileTool(args = {}) {
   const { dayOf, drawnHere, drawnBy } = require("./index.js");
   onlyArguments(TOOL, args, ARGUMENTS);
   const day = dayOf(args.date);
-  const st = systemsOf(args.systems);
+  systemsOf(args.systems, { held: true });
   const read = readDesk(deskFor(args.desk));
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so nothing is reconciled. Run check_desk to see why.`);
   }
+  // The live-row contract (row E11, live/live.js), as render_view holds it: a role holding a
+  // refused row is counted as not handed over, so the snapshot is held to the desk's own count of
+  // it, and a row that names no one on the desk never counts toward a pass.
+  const contract = liveRows(args.systems, read);
+  const st = systemsOf(contract.systems);
   const desk = new Desk(read);
   const rel = `${VIEWS_REL}/${day}-${VIEW}-${KEY}.html`;
   const root = deskRoot(read.root);
-  const hole = (why) => ({ day, snapshot: rel, reconciled: false, hole: why });
+  // the contract's answer, on every return: the roles counted as not handed over, and each refused
+  // row by its role, list and rule, never by its value; always said, as empty lists when nothing was
+  // refused (item 11, ruled), never left out
+  const told = (answer) => ({ ...answer, fell_back: contract.fell_back, dropped: contract.dropped });
+  const hole = (why) => told({ day, snapshot: rel, reconciled: false, hole: why });
   if (!(plainFolder(root, "celorus") && plainFolder(root, VIEWS_REL) && plainFile(root, rel))) {
     return hole(`There is no snapshot of ${day} at ${rel}, so there is nothing to hold to the views. Take one with render_view (view snapshot) first.`);
   }
@@ -250,12 +251,29 @@ function checkReconcileTool(args = {}) {
   // the desk as the snapshot read it (round 5, row A13): the desk log holds its first rows, as
   // many as the record read, and no row logged since. Only the desk log is rolled back; every
   // other page of the desk is read as it stands now (base ruling R56: the mechanism is owed)
-  const problems = recordProblems(record, read, moment);
+  // DESK-147: the snapshot key this machine holds and can read, if any (render/key.js; nothing is
+  // written, and no key is made here), and whether it is the one that sealed this record. A key
+  // file that is there and cannot be read is never taken for no key.
+  const holds = K.held(root);
+  const unreadable = holds !== null && holds.unreadable === true;
+  const key = holds === null || unreadable ? null : holds;
+  const sealed = record.key_id !== undefined;
+  const mine = sealed && key !== null && key.id === record.key_id;
+  const problems = recordProblems(record, read, moment, mine ? key.key : null);
   const asRead = new Desk(C.deskAsRecorded(read, record.rows));
   // the whole page render_view draws for the same moment from those rows, shell and content, as
   // it draws it
   const data = C.snapshotView(asRead, st, day, moment);
-  const drawn = assemble(PAGES[VIEW](data, {}, pageContext(asRead)), data, { firm: asRead.firm(), fixture: asRead.fixture, stamp: drawnBy() });
+  // the record it is drawn with: a sealed one made again with the key that sealed it, so a seal or
+  // a key's id edited on the page differs from the page drawn now; where this machine does not
+  // hold that key the seal cannot be made again, and the page is drawn with the record it carries
+  if (sealed) data.read = mine ? C.rowsRead(asRead, moment, key.key) : record;
+  const who = persona({ desk: asRead });
+  const ctx = pageContext(asRead, who);
+  const page = PAGES[VIEW](data, {}, ctx);
+  // a role that fell back is said on the page, as render_view says it
+  page.content += fellBack(ctx, contract.fell_back);
+  const drawn = assemble(page, data, { firm: asRead.firm(), fixture: asRead.fixture, stamp: drawnBy(), persona: who });
   const saved = figures(html);
   const figured = figureProblems(saved, figures(drawn));
   problems.push(...figured);
@@ -263,7 +281,23 @@ function checkReconcileTool(args = {}) {
   problems.push(...C.checkReconcile(asRead, st, day, moment));
   // A problem quotes the snapshot's words as it holds them, but for a path in them, said as "(a
   // path)" (R73: no answer repeats a path; 0.19.0 K4c, met by the door walk's drive).
-  return { day, snapshot: rel, taken_at: moment, figures: saved.length, reconciled: !problems.length, problems: problems.map(pathsSaid) };
+  const held = { day, snapshot: rel, taken_at: moment, figures: saved.length };
+  const said = problems.map(pathsSaid);
+  // a desk's assistant_name that was set and refused is said, in words that never repeat it,
+  // whichever of the answers below is given, and each through told (row E11)
+  const named = notUsed(who) ? { assistant_name_not_used: notUsed(who) } : {};
+  // DESK-147, each in the founder's words (render/key.js). A record sealed with a key this machine
+  // does not hold is a hole in words: its count, its time and its figures are held above, and it
+  // is never a pass. So is any record while the key file here cannot be read, in its own words:
+  // whether its seal was removed cannot be told. A record with no seal, taken in or after the minute this seat's key was made,
+  // is a problem: every snapshot this seat took since then is sealed. Any other record with no
+  // seal is held as it was before snapshots were sealed, and the answer says it carries no key.
+  if (unreadable) return told({ ...held, reconciled: false, hole: K.UNREADABLE_HOLE, problems: said, ...named });
+  if (sealed && !mine) return told({ ...held, reconciled: false, hole: K.NOT_HELD, problems: said, ...named });
+  if (!sealed && key !== null && moment.slice(0, 16) >= key.made.slice(0, 16)) {
+    return told({ ...held, reconciled: false, problems: [K.STRIPPED, ...said], ...named });
+  }
+  return told({ ...held, reconciled: !problems.length, problems: said, ...(sealed ? {} : { seal: K.NO_KEY }), ...named });
 }
 
 const RECONCILE_TOOL = {
@@ -278,7 +312,12 @@ const RECONCILE_TOOL = {
     "same day, shows as a figure that moved. Rows it read and changed since are said to have " +
     "changed, and the figures that moved with them are named; the team " +
     "view, the consoles and the desk log file are held to each other. Each disagreement is said in " +
-    "words with both numbers. A snapshot that cannot be held says why. Nothing is written.",
+    "words with both numbers. A snapshot's record is read with the snapshot key this machine holds: " +
+    "a snapshot sealed with a key this machine does not hold is said in the answer's hole field and " +
+    "does not count as a pass, and a snapshot that carries no key is checked as before and is said " +
+    "in the answer's seal field; when this machine's key cannot be read, that is said in the " +
+    "answer's hole field and no snapshot counts as a pass. A snapshot that cannot be held says " +
+    "why. Nothing is written.",
   inputSchema: {
     type: "object",
     properties: {

@@ -9,13 +9,18 @@
 // running git (the base's ruling R8).
 //
 // The read side is the rule "a cited line must exist" (C16): a plain citation's file must be on
-// the desk, readable, and hold every line it names. A stamped citation is not checked, and is
-// counted as not checked: reading a file out of git history is a later row (E4b), so until then
-// the check never says a stamped line is missing, and never says it is there.
+// the desk, readable, and hold every line it names. A stamped citation is checked the same way
+// against the file as it was at its commit, read out of the desk's own git objects (objects.js,
+// row E4b), and a line that was not there is the same finding in the same words. What the history
+// cannot give (no git folder, a shallow or partial copy without the commit or the file, a pack of
+// a version it does not know, damage, a short id that names two objects) is not guessed: that
+// citation is counted as not checked under its reason, and each reason is said with its count.
 
 const fs = require("node:fs");
 const path = require("node:path");
 const { BLANK_CLASS, splitLines } = require("../check/values.js");
+const { REASONS, openHistory, cannotRead } = require("./objects.js");
+const { Refusal } = require("../lib/refusal.js");
 
 // A blank as Python's `\s` reads one: any whitespace, line ends included.
 const WHITE = `${BLANK_CLASS.slice(0, -1)}\\n]`;
@@ -213,34 +218,118 @@ function citedProblem(desk, inDesk, c, lines) {
   return null;
 }
 
+function linesOf(bytes) {
+  try {
+    return splitLines(new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes));
+  } catch {
+    return "names a file that is not readable as UTF-8";
+  }
+}
+
+// What is wrong with a stamped citation, as citedProblem says it of a plain one: { problem } (null
+// when every line it names was there at its commit), or { reason } when the history cannot say
+// (a key of objects.js REASONS). `history()` opens the desk's history once for the run. `atCommit`
+// caches each file's lines (or its problem, or its reason) by commit and path.
+function stampedProblem(c, history, atCommit) {
+  if (c.first < 1) return { problem: "names line 0, and a file's lines start at 1" };
+  if (c.last < c.first) return { problem: "ends before it starts" };
+  const stamp = STAMP.exec(c.path)[1];
+  const file = path.posix.normalize(sourceFile(c.path));
+  if (file === ".." || file.startsWith("../") || path.posix.isAbsolute(file)) return { problem: OUTSIDE };
+  if (file === "." || file.endsWith("/")) return { problem: "names a folder, not a file" };
+  const key = `${stamp}:${file}`;
+  if (!atCommit.has(key)) {
+    let got;
+    try {
+      const at = history().fileAt(stamp, file);
+      got = at.problem ? at.problem : linesOf(at.bytes);
+    } catch (err) {
+      // Only the reader's own refusals carry a reason; anything else it met is named as damage,
+      // never repeated in its raw words.
+      got = { reason: err instanceof Refusal && Object.hasOwn(REASONS, err.reason) ? err.reason : "corrupt" };
+    }
+    atCommit.set(key, got);
+  }
+  const got = atCommit.get(key);
+  if (typeof got === "string") return { problem: got };
+  if (!Array.isArray(got)) return got;
+  if (c.last > got.length) {
+    return { problem: `names ${lineWords(c.first, c.last)}, and the file has ${got.length} line${got.length === 1 ? "" : "s"}` };
+  }
+  return { problem: null };
+}
+
 // The rule "a cited line must exist" over the check's pages (check/text.js Page, each with its
 // body read outside fenced blocks). `desk` is the desk folder. Returns the findings, each
-// { page, rule, message }, and how many citations were checked and how many were stamped and so
-// not checked.
+// { page, rule, message }; how many citations were checked, plain and stamped; and the stamped
+// ones the desk's history could not give, as `reasons` (a key of objects.js REASONS to its count)
+// and `notChecked`, their sum. The history is opened at the first stamped citation, once for the
+// run, and let go of before this returns.
 function checkCitations(desk, pages) {
   const findings = [];
   const lines = new Map();
-  const realDesk = realPath(path.resolve(desk));
-  const inDesk = [realDesk, realPath(path.join(path.resolve(desk), "celorus"))];
+  const atCommit = new Map();
+  const deskAt = path.resolve(desk);
+  const realDesk = realPath(deskAt);
+  const inDesk = [realDesk, realPath(path.join(deskAt, "celorus"))];
+  const reasons = {};
   let checked = 0;
-  let notChecked = 0;
-  for (const page of pages) {
-    for (const line of splitLines(page.outside)) {
-      const c = citationIn(line);
-      if (!c) continue;
-      if (isStamped(c.path)) {
-        notChecked += 1;
-        continue;
-      }
-      checked += 1;
-      const problem = citedProblem(path.resolve(desk), inDesk, c, lines);
-      if (problem !== null) {
-        const range = c.first === c.last ? `${c.first}` : `${c.first}-${c.last}`;
-        findings.push({ page: page.rel, rule: RULE, message: `from ${c.path}:${range} ${problem}` });
+  let opened;
+  let failed = null;
+  const history = () => {
+    if (failed !== null) throw failed;
+    if (opened === undefined) {
+      try {
+        const folders = gitFolders(deskAt);
+        if (folders === null) throw cannotRead("no_history");
+        opened = openHistory(folders);
+      } catch (err) {
+        failed = err;
+        throw err;
       }
     }
+    return opened;
+  };
+  try {
+    for (const page of pages) {
+      for (const line of splitLines(page.outside)) {
+        const c = citationIn(line);
+        if (!c) continue;
+        let problem;
+        if (isStamped(c.path)) {
+          const got = stampedProblem(c, history, atCommit);
+          if (got.reason) {
+            reasons[got.reason] = (reasons[got.reason] || 0) + 1;
+            continue;
+          }
+          problem = got.problem;
+        } else {
+          problem = citedProblem(deskAt, inDesk, c, lines);
+        }
+        checked += 1;
+        if (problem !== null) {
+          const range = c.first === c.last ? `${c.first}` : `${c.first}-${c.last}`;
+          findings.push({ page: page.rel, rule: RULE, message: `from ${c.path}:${range} ${problem}` });
+        }
+      }
+    }
+  } finally {
+    if (opened) opened.close();
   }
-  return { findings, checked, notChecked };
+  const notChecked = Object.values(reasons).reduce((sum, n) => sum + n, 0);
+  return { findings, checked, notChecked, reasons };
+}
+
+// The stamped citations the check could not read, said: one sentence per reason, in REASONS'
+// order, each with its count; none when every stamped citation was read.
+function notCheckedSaid(reasons) {
+  return Object.keys(REASONS)
+    .filter((key) => reasons && reasons[key])
+    .map((key) => {
+      const n = reasons[key];
+      const names = n === 1 ? "citation names a file as it was at a commit and was" : "citations name a file as it was at a commit and were";
+      return `${n} ${names} not checked: ${REASONS[key]}.`;
+    });
 }
 
 module.exports = {
@@ -254,4 +343,5 @@ module.exports = {
   stamped,
   headCommit,
   checkCitations,
+  notCheckedSaid,
 };

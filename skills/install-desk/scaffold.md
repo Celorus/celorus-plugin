@@ -2,7 +2,7 @@
 
 Templates for every file `install-desk` writes. Placeholders: `{{desk}}` the desk's name
 (where it sits inside double quotes, write a `"` in the name as `\"` and a `\` as `\\`),
-`{{desk_id}}` the minted id, `{{handle}}` the seat handle, `{{role}}` one of `rm`,
+`{{desk_id}}` the minted id, `{{handle}}` the seat handle, `{{role}}` one of `rep`, `rm`,
 `desk-head`, `operator`, `other`, `{{book_source}}` one of `crm-export`, `sheet`, `typed`,
 `{{mail}}`, `{{calendar}}`, `{{drive}}` each `true` or `false`, `{{baseline}}` the
 self-reported minutes per lead, `{{now}}` the ISO 8601 timestamp with offset, `{{date}}`
@@ -356,6 +356,50 @@ Add a word to a pack list as `<list>: <your word> -> <the pack word it means>`, 
 territory, team) as `<list>: <word>`. Add an extra detail as `<kind>: <detail name>`. Never a
 new kind of page and never a new kind of connection. The checker lists any word it cannot
 match.
+```
+
+## The systems table (at the end of `celorus/desk.md`)
+
+The desk tools' `scaffold_desk` writes this below the text of `desk.md`, never by hand: one row
+per role, in this order: mail, calendar, files, chat, crm, client book, product list. The
+`connector` is the connector's name as the harness shows it, or `·` where it shows none; the
+`state` is `connected`, `still to connect` or `none on this desk`. `none on this desk` is
+written only where the person said, at set-up or when the update asked, that the firm has no
+such system, and its `connector` is always the blank. The table is what the set-up recorded;
+afterwards the update changes only a row's `state`, from `still to connect` to
+`none on this desk`, where the person said the firm has no such system. The install's
+"still to connect" list reads this table as that record, and the take-down reads it in reverse.
+
+```markdown
+## Systems
+
+| role | connector | state |
+|---|---|---|
+```
+
+## The set-up record (at the end of `celorus/desk.md`, after the systems table)
+
+Written by `scaffold_desk` with the systems table: one row for each thing the set-up made that
+holds the rest, the seat pointer outside the desk folder included, so the take-down can name
+each one. The path `.` is the desk folder itself, where the set-up made it; a folder that was
+there before the set-up is named by what the set-up put in it, `celorus/`. In either folder,
+each line the set-up added to `.gitignore` is named as `.gitignore: <line>`, with
+`.gitignore (line break)` where the file's last line had no line break and the set-up added
+one before its lines, and `.gitignore (made by the set-up)` wherever the folder held no
+`.gitignore` and the set-up made it, a folder the set-up made included. The record names the
+lines, and names the file only when the set-up made it: a `.gitignore` that was there keeps
+every line of its own, and stays. Taking the desk out deletes a `.gitignore` the set-up made
+only when, the desk's lines and every blank line taken out, nothing is left in it; a line the
+firm added keeps the file, and the desk folder with it.
+
+```markdown
+## Set up
+
+What the set-up made, so taking the desk out can name each thing. A person removes what a
+person created.
+
+| made | path |
+|---|---|
 ```
 
 ## The model pages

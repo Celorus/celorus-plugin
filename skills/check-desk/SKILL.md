@@ -218,6 +218,8 @@ A refusal names what it takes. Where two pages share the name, the refusal lists
 names: ask which one, and call again with that file name as `to`. Where the desk's model cannot
 be read, say the refusal, write nothing, and stop.
 
+When someone asks which introductions a firm's conversations offered, call `introductions_from` with `firm`, the firm page's file name: it writes nothing and answers each `knows` or `introduced_by` line, shown or said, from that firm's conversations or record with the `page` holding it, so say each line as it came with its page, where `introductions` is empty say its `none` as it came, and whenever `not_read` is not empty say its `summary` as it came.
+
 The tool writes only its own page, and never through a link. Where `celorus`, `celorus/views` or
 the page's path is a link, a folder or another kind of file, or a page already there was not
 written by `who_can_introduce`, it refuses by the page's name and writes nothing: say the

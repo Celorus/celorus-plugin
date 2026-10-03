@@ -20,18 +20,26 @@ const { systemsOf } = require("./systems.js");
 const C = require("./counts.js");
 const { familyFacts } = require("./facts.js");
 const { proseRefusal, shownRefusal, OWN_TEXT, PATH_ONLY } = require("./screen.js");
-const { checked, drawnRefusal, rowRefs } = require("./prose.js");
+const { checked, drawnRefusal, rowRefs, withoutCarried } = require("./prose.js");
 const { settingsFiles, missingSettings, settingsTargets } = require("./obsidian.js");
 const { deskRoot, plainFolder, plainFile, emptyFiles, readPlain, writeAll } = require("./files.js");
 const W = require("./words.js");
-const { pageContext } = require("../templates/parts.js");
+const { pageContext, fellBack, delinker } = require("../templates/parts.js");
+const { liveRows, handedOver } = require("../live/live.js");
 const { PAGES } = require("../templates/pages.js");
 const { assemble } = require("../templates/base.js");
+const { persona, notUsed } = require("../lib/persona.js");
 const { RECONCILE_TOOL } = require("./reconcile.js");
+const { forSnapshot, MINTED } = require("./key.js");
 
 const TOOL = "render_view";
 const VIEWS_REL = "celorus/.views";
 const SAVED_REFUSED = "The saved sentences for this page cannot go on it: ";
+// what a render answers when a connector's rows were handed to it, kept or refused (row E11, the
+// live-row contract)
+const NOT_SAVED =
+  "This page was drawn with rows read from a connector, so its sentences were not saved and no saved " +
+  "sentence was drawn: send the sentences again with each render that hands rows over.";
 // the line every page render_view draws carries in its head (templates/base.js)
 const DRAWN_HERE = /<meta name="generated_by" content="celorus-plugin [^ "]+ render_view">/;
 const VIEWS = Object.keys(PAGES);
@@ -51,8 +59,12 @@ function todayInIst(now = Date.now()) {
   return new Date(now + IST_MS).toISOString().slice(0, 10);
 }
 
-function touchWords(last) {
-  return last ? `Last touch ${W.dayWords(last)}` : NO_TOUCH;
+// The touch line of a family page. With no touch on the desk's own pages and the CRM not counted
+// (not handed over, or set aside), the line is left out: that no one has spoken to the family is
+// said only when the CRM's logged touches were read too.
+function touchWords(last, crmCounted) {
+  if (last) return `Last touch ${W.dayWords(last)}`;
+  return crmCounted ? NO_TOUCH : "";
 }
 
 function refuseFamily(desk, family) {
@@ -81,7 +93,11 @@ function familyView(desk, st, seat, family, day) {
     seat_name: seat ? desk.title(seat) : "",
     date: day,
     date_label: W.dateLabel(day),
-    touch_words: touchWords(data.last_touch),
+    touch_words: touchWords(data.last_touch, st.given.includes("crm")),
+    // what the page could not count, as family_facts answers it (counts.js notHandedOver): the CRM
+    // when its rows are not counted, which a family page says in its "Not counted" block
+    crm_counted: st.given.includes("crm"),
+    unread: C.notHandedOver(st, C.FAMILY_READS),
   });
   // the signal's sentence is counts.signalWhy's, never a second copy: the label is the pitch
   data.signal_rows = desk.signals(family).map((s) => ({
@@ -144,11 +160,16 @@ function snapshotMoment(takenAt, date, now = Date.now()) {
 // The sentences as the page's schema takes them (prose.js), each text screened as it was sent,
 // or a refusal: the file saved beside the page is written only from what this answers. The rules
 // in `skip` are left out: a path, in the sentences a render saved before (the page's own text).
-function schemaWords(view, value, refs, prefix = "", skip = undefined) {
-  const { words, refused } = checked(view, value, refs);
-  const why = refused || proseRefusal(words, skip);
+// `carries`, when given, says whether a sentence carries a word of a row the live-row contract
+// refused (live/live.js): each that does is left out before the screen reads the rest, and
+// `setAside` counts them. A sentence left out is said by that count alone, never by its words.
+function schemaWords(view, value, refs, prefix = "", skip = undefined, carries = null) {
+  const { words: sent, refused } = checked(view, value, refs);
+  if (refused) throw new Refusal(`${prefix}${refused}`);
+  const { words, setAside } = carries ? withoutCarried(view, sent, carries) : { words: sent, setAside: 0 };
+  const why = proseRefusal(words, skip);
   if (why) throw new Refusal(`${prefix}${why}`);
-  return words;
+  return { words, setAside };
 }
 
 // Whether a page already at the path is one render_view drew: its generated_by line says so.
@@ -183,16 +204,30 @@ function renderView(args = {}) {
   }
   const taken = view === "snapshot" ? snapshotMoment(args.taken_at, date) : null;
   const day = taken ? taken.day : dayOf(date);
-  const st = systemsOf(systems);
-  const refs = rowRefs(st);
+  // the shape of `systems`, refused whole as every tool that takes it refuses it
+  systemsOf(systems, { held: true });
   const fresh = prose !== undefined && prose !== null;
-  const given = fresh ? schemaWords(view, prose, refs) : null;
-  const found = deskFor(args.desk);
+  const found = deskFor(args.desk, { writes: true });
   const read = readDesk(found);
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so no page is drawn. Run check_desk to see why.`);
   }
   const desk = new Desk(read);
+  // The live-row contract (row E11, live/live.js): a connector's rows are counted only when each
+  // names someone on this desk, as it is read now, and only by the fields the contract carries. A
+  // role holding a refused row is counted as not handed over. The sentences meet the contract before
+  // they are checked: they are held to the rows that are left and to no other, so a refusal of them
+  // names no refused row, and a sentence that carries a refused row's name, handle or number, as it
+  // was sent or as the page would draw it, is left out and counted.
+  const contract = liveRows(systems, read);
+  const st = systemsOf(contract.systems);
+  const refs = rowRefs(st);
+  const asDrawn = delinker(desk).plain;
+  const carries = (text) => contract.carriesRefused(text) || contract.carriesRefused(asDrawn(text));
+  const given = fresh ? schemaWords(view, prose, refs, "", undefined, carries) : null;
+  // a call that handed a connector's rows over, kept or refused: its sentences are about those
+  // rows, never the desk's, so they are neither saved nor read from the ones saved
+  const live = handedOver(contract);
   let data;
   let key;
   if (FAMILY_VIEWS.includes(view)) {
@@ -266,19 +301,21 @@ function renderView(args = {}) {
   let words;
   let sentences;
   if (fresh) {
-    words = given;
+    words = given.words;
     // prose sent with no words in it clears the saved ones: they never come back on a later render
-    sentences = !Object.keys(words).length && hasSaved ? "cleared" : "new";
-  } else if (hasSaved) {
+    sentences = !Object.keys(words).length && hasSaved && !live ? "cleared" : "new";
+  } else if (hasSaved && !live) {
     // saved sentences are held to the same schema and the same screen before they are used
-    words = schemaWords(view, savedWords, refs, SAVED_REFUSED, OWN_TEXT);
+    words = schemaWords(view, savedWords, refs, SAVED_REFUSED, OWN_TEXT).words;
     sentences = "saved";
   } else {
     words = {};
     sentences = "none";
   }
   const stamp = drawnBy();
-  const ctx = pageContext(desk);
+  // the persona this desk's page speaks for, read from this desk on this call (lib/persona.js)
+  const who = persona({ desk, seat });
+  const ctx = pageContext(desk, who);
   // every text is screened as the page draws its slot, drawn by this render or not (R20). A link
   // there reads as its page's title, the desk's own text, which is never refused for a path (R72,
   // K2c), so the path rule reads each link in the model's own words instead; saved sentences are
@@ -286,21 +323,30 @@ function renderView(args = {}) {
   const sent = sentences !== "saved";
   const drawn = drawnRefusal(view, words, ctx.delink.plain, OWN_TEXT) || (sent ? drawnRefusal(view, words, ctx.delink.own, PATH_ONLY) : null);
   if (drawn) throw new Refusal(sentences === "saved" ? `${SAVED_REFUSED}${drawn}` : drawn);
+  // DESK-147: a snapshot's record is sealed with this seat's snapshot key (key.js), and no other
+  // view reads it. The key the machine holds is read here; one that does not read as a key refuses
+  // the render, and the file is left as it is. Where the machine holds none a new one is made, on
+  // no disk yet: it is put at its path only with the snapshot's own files (seal.around, below),
+  // and the answer says once that the machine now holds it (key_made).
+  const seal = view === "snapshot" ? forSnapshot(root) : null;
+  if (seal) data.read = C.rowsRead(desk, taken.moment, seal.key);
   const page = PAGES[view](data, words, ctx);
+  // a role that fell back to the desk's own count is said on the page, in the templates' words
+  page.content += fellBack(ctx, contract.fell_back);
   // the screen holds what the page says: each sentence as it is drawn, links read and lines joined
   const shown = shownRefusal(ctx.shown, OWN_TEXT) || (sent ? shownRefusal(ctx.shownOwn, PATH_ONLY) : null);
   if (shown) throw new Refusal(sentences === "saved" ? `${SAVED_REFUSED}${shown}` : shown);
-  const html = assemble(page, data, { firm: desk.firm(), fixture: desk.fixture, stamp });
+  const html = assemble(page, data, { firm: desk.firm(), fixture: desk.fixture, stamp, persona: who });
   // the saved sentences first, so a page never shows words its saved file does not hold; cleared
   // ones are written as the checked empty object, so the file never holds words the page dropped
   const files = [];
-  if (Object.keys(words).length || sentences === "cleared") files.push({ rel: savedRel, text: `${JSON.stringify(words, null, 2)}\n`, replace: hasSaved });
+  if (!live && (Object.keys(words).length || sentences === "cleared")) files.push({ rel: savedRel, text: `${JSON.stringify(words, null, 2)}\n`, replace: hasSaved });
   files.push({ rel: pageRel, text: html, replace: hasPage }, ...settingsTargets(settings));
   // the sweep set (files.js): the folder of every file this render can create, taken from the same
   // names that chose them, over all of them, missing or not: its sentences, its page and every
   // settings file
   const targets = [savedRel, pageRel, ...settingsTargets(Object.keys(settingsFiles())).map((f) => f.rel)];
-  const { removed, kept, unlisted } = writeAll(root, files, targets);
+  const { removed, kept, unlisted } = seal ? seal.around(() => writeAll(root, files, targets)) : writeAll(root, files, targets);
   const drawnRel = path.relative(read.root, out).split(path.sep).join("/");
   const answer = {
     // The page to show: the caller's `desk` extended, or desk-relative (R72, lib/desk.js deskShown).
@@ -313,6 +359,18 @@ function renderView(args = {}) {
     systems: st.given,
     generated_by: stamp,
   };
+  if (seal && seal.minted) answer.key_made = MINTED;
+  // the contract's answer (row E11): the roles whose rows were refused and are counted as not handed
+  // over, each refused row by its role, list and rule, never by its value; how many sentences were
+  // left off the page for carrying a refused row's words, never which; and that a call that handed
+  // a connector's rows over kept no sentences
+  // (item 11, ruled) always said, as empty lists when nothing was refused, never left out: an absent
+  // key cannot tell a contract that ran and refused nothing from one that never ran
+  Object.assign(answer, { fell_back: contract.fell_back, dropped: contract.dropped });
+  if (given && given.setAside) answer.sentences_set_aside = given.setAside;
+  if (live) answer.sentences_not_saved = NOT_SAVED;
+  // a desk's assistant_name that was set and refused is said, in words that never repeat it
+  if (notUsed(who)) answer.assistant_name_not_used = notUsed(who);
   if (settings.length) answer.obsidian_settings_written = settings;
   // the leftover spare files in the sweep set, removed before this one wrote (files.js), each by
   // its path, and apart from them the folders of that set it could not look in
@@ -331,7 +389,12 @@ const RENDER_TOOLS = [
       "or its console (rep-console for a rep, rm-console for an RM); or the desk's team view " +
       "(lead-gen) or its snapshot. Every number " +
       "and row on it is counted by the engine from the desk and the systems rows handed over; the " +
-      "sentences are yours, in prose, and are saved beside the page for the next render.",
+      "sentences are yours, in prose, and are saved beside the page for the next render. A page drawn " +
+      "with systems rows keeps no sentences: send them with each render. A systems row that names no " +
+      "one on the desk is refused, and its whole role is then counted as not handed over; the answer " +
+      "names the role and the rule. A sentence that carries a name, a handle or a number of a refused " +
+      "row is left off the page, and sentences_set_aside says how many were." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {

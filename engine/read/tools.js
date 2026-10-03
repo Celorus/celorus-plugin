@@ -20,6 +20,7 @@ const { pluginVersion } = require("../lib/version.js");
 const { readDesk, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
 const { Desk } = require("../render/desk.js");
 const { systemsOf } = require("../render/systems.js");
+const { liveRows } = require("../live/live.js");
 const { todayInIst } = require("../render/index.js");
 const C = require("../render/counts.js");
 const F = require("../render/facts.js");
@@ -48,17 +49,33 @@ const SYSTEMS = {
     "leaves uncounted. Every time is an ISO string in IST, like 2026-09-21T10:00:00+05:30.",
 };
 
-// The desk, read once through the engine's one reader, and the systems rows checked.
+// The desk, read once through the engine's one reader, and the systems rows checked for their
+// shape. The rows themselves are handed to no tool from here: each tool that counts them takes
+// them from underContract, below.
 function context(tool, args, allowed) {
   const { deskFor, onlyArguments } = require("../lib/tools.js");
   onlyArguments(tool, args, allowed);
   const day = dayOf(args.date);
-  const st = systemsOf(args.systems);
+  systemsOf(args.systems, { held: true });
   const read = readDesk(deskFor(args.desk));
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so nothing is counted. Run check_desk to see why.`);
   }
-  return { tool, day, st, desk: new Desk(read) };
+  return { tool, day, desk: new Desk(read), read };
+}
+
+// The systems rows a read tool counts, under the live-row contract (row E11, live/live.js), as
+// render_view holds it: a role holding a row that names no one on the desk is counted as not
+// handed over, so its hole is said as any hole is. `st` is the rows that are left; `told` adds to
+// every answer the roles that fell back (`fell_back`) and each refused row by its role, list and
+// rule (`dropped`), never by its value: both always, empty when nothing fell back, as render_view
+// and check_reconcile answer them. Every read tool that takes `systems` counts from this `st` and
+// no other: one copy, so a guard on one door is never a hole on the next.
+function underContract(args, read) {
+  const contract = liveRows(args.systems, read);
+  const st = systemsOf(contract.systems);
+  const told = (counted) => ({ ...counted, fell_back: contract.fell_back, dropped: contract.dropped });
+  return { st, told };
 }
 
 function dayOf(date) {
@@ -102,7 +119,7 @@ function needRole(desk, roles, view) {
 // The holes of a tool that is not a seat's view (family_facts, book_query): each connector it reads
 // whose rows were not handed over, and a desk with no family pages where it reads over families.
 function holes(desk, st, roles, overFamilies) {
-  const out = roles.filter((role) => !st.given.includes(role)).map((role) => ({ role, why: C.NOT_HANDED_OVER[role] }));
+  const out = C.notHandedOver(st, roles);
   if (overFamilies && !desk.of("families").length) out.push({ role: "families", why: C.NO_FAMILIES });
   return out;
 }
@@ -111,8 +128,43 @@ function answer(tool, data, st, found) {
   return { tool, plugin_version: pluginVersion(), ...data, systems: st.given, holes: found };
 }
 
+// desk_count's `count`: one workday count (counts.js WORKDAY_COUNTS) for one seat on one day, in
+// place of a view. The count reads the seat itself and says its own refusals; `start` and `page`
+// are research_minutes' inputs and go with no other count and no view. Its holes are the
+// connectors it reads (counts.js WORKDAY_READS) that were not handed over, then the count's own
+// (due_follow_ups names a follow-up with no date it is due by), each as a `why`. A count that
+// reads a connector not handed over answers no figure at all: a figure that is absent is never
+// read as zero, so the answer holds the hole and `not_counted`, the keys the count would have
+// answered, as a page's gates name the keys it does not count. The rule is read from the table,
+// never from a count's name.
+const COUNTS = Object.keys(C.WORKDAY_COUNTS);
+const TIMED = "research_minutes";
+const VIEW_OR_COUNT = `desk_count needs \`view\` or \`count\`. The views are: ${VIEWS.join(", ")}. The counts are: ${COUNTS.join(", ")}.`;
+const NOT_BOTH = "desk_count takes `view` or `count`, never both: `view` is a view of the desk, `count` one workday count for one seat on one day.";
+const TIMED_ONLY = `\`start\` and \`page\` go with \`count\` "${TIMED}" only: leave them out of a view and of every other count.`;
+
+function workdayCount(tool, desk, st, day, args) {
+  const { count, seat, start, page } = args;
+  if (args.view !== undefined) throw new Refusal(NOT_BOTH);
+  if (typeof count !== "string" || !Object.hasOwn(C.WORKDAY_COUNTS, count)) {
+    throw new Refusal(`${JSON.stringify(count)} is not a count desk_count counts. The counts are: ${COUNTS.join(", ")}.`);
+  }
+  const timed = count === TIMED;
+  if (!timed && (start !== undefined || page !== undefined)) throw new Refusal(TIMED_ONLY);
+  const { holes: own = [], ...data } = C.WORKDAY_COUNTS[count](desk, st, seat, day, timed ? { start, page } : undefined);
+  const unread = holes(desk, st, C.WORKDAY_READS[count], false);
+  // a count's own hole is a sentence about a follow-up, or a hole with its own role
+  const found = [...unread, ...own.map((hole) => (typeof hole === "string" ? { role: "follow-ups", why: hole } : hole))];
+  if (unread.length) return answer(tool, { not_counted: Object.keys(data) }, st, found);
+  return answer(tool, data, st, found);
+}
+
 function deskCount(args = {}) {
-  const { tool, day, st, desk } = context("desk_count", args, ["desk", "view", "seat", "date", "systems"]);
+  const { tool, day, desk, read } = context("desk_count", args, ["desk", "view", "count", "seat", "start", "page", "date", "systems"]);
+  const { st, told } = underContract(args, read);
+  if (args.count !== undefined) return told(workdayCount(tool, desk, st, day, args));
+  if (args.start !== undefined || args.page !== undefined) throw new Refusal(TIMED_ONLY);
+  if (args.view === undefined) throw new Refusal(VIEW_OR_COUNT);
   const { view, seat = "" } = args;
   if (!VIEWS.includes(view)) {
     throw new Refusal(`${JSON.stringify(view === undefined ? "" : view)} is not a view desk_count counts. The views are: ${VIEWS.join(", ")}.`);
@@ -120,7 +172,7 @@ function deskCount(args = {}) {
   if (typeof seat !== "string") throw new Refusal("`seat` is a seat's handle, as text.");
   if (view === "team") {
     needRole(desk, ["desk-head"], "team");
-    return answer(tool, C.leadGenView(desk, st, day), st, C.viewUnread(desk, st, "desk-head"));
+    return told(answer(tool, C.leadGenView(desk, st, day), st, C.viewUnread(desk, st, "desk-head")));
   }
   const roles = { brief: ["rep", "rm", "desk-head"], rep: ["rep"], rm: ["rm"] }[view];
   needRole(desk, roles, view);
@@ -130,17 +182,19 @@ function deskCount(args = {}) {
   // reads no CRM row and counts its book moments over the families; a seat not on the desk reads all
   const page = desk.pages.get(seat);
   const role = page && page.kind === "seats" ? page.header.role : null;
-  return answer(tool, data, st, C.viewUnread(desk, st, role));
+  return told(answer(tool, data, st, C.viewUnread(desk, st, role)));
 }
 
 function teamRollup(args = {}) {
-  const { tool, day, st, desk } = context("team_rollup", args, ["desk", "date", "systems"]);
+  const { tool, day, desk, read } = context("team_rollup", args, ["desk", "date", "systems"]);
+  const { st, told } = underContract(args, read);
   needRole(desk, ["desk-head"], "team");
-  return answer(tool, { ...C.leadGenView(desk, st, day), pull: PULL }, st, C.viewUnread(desk, st, "desk-head"));
+  return told(answer(tool, { ...C.leadGenView(desk, st, day), pull: PULL }, st, C.viewUnread(desk, st, "desk-head")));
 }
 
 function familyFacts(args = {}) {
-  const { tool, st, desk } = context("family_facts", args, ["desk", "family", "systems"]);
+  const { tool, desk, read } = context("family_facts", args, ["desk", "family", "systems"]);
+  const { st, told } = underContract(args, read);
   const { family } = args;
   const families = desk
     .of("families")
@@ -150,7 +204,7 @@ function familyFacts(args = {}) {
   if (typeof family !== "string" || !families.includes(family)) {
     throw new Refusal(`${JSON.stringify(family === undefined ? "" : family)} is not a family on this desk. The families are: ${families.join(", ")}.`);
   }
-  return answer(tool, F.familyFacts(desk, st, family), st, holes(desk, st, ["crm"], false));
+  return told(answer(tool, F.familyFacts(desk, st, family), st, holes(desk, st, C.FAMILY_READS, false)));
 }
 
 // book_query's signal window: a day (`event_since`), or a count of days back from the query's own
@@ -172,7 +226,8 @@ function signalWindow(args, day) {
 
 function bookQuery(args = {}) {
   const allowed = ["desk", "owner", "relationship", "event_since", "event_within_days", "no_touch_days", "liquidity_only", "date", "systems"];
-  const { tool, day, st, desk } = context("book_query", args, allowed);
+  const { tool, day, desk, read } = context("book_query", args, allowed);
+  const { st, told } = underContract(args, read);
   const { owner = "", relationship = "", no_touch_days: noTouch = 0, liquidity_only: liquidityOnly = false } = args;
   const seats = desk
     .of("seats")
@@ -190,7 +245,7 @@ function bookQuery(args = {}) {
     throw new Refusal("`liquidity_only` is true or false: false, the default, reads every signal; true keeps only liquidity signals.");
   }
   const { rows, leftForSignals, filtered } = bookRows(desk, st, { owner, relationship, eventSince, eventUntil, noTouchDays: noTouch, liquidityOnly, today: day });
-  const found = holes(desk, st, ["crm"], true);
+  const found = holes(desk, st, C.FAMILY_READS, true);
   if (relationship && !desk.of("families").some((p) => desk.get(p, "relationship_kind") === relationship)) {
     const kinds = [...new Set(desk.of("families").map((p) => desk.get(p, "relationship_kind")).filter(Boolean))].sort();
     found.push({
@@ -217,7 +272,7 @@ function bookQuery(args = {}) {
     liquidity_engines: engines,
     today: day,
   };
-  return answer(tool, { query, count: rows.length, rows }, st, found);
+  return told(answer(tool, { query, count: rows.length, rows }, st, found));
 }
 
 const TOOLS = [
@@ -225,19 +280,25 @@ const TOOLS = [
     name: "desk_count",
     description:
       "Numbers and rows for a view of the desk: brief (a seat's morning brief), rep (an SDR's " +
-      "console), rep and rm need seat; team (the head of lead generation's view). Counted by the " +
+      "console), rep and rm need seat; team (the head of lead generation's view). Or, with count " +
+      "in place of view, one workday count for one seat on one day; start and page go with count " +
+      "research_minutes only. Counted by the " +
       "engine from the desk and the systems rows handed over; say these numbers, never your own. " +
-      "holes says what a connector not handed over leaves uncounted.",
+      "holes says what a connector not handed over leaves uncounted. A systems row that names no " +
+      "one on the desk is refused, and its whole role is then counted as not handed over: fell_back " +
+      "names the role, and dropped the rule.",
     inputSchema: {
       type: "object",
       properties: {
         desk: DESK,
         view: { type: "string", enum: VIEWS, description: "brief, rep, rm or team." },
-        seat: { type: "string", description: "The seat's handle, for brief, rep and rm." },
+        count: { type: "string", enum: COUNTS, description: `In place of view, a workday count for one seat on one day: ${COUNTS.join(", ")}.` },
+        seat: { type: "string", description: "The seat's handle, for brief, rep and rm, and for a count." },
+        start: { type: "string", description: "With count research_minutes only: when the research began, a time with its offset, like 2026-09-21T10:00:00+05:30." },
+        page: { type: "string", description: "With count research_minutes only: the page the research wrote." },
         date: DATE,
         systems: SYSTEMS,
       },
-      required: ["view"],
       additionalProperties: false,
     },
     run: deskCount,

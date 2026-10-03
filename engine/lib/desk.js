@@ -109,11 +109,14 @@ function isCelorusFolder(folder) {
 // The folder to set is said by its last component, as the person wrote the setting, never
 // resolved (a relative one read through a folder link would otherwise name where the link leads)
 // and never by its path (the base's ruling R72: prose never carries a path).
+// 0.20.0 DESK-96 (4): both folders are said with the name's `.` and `..` steps taken as text
+// (celorusSaid), so a setting ending in `celorus/.` is told the desk folder, never celorus again.
 function refuseCelorusFolder(named, folder) {
   if (isCelorusFolder(folder)) {
+    const { folder: said, holder } = celorusSaid(folder);
     throw new Refusal(
-      `CELORUS_DESK names the folder ${lastPart(named)}, the desk's celorus folder. CELORUS_DESK names the desk folder, ` +
-        `the one holding celorus/: set it to the folder that holds that one, ${lastPart(path.dirname(named))}.`,
+      `CELORUS_DESK names the folder ${said}, the desk's celorus folder. CELORUS_DESK names the desk folder, ` +
+        `the one holding celorus/: set it to the folder that holds that one, ${holder}.`,
     );
   }
 }
@@ -179,10 +182,13 @@ function holdsCelorus(folder) {
   }
 }
 
-// The name of an entry in `folder`'s listing that is `celorus` in another case (`Celorus`,
-// `CELORUS`) and holds an index.md, or null. Such an entry is a desk's record folder misnamed, not
-// the person's own folder: every door refuses it by name, with the rename to make, for the readers
-// and the writers alike, never passing it for a desk above. One without an index.md is walked past.
+// The entry in `folder`'s listing that is `celorus` in another case (`Celorus`, `CELORUS`) and holds
+// an index.md, or that this machine gives no permission to look inside, as { name, denied }, or
+// null. One holding an index.md is a desk's record folder misnamed, not the person's own folder:
+// every door refuses it by name, with the rename to make, for the readers and the writers alike,
+// never passing it for a desk above. One that cannot be looked inside may be one (0.20.0 DESK-96
+// (3)): it is refused by name too, never walked past to a desk above. One without an index.md is
+// walked past.
 function misnamedCelorus(folder) {
   let names;
   try {
@@ -194,17 +200,24 @@ function misnamedCelorus(folder) {
     if (name === "celorus" || name.toLowerCase() !== "celorus") continue;
     try {
       fs.lstatSync(path.join(folder, name, "index.md"));
-      return name;
-    } catch {
+      return { name, denied: false };
+    } catch (err) {
+      if (DENIED.has(err && err.code)) return { name, denied: true };
       // no index.md in it: some other folder
     }
   }
   return null;
 }
 
-const misnamedFault = (name) =>
-  `${name}/ holds an index.md, but the desk tools read a desk only from a folder named exactly celorus/`;
-const renameIt = (name) => `Rename ${name}/ to celorus/, then ask again. ${LINKED_NOTHING}`;
+const misnamedFault = ({ name, denied }) =>
+  denied
+    ? `${name}/ cannot be looked inside: this machine gives no permission to search it, so the desk tools cannot tell ` +
+      "whether it holds an index.md, and they read a desk only from a folder named exactly celorus/"
+    : `${name}/ holds an index.md, but the desk tools read a desk only from a folder named exactly celorus/`;
+const renameIt = ({ name, denied }) =>
+  denied
+    ? `Give ${name}/ back its permissions, or rename it to celorus/ if it holds a desk's record, then ask again. ${LINKED_NOTHING}`
+    : `Rename ${name}/ to celorus/, then ask again. ${LINKED_NOTHING}`;
 
 // The desk at `folder`, reached by the walk or by CELORUS_DESK (`named`, as set; undefined for the
 // walk): undefined when its listing names no entry exactly `celorus` (a `Celorus` is some other
@@ -251,12 +264,15 @@ function deskAt(folder, named, writes) {
 // linked celorus/ meets the folder that holds the link; without it the walk starts from `start`,
 // the tools' own working folder, which names every link in it resolved. CELORUS_DESK is never
 // read from it: a relative one is read from `start`, the real folder, as the `desk` argument and
-// the session hook read it.
+// the session hook read it. The same folder is the same device and inode (0.20.0 DESK-96 (1)): a
+// resolved path keeps the letter case it was given, so on a disk that ignores case a PWD typed in
+// another case named the same folder and was read as no PWD.
 function shellFolder(start, env) {
   const pwd = env.PWD;
   if (typeof pwd !== "string" || !path.isAbsolute(pwd)) return null;
   try {
-    return fs.realpathSync(pwd) === fs.realpathSync(start) ? path.resolve(pwd) : null;
+    const [shell, here] = [fs.statSync(pwd), fs.statSync(start)];
+    return shell.dev === here.dev && shell.ino === here.ino ? path.resolve(pwd) : null;
   } catch {
     return null;
   }
@@ -271,6 +287,39 @@ const INSIDE_CELORUS =
   "tools cannot tell whether that celorus/ is a link; a desk tool writes a page only as a real " +
   "file inside the desk folder, never through a link, so it wrote nothing. Start the session " +
   `from the desk's folder, the one holding celorus/, then ask again. ${LINKED_NOTHING}`;
+
+// 0.20.0 DESK-96 (2), C9's residue, as the base ruled it (round 2, F1, ruling A): with no PWD to
+// say how the session reached its working folder, and no CELORUS_DESK, a writer writes only when
+// the working folder is itself the desk folder: it holds a real celorus/ folder (lstat, never a
+// link) with an index.md in it. Anywhere else a celorus/ link may have led the session there, and
+// the engine cannot tell, so it writes nothing. The readers answer as the walk finds, as under D2.
+// The words name no path.
+const INSIDE_RECORD =
+  "PWD does not name the working folder, so the desk tools cannot tell how the session reached it, and without " +
+  "that they write only when the working folder is itself the desk folder, one holding a celorus/ folder (a real " +
+  "folder, not a link) with an index.md in it; this one is not, so the tool wrote nothing. Start the session from " +
+  `the desk's folder, the one holding celorus/, then ask again. ${LINKED_NOTHING}`;
+
+// `folder` is a desk folder as a writer with no PWD may use it: its celorus/ is a real folder,
+// never a link, and holds an index.md (looked at with lstat, never followed).
+function isDeskItself(folder) {
+  try {
+    const celorus = path.join(folder, "celorus");
+    if (!fs.lstatSync(celorus).isDirectory()) return false;
+    fs.lstatSync(path.join(celorus, "index.md"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function celorusIsLink(folder) {
+  try {
+    return fs.lstatSync(path.join(folder, "celorus")).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
 
 function isInside(folder, within) {
   const rel = path.relative(within, folder);
@@ -291,7 +340,9 @@ function noDeskNamed(named) {
 // The first folder the variable or the walk reaches that holds a `celorus` entry of any kind is
 // the desk for the call (deskAt): the walk never passes it to reach a desk above. `writes` says
 // the call writes, which decides the words for a live link to a folder with no readable index.md,
-// and refuses a walk from inside the desk's celorus/ that no PWD vouches for (INSIDE_CELORUS).
+// and refuses a writer's walk that no PWD vouches for from anywhere but the desk folder itself:
+// from inside the desk's celorus/ in its own words (INSIDE_CELORUS), from elsewhere in the rule A
+// words (INSIDE_RECORD).
 function findDesk({ start = process.cwd(), env = process.env, writes = false } = {}) {
   const named = envDesk(env, start);
   if (named !== undefined) {
@@ -309,8 +360,14 @@ function findDesk({ start = process.cwd(), env = process.env, writes = false } =
     if (parent === folder) return null; // the filesystem root is not walked, as in the hook
     const found = deskAt(folder, undefined, writes);
     if (found !== undefined) {
-      if (writes && shell === null && isInside(path.resolve(start), path.join(found, "celorus"))) {
-        throw new Refusal(INSIDE_CELORUS);
+      if (writes && shell === null) {
+        if (isInside(path.resolve(start), path.join(found, "celorus"))) throw new Refusal(INSIDE_CELORUS);
+        // the session is in the desk folder already, and its celorus/ is a link: the linked-root
+        // words, as a writer with PWD gets them, never a remedy to start where it stands (round 3, F2)
+        if (found === path.resolve(start) && celorusIsLink(found)) {
+          throw new Refusal(`${linkedSaid("celorus/", "a link to a folder")} ${LINKED_NOTHING}`);
+        }
+        if (found !== path.resolve(start) || !isDeskItself(found)) throw new Refusal(INSIDE_RECORD);
       }
       return found;
     }
@@ -355,6 +412,17 @@ function lastPart(named) {
   return JSON.stringify(trimmed === "" ? String(named) : path.basename(trimmed.replace(/\\/gu, "/")));
 }
 
+// A desk's celorus folder as the person named it (`named`, a CELORUS_DESK or a `desk` argument),
+// said by last parts (R72): `folder`, the celorus folder, and `holder`, the desk folder that holds
+// it, the one to name instead. The name is resolved against `from`, the folder it is read from, its
+// `.` and `..` steps taken as text (as path.resolve takes them, never through a link), so
+// `<desk>/celorus/.` names celorus and the desk, never `.` and celorus, and `.` or `..` given from
+// inside the desk names real folders, never the value the person already gave (round 2, F4).
+function celorusSaid(named, from = process.cwd()) {
+  const plain = path.resolve(from, String(named));
+  return { folder: lastPart(plain), holder: lastPart(path.dirname(plain)) };
+}
+
 // How an answer names the desk and every path under it (the base's ruling R72, K4a): the one rule
 // every tool answers by. An answer carries an absolute path only where the caller already gave
 // that form, a path under the `desk` argument it passed; a desk found from the working folder or
@@ -368,11 +436,14 @@ function lastPart(named) {
 //   celorus folder is extended from there: a path under celorus/ by its rest, any other through
 //   "..", so every path still starts with what the caller wrote.
 // `found` is the desk folder the tool's door answered for `named` (lib/tools.js deskFor), before
-// any link in it is resolved.
+// any link in it is resolved. `celorus` is false, or, where the caller named the desk's celorus
+// folder, so that the desk folder itself, `at("")`, lies above what the caller gave, that folder
+// and its holder as celorusSaid names them (0.20.0 DESK-119: desk_sync, whose commands run there,
+// refuses that at resolution). `named` is resolved as the door resolved it, from the working folder.
 function deskShown(named, found) {
   const given = typeof named === "string" && named.trim() !== "";
   if (!given) {
-    return { given, root: path.basename(found), at: (rel) => (rel === "" ? "." : rel) };
+    return { given, celorus: false, root: path.basename(found), at: (rel) => (rel === "" ? "." : rel) };
   }
   const head = /[\\/]$/u.test(named) ? named : `${named}${path.sep}`;
   const native = (rel) => rel.split("/").join(path.sep);
@@ -383,7 +454,7 @@ function deskShown(named, found) {
     if (rel.startsWith("celorus/")) return head + native(rel.slice("celorus/".length));
     return head + (rel === "" ? ".." : native(`../${rel}`));
   };
-  return { given, root: named, at };
+  return { given, celorus: celorusNamed ? celorusSaid(named) : false, root: named, at };
 }
 
 // The `desk` argument every desk tool takes, one text for all of them.
@@ -697,6 +768,7 @@ module.exports = {
   envDesk,
   resolveDesk,
   deskShown,
+  celorusSaid,
   DESK_ARGUMENT,
   splitPage,
   readPage,

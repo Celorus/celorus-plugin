@@ -19,7 +19,7 @@ const { RULES, checkDesk, checkPages } = require("../check/rules.js");
 const { loadDeskModel, isKind } = require("../check/model.js");
 const { linkSpans, linkName, linksIn, proofMatch, sectionOf, Page } = require("../check/text.js");
 const V = require("../check/values.js");
-const { checkCitations } = require("../cite/cite.js");
+const { checkCitations, notCheckedSaid } = require("../cite/cite.js");
 const { dumpLines } = require("../update/yaml.js");
 const { rstrip } = require("../update/history.js");
 
@@ -229,7 +229,7 @@ function isFile(file) {
   }
 }
 
-function needsAttention(root, findings, onDesk, notChecked, now) {
+function needsAttention(root, findings, onDesk, notRead, now) {
   // A missing file is half the findings under C12; its name stays plain.
   const where = (rel) => {
     const stem = new Page(rel, null, "", null).stem;
@@ -241,14 +241,8 @@ function needsAttention(root, findings, onDesk, notChecked, now) {
     body.push("", "| what | page | detail |", "|---|---|---|");
     for (const f of findings) body.push(`| ${RULES[f.rule]} | ${where(f.page)} | ${cell(plain(f.message, onDesk))} |`);
   }
-  if (notChecked) {
-    body.push(
-      "",
-      `${notChecked} ${notChecked === 1 ? "citation names" : "citations name"} a file as it was at a commit (\`@\` and ` +
-        "the commit), and the check does not read a file out of the desk's history yet, so " +
-        `${notChecked === 1 ? "it was" : "they were"} not checked.`,
-    );
-  }
+  // A stamped citation the desk's history could not give, said under its reason with its count.
+  for (const said of notCheckedSaid(notRead)) body.push("", said);
   return viewPage("Needs attention", "What the checker found, to walk with the person", now, body);
 }
 
@@ -273,10 +267,10 @@ function renderViews(desk, now) {
     views: {
       "pipeline.md": pipeline(root, model, pages, now),
       "who-knows-whom.md": whoKnowsWhom(model, pages, onDesk, now),
-      "needs-attention.md": needsAttention(root, findings, onDesk, cited.notChecked, now),
+      "needs-attention.md": needsAttention(root, findings, onDesk, cited.reasons, now),
     },
     findings: findings.length,
-    citations: { checked: cited.checked, notChecked: cited.notChecked },
+    citations: { checked: cited.checked, notChecked: cited.notChecked, reasons: cited.reasons },
   };
 }
 

@@ -20,7 +20,8 @@ const { PY_SPACE } = require("../write/text.js");
 // root), a home written with a user's name after a tilde; /tmp, /var/tmp and /private/tmp,
 // /var/folders and /private/var/folders, and the Windows AppData temp. Beside them, the home and
 // temp folders of the machine the engine runs on, read when it starts (os.homedir(); os.tmpdir(),
-// which is TMPDIR, TMP or TEMP when set), so a home or temp outside the families is refused too.
+// which is TMPDIR, TMP or TEMP when set), so a home or temp outside the families is refused too;
+// and a Windows drive path, a drive, its colon and a separator before a name (DESK-118).
 // No folder of any machine is written here.
 //
 // Each is matched by its CONTENT, a path's shape wherever it sits, never by its position, and
@@ -71,13 +72,24 @@ const DEEP = `(?:${NAME}${SEPS})*?`;
 // Where a home folder's path begins (the base's ruling R108 (3), K4g-2): a root, or the start of
 // a token (the text's start, or a character that is neither a name's nor a separator), then any
 // run of folders; the same for every home family, the machine's own and every other ("kept at
-// Users/x/", "C:Users\x", a volume whose name holds a space, an smb host). A name alone never
-// starts one, and at a token's start with no root or drive a family needs a separator after its
-// name: "Users/Admins" is a slash used as "or" and passes, "Users/Admins/" is refused (a limit,
-// pinned in the table). A drive's colon with no separator ("C:Users\x") is a root.
+// Users/x/", "C:Users\x\", a volume whose name holds a space, an smb host). A name alone never
+// starts one, and at a token's start with no root a family needs a separator after its name:
+// "Users/Admins" is a slash used as "or" and passes, "Users/Admins/" is refused (a limit, pinned
+// in the table). A drive's colon with no separator after it ("C:Users\x", "Plan B:Users/x") is a
+// token's start, not a root (DESK-105): the family needs a separator after its name there too, as
+// the door reads it (the colon a mark, the tail a relative name). The machine's own home is found
+// by its own text wherever it stands (folderForm), so it is refused in every one of these forms.
 const AT_TOKEN = `(?<![${NAME_CHAR}\\\\/])`;
-const AT_DRIVE = `(?<=(?:^|[^${NAME_CHAR}+])[A-Za-z]:)`;
-const HOME_AT = (folder) => `(?:(?:${ROOT}|${AT_DRIVE})${DEEP}${folder}${SEPS}${NAME}|${AT_TOKEN}${DEEP}${folder}${SEPS}${NAME}${SEP})`;
+const HOME_AT = (folder) => `(?:${ROOT}${DEEP}${folder}${SEPS}${NAME}|${AT_TOKEN}${DEEP}${folder}${SEPS}${NAME}${SEP})`;
+// A drive, its colon and a separator before a name (DESK-118): a path from a root on a machine,
+// whatever folder it names, so it is refused as the families are; a drive root with no name after
+// it ("C:\", then a blank or the end) is none. A drive is one letter with no name character or "+"
+// before it, as AT_ROOT reads one, or one after a long-path prefix ("\\?\", "\\.\", as PATH_PREFIX
+// says them; pathsSaid takes the prefix with it), a single leading separator ("/D:/", one with no
+// name character, "+", "?" or separator before it) or a file url, its host or none as URL_ROOT
+// reads one, before the drive, which are taken with it; the door reads each of these as rooted
+// (lib/door.js FROM_ROOT: the colon a mark and the tail from a root, or the url's root the place's).
+const DRIVE_PATH = `(?:(?<![${NAME_CHAR}+\\\\/])|(?<=${SEP}{2}[?.]${SEP})|(?<![${NAME_CHAR}+?\\\\/])(?:file:${SEP}{2}[^\\\\/\\s"'<>]*)?${SEP})[A-Za-z]:${SEPS}${NAME}`;
 const FAMILIES = [
   HOME_AT("Users"),
   HOME_AT("Documents and Settings"),
@@ -88,6 +100,7 @@ const FAMILIES = [
   `${ROOT}(?:private${SEPS})?var${SEPS}folders${SEP}`,
   `(?<![~\\\\/])${SEPS}AppData${SEPS}Local${SEPS}Temp(?:${SEP}|${END})`,
   `(?<![\\p{L}\\p{N}_.~\\\\/-])AppData${SEPS}Local${SEPS}Temp(?:${SEP}|${END})`,
+  DRIVE_PATH,
 ];
 
 // A character of a folder's name as a pattern: a letter or digit as itself, any other by its code
@@ -102,8 +115,10 @@ const asPattern = (ch) => (/^[A-Za-z0-9]$/u.test(ch) ? ch : `\\u{${ch.codePointA
 //   pin 3): after a root, a mount, a volume, a scheme or leading text, with any root or run of
 //   folders before it taken with it, so the whole path is one match. Its drive is not part of
 //   the text matched (a path's drive is said with it by pathsSaid), so the home is found under a
-//   WSL mount too. A home of one name ("/root") and the temp folder are matched at a root only,
-//   as before: a one-name folder is a word a sentence may hold ("work/tmp/x");
+//   WSL mount too. A scratch form of two or more names, the temp folder among them, is matched
+//   the same way, wherever it sits (R110 5 (b), K4g-4b). A form of one name ("/root", or a temp
+//   folder of one name) is matched at a root only: a one-name folder is a word a sentence may
+//   hold ("work/tmp/x");
 // - where it ends: after its last name comes a separator, or a character that cannot go on a
 //   folder's name (END: no letter, digit, "_", "." or "-"), so a home named "al" is not found in
 //   a folder named "alex": a path is never taken for the home because it shares the home's first
@@ -135,7 +150,7 @@ function folderForm(dir, anywhere) {
 // (the var folders, the private tmp, the var tmp, each with and without the private prefix; the
 // AppData temp's family is matched anywhere already), and `folders` (the machine's own temp),
 // each as given and as its real path where a link names it, as the own homes are (R110 5 (b)).
-// This is the rule folderForm's note on the temp folder at a root now reads under.
+// folderForm's note on where a form starts states this same rule.
 const SCRATCH = [["private", "var", "folders"], ["var", "folders"], ["private", "tmp"], ["private", "var", "tmp"], ["var", "tmp"]].map((names) => ["", ...names].join("/"));
 function realOf(dir) {
   try {
@@ -366,10 +381,36 @@ function first(rule, folded, re, out) {
   if (m) out.push(found(rule, folded, m));
 }
 
+// The text the path rule reads (DESK-102, R108 item 4): one percent-decode of a separator written as
+// percent 2F or percent 5C (either case), then one fold of the look-alike separators (division
+// slash, fraction slash, big solidus, fullwidth solidus) to a plain one, both before the families
+// run, so a home written with either is the home. One decode: a second encoding is left. Only the
+// separators are decoded: a decoder of any escape is a speller the engine holds at six (R68) and
+// could spell a bracket, so another escape (a letter's) is left, a named limit (the class table,
+// row 102-12). Only the path rule reads it: an escape is no @ and no digit.
+const PERCENT_SEPARATOR = /%(?:2f|5c)/giu;
+const LOOK_ALIKE = /[\u2215\u2044\u29f8\uff0f]/gu;
+const pathForm = (folded) => folded.replace(PERCENT_SEPARATOR, (m) => (m[1] === "2" ? "/" : "\\")).replace(LOOK_ALIKE, () => "/");
+// The same separators in a text as pathsSaid reads it, each kept at its own place: each character
+// the finder's text (pathForm of the fold) reads as a separator is one here, every code unit of
+// what was sent under it, so a percent separator (three characters, or more with an invisible in
+// it, or in fullwidth characters) is read as that many separators, and a separator the fold makes
+// (a fullwidth or small reverse solidus) as one; a place in this text is the same place in the
+// text said (DESK-102: the said text masks what the finder reads; panel 2 round 3, V1). Every
+// other character is as sent, so a path's end is read at the marks as sent.
+function separatorsAt(text) {
+  const read = pathForm(fold(text));
+  const at = text.split("");
+  for (let i = 0; i < read.text.length; i += 1) {
+    if (read.text[i] === "/" || read.text[i] === "\\") at.fill(read.text[i], read.starts[i], read.ends[i]);
+  }
+  return at.join("");
+}
+
 function textRules(folded, out) {
   first("phone", folded, PHONE, out);
   for (const m of folded.text.matchAll(EMAIL)) if (!m[1].endsWith(".example")) out.push(found("email", folded, m));
-  first("home-path", folded, HOME, out);
+  first("home-path", pathForm(folded), HOME, out);
   first("em-dash", folded, EM_DASH, out);
 }
 
@@ -417,27 +458,75 @@ function screen(text, skip = NONE) {
 // or fault that quotes a page's text, and every answer that echoes one, goes through it. A path
 // is what the path rule finds (by its content, wherever it sits: a mount, a volume, a scheme, a
 // relative walk, leading text), from a drive or a long-path prefix before its root to the space,
-// quote or bracket after it (a comma, stop or semicolon that ends a clause is the sentence's),
-// and a home written with a tilde; "~/" alone names no folder and is left. A folder's name may
-// hold a space: where the word after a space goes on as a path (it holds a separator before the
-// next space, quote or bracket), the path goes on through it (panel round 2, finding 7), so a
-// home folder named "a person" is said whole with the path under it. The machine's own home is
+// quote or bracket after it (a comma, stop, semicolon or colon that ends a clause, before a blank
+// or the end of the text, is the sentence's: DESK-157; a colon before a letter or a digit is the
+// path's), and a home written with a tilde, which ends at the same marks and goes on past them as
+// below (DESK-187: PATH_GOES_ON's run); "~/" alone names no folder and is left. A folder's name may
+// hold a space: where the word after a blank (any run of white space, as the path's end reads one)
+// goes on as a path (it holds a separator before the next blank, quote or bracket), the path goes
+// on through it (panel round 2, finding 7), so a home folder named "a person" is said whole with
+// the path under it. A comma, stop, semicolon or colon before the blank is the name's too when the
+// word after it goes on as a path (a name holds ", ", ". ", "; " or ": ", as a folder named
+// "Accounts: north" or "Dr. Rao"), and the sentence's only when no path goes on after it (DESK-157;
+// panel 2 round 3, V2: the marks and blanks the end stops at). The path's end is read in the separators the finder reads (separatorsAt, DESK-102),
+// so a path written in percent or look-alike separators is said whole too. The machine's own home is
 // matched by its literal text (folderForm), its space in it, so it is said whole by the rule's
 // own match.
-const TILDE_PATH = /(?<![\p{L}\p{N}_.~\\/-])~[\\/][^\s"'`<>|]+/gu;
+const TILDE_PATH = /(?<![\p{L}\p{N}_.~\\/-])~[\\/](?:(?![,.;:](?:\s|$))[^\s"'`<>|])+(?:[,.;:]?\s+(?=[^\s"'`<>|()]*[\\/])(?:(?![,.;:](?:\s|$))[^\s"'`<>|])+)*/gu;
 const PATH_PREFIX = /(?:[\\/]{2}[?.][\\/](?:UNC[\\/])?)?(?:[A-Za-z]:)?$/u;
-const PATH_STOP = /^(?:[\s"'`<>|()]|[,.;](?:\s|$))/u;
-const PATH_GOES_ON = /^ [^\s"'`<>|()]*[\\/]/u;
+const PATH_STOP = /^(?:[\s"'`<>|()]|[,.;:](?:\s|$))/u;
+const PATH_GOES_ON = /^[,.;:]?\s+[^\s"'`<>|()]*[\\/]/u;
+// How many separators a text holds as the path rule reads it (textRules): each "/" or "\\" in the
+// fold with its percent and look-alike separators read (pathForm), and, where the fold without
+// accents differs, each in it read the same way, since a separator may be one only without accents
+// (a percent escape whose letter carries one, "%2" and an accented F). The most passes pathsSaid
+// may take (DESK-196).
+const SEPARATOR = /[\\/]/gu;
+const separatorsIn = (folded) => (pathForm(folded).text.match(SEPARATOR) || []).length;
+function separatorsRead(text) {
+  const plain = fold(text);
+  const bare = unaccented(plain);
+  return separatorsIn(plain) + (bare.text === plain.text ? 0 : separatorsIn(bare));
+}
+// DESK-196: the passes are bounded, and no text whose spans hold reaches the bound. Where a folded
+// text's characters and its spans come apart (the door walk's replay of a marked receiver, Folded.
+// replace's `this`), a pass splices "(a path)" where the path is not, the path stays, and an
+// unbounded loop grew one text from 85 characters to about 21,000. Why the bound ends every loop
+// and changes no answer where the spans hold, read on the count separatorsRead takes, the fold's
+// separators and, where the fold without accents differs, its separators too:
+// - every form the path rule matches holds a separator as it reads one: each family and each of
+//   this machine's folders is written with SEP or SEPS (FAMILIES, folderForm). A hit is a match in
+//   the fold or in the fold without accents (textRules runs on both), so it holds a separator that
+//   form's count counts;
+// - a pass says [start, end), which holds the whole of its hit, so the code units of that
+//   separator go, and the count of the form the hit came from falls by one or more. The "(a path)"
+//   put in their place adds none to either form and joins nothing across it into one: it is plain
+//   letters, a blank and brackets, no separator, no part of a percent escape, no accented letter and
+//   no base a mark composes with. So neither form's count rises, and a text whose fold without
+//   accents is its fold stays so (no accented letter comes into it). A pass may expose a match the
+//   text did not hold before (a drive taken with the hit's prefix, a scratch form left before it),
+//   but it holds a separator still counted;
+// - so each pass lowers the count by one or more, and a text takes at most as many passes as its
+//   count before the first. Past that, a hit left is a text whose spans did not hold, and it fails
+//   closed: the whole text is said as the screen says a home-path finding in a quoted text,
+//   "(a path)" (R73), the answer pathsSaid gives a text that is a path whole, so no path text goes
+//   out and every caller gets a value it already reads (lib/tools.js entrySaid).
 function pathsSaid(text) {
   if (typeof text !== "string") return text;
   let out = text.replace(TILDE_PATH, "(a path)");
+  let passes = null;
   for (let hit = allFindings(out).find((f) => f.rule === "home-path"); hit; hit = allFindings(out).find((f) => f.rule === "home-path")) {
+    if (passes === null) passes = separatorsRead(out);
+    if (passes === 0) return "(a path)";
+    passes -= 1;
     const start = hit.start - PATH_PREFIX.exec(out.slice(0, hit.start))[0].length;
+    const read = separatorsAt(out);
     let end = hit.end;
     for (;;) {
-      while (end < out.length && !PATH_STOP.test(out.slice(end, end + 2))) end += 1;
-      if (!PATH_GOES_ON.test(out.slice(end))) break;
-      end += 1;
+      while (end < read.length && !PATH_STOP.test(read.slice(end, end + 2))) end += 1;
+      const on = PATH_GOES_ON.exec(read.slice(end));
+      if (on === null) break;
+      end += on[0].length;
     }
     out = `${out.slice(0, start)}(a path)${out.slice(end)}`;
   }

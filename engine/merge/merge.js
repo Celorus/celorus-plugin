@@ -301,12 +301,20 @@ function joinedBody(aBody, bBody, title, differs) {
   return body;
 }
 
-// `file` with every link in its path resolved, or, when it cannot be, as it is written.
+// `file` with every link in its path resolved: when it is not there, the nearest folder above it
+// that is, resolved, with the rest as written, so a missing folder under a folder that is a link
+// is read where that link leads; when that cannot be resolved either (a link to nothing on its
+// way), as it is written.
 function realOr(file) {
-  try {
-    return fs.realpathSync(file);
-  } catch {
-    return path.resolve(file);
+  const rest = [];
+  for (let at = path.resolve(file); ; ) {
+    try {
+      return path.join(fs.realpathSync(at), ...rest);
+    } catch {
+      if (exists(at) || path.dirname(at) === at) return path.resolve(file);
+      rest.unshift(path.basename(at));
+      at = path.dirname(at);
+    }
   }
 }
 
@@ -719,16 +727,34 @@ function repointedHeader(header, merge, keep) {
   let head = headOf(header);
   if (head === null) return header;
   let text = header;
-  // From the last span back, so each earlier span's offsets still hold.
-  for (const span of linkSpans(header).filter((s) => linkName(s) === merge).reverse()) {
+  // From the last span back, so each earlier span's offsets still hold; a span that reaches into
+  // one already taken is passed over.
+  let taken = Infinity;
+  for (const span of everySpan(header).filter((s) => linkName(s) === merge).reverse()) {
+    if (span.end > taken) continue;
     const next = withName(text, span, keep);
     const after = headOf(next);
     if (after !== null && oneLinkApart(head, after, merge, keep)) {
       text = next;
       head = after;
+      taken = span.start;
     }
   }
   return text;
+}
+
+// Every span the reader (linkSpans) gives in `text` read from its start, and from just past the
+// start of each span it gives: a link the header's text read whole runs on into (an unclosed
+// link in one value runs to the next value's end) is a span of its own there, as linksIn reads
+// that value alone. In order of where each starts, its offsets into `text`.
+function everySpan(text) {
+  const out = [];
+  for (let from = 0; ; ) {
+    const first = linkSpans(text.slice(from))[0];
+    if (first === undefined) return out;
+    out.push({ ...first, start: from + first.start, end: from + first.end });
+    from += first.start + 1;
+  }
 }
 
 // The links the check reads in a page body, the body outside fenced blocks (check/text.js
@@ -785,10 +811,29 @@ function repointed(text, merge, keep) {
   return `---\n${repointedHeader(split.header, merge, keep)}\n---\n${body}`;
 }
 
+// The line of each item of `list`, the value of the header key on line `at` of `lines`, when the
+// list is written as a block, one `- ` line per item at one indent under its key: as their
+// places in `lines`, or null when it is written any other way (then its key's line stands for
+// each item).
+const ITEM = /^(?<indent>[ \t]*)-(?:[ \t]|$)/u;
+function itemLines(lines, at, list) {
+  if (!Array.isArray(list) || at < 0 || !/:[ \t]*(?:#.*)?$/u.test(lines[at])) return null;
+  const found = [];
+  let indent = null;
+  for (let i = at + 1; i < lines.length && !KEY.test(lines[i]); i += 1) {
+    const m = ITEM.exec(lines[i]);
+    if (m === null) continue;
+    if (indent === null) indent = m.groups.indent;
+    if (m.groups.indent === indent) found.push(i);
+  }
+  return found.length === list.length ? found : null;
+}
+
 // Every link the repoint's reading reads on a page's text, as { name, line }: each value of a
-// header that reads as a mapping (linksIn, over the value decoded), on its key's line, and the
-// body outside fenced blocks (linkSpans over readOutsideFences), each on its line. Lines are
-// counted as V.splitLines counts the page's lines.
+// header that reads as a mapping (linksIn, over the value decoded), on its key's line, or, for a
+// list written as a block, on its item's line (itemLines), and the body outside fenced blocks
+// (linkSpans over readOutsideFences), each on its line. Lines are counted as V.splitLines counts
+// the page's lines.
 function linksRead(text) {
   const split = splitPage(text);
   const body = split === null ? text : split.body;
@@ -801,7 +846,9 @@ function linksRead(text) {
         const m = KEY.exec(line);
         return m !== null && m.groups.key === key;
       });
-      for (const name of linksIn(value)) found.push({ name, line: at + 2 });
+      const items = itemLines(lines, at, value);
+      if (items === null) for (const name of linksIn(value)) found.push({ name, line: at + 2 });
+      else value.forEach((item, i) => found.push(...linksIn(item).map((name) => ({ name, line: items[i] + 2 }))));
     }
   }
   const first = V.splitLines(text.slice(0, text.length - body.length)).length;
@@ -827,11 +874,18 @@ function stillNamed(root, rels, merged, texts = {}) {
     const lines = new Set(linksRead(text).filter((link) => link.name === merged).map((link) => link.line));
     const split = splitPage(text);
     const body = split === null ? text : split.body;
-    const read = text.slice(0, text.length - body.length) + readOutsideFences(body)[0];
+    // A body whose fence was left open is read the plain way, as the checker reads such a page
+    // (check/text.js sectionWords): its later lines are never left out.
+    const [outside, open] = readOutsideFences(body);
+    const read = text.slice(0, text.length - body.length) + (open ? body : outside);
     V.splitLines(read).forEach((line, i) => {
       if (edge.test(line)) lines.add(i + 1);
     });
-    for (const n of [...lines].sort((x, y) => x - y)) found.push(`${rel}:${n}`);
+    if (!lines.size) continue;
+    // The path is said as the answers say one (pathsSaid) before the line is added, so a path
+    // said as "(a path)" keeps its line.
+    const shown = require("../render/screen.js").pathsSaid(rel);
+    for (const n of [...lines].sort((x, y) => x - y)) found.push(`${shown}:${n}`);
   }
   return found;
 }

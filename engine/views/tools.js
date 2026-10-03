@@ -11,12 +11,15 @@ const V = require("../check/values.js");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot, refuseLinkedFolders } = require("../lib/linkedroot.js");
 const { pluginVersion } = require("../lib/version.js");
+const { persona, notUsed } = require("../lib/persona.js");
 const { checkPages } = require("../check/rules.js");
 const { ModelUnreadable, loadDeskModel } = require("../check/model.js");
 const { renderViews, renderSentBlocks, sentBlocksAfter, VIEWS } = require("./views.js");
+const { notCheckedSaid } = require("../cite/cite.js");
 const { mergePages, undoMerge, octal, modesSaid } = require("../merge/merge.js");
 const { previewUpdate, applyUpdate, UpdateStopped } = require("../update/update.js");
 const H = require("../update/history.js");
+const { ROLES } = require("../scaffold/systems.js");
 const { pathPage } = require("../paths/index.js");
 const { writePathPage, owned } = require("../paths/write.js");
 
@@ -389,7 +392,7 @@ function renderViewsTool(args = {}) {
   const current = same.length
     ? ` ${plural(same.length, "path page was", "path pages were")} already current and left as ${same.length === 1 ? "it was" : "they were"}.`
     : "";
-  return {
+  const answer = {
     tool: "render_views",
     plugin_version: pluginVersion(),
     root: c.shown.root,
@@ -404,14 +407,16 @@ function renderViewsTool(args = {}) {
     summary:
       `Wrote the three views, and rewrote ${plural(wrote.sent.length, "sent list", "sent lists")} that changed; ` +
       `needs-attention holds ${plural(wrote.findings, "row", "rows")}.` +
-      (cited.notChecked
-        ? ` ${plural(cited.notChecked, "citation names", "citations name")} a file at a commit, ` +
-          "which the check does not read yet, so they were not checked."
-        : "") +
+      notCheckedSaid(cited.reasons).map((said) => ` ${said}`).join("") +
       rebuilt +
       current +
       " Logged the change in log.md.",
   };
+  // a desk's assistant_name that was set and refused is said, in words that never repeat it: the
+  // pages render_view draws for this desk say the default instead (lib/persona.js)
+  const who = persona({ desk: c.read });
+  if (notUsed(who)) answer.assistant_name_not_used = notUsed(who);
+  return answer;
 }
 
 function mergePagesTool(args = {}) {
@@ -459,7 +464,7 @@ function mergePagesTool(args = {}) {
     views_not_rebuilt: views.not_rebuilt,
     logged,
     summary:
-      `Merged ${args.merge} into ${args.keep}: ${plural(done.changed.length, "page changed", "pages changed")}, ` +
+      `Merged ${require("../render/screen.js").pathsSaid(args.merge)} into ${require("../render/screen.js").pathsSaid(args.keep)}: ${plural(done.changed.length, "page changed", "pages changed")}, ` +
       `${done.removed} removed, the record at ${done.record}. ` +
       (views.not_rebuilt || `The views are rebuilt. ${pathPagesSaid(views.paths)}`) +
       "Logged the change in log.md.",
@@ -539,12 +544,28 @@ function updating(fn) {
   }
 }
 
+// none_on_this_desk as the door takes it: left out, or a list of roles, each named once. The
+// update itself refuses a role its systems table does not record still to connect with no
+// connector named (update/update.js checkNone).
+function noneOnThisDeskArg(value) {
+  if (value === undefined || value === null) return [];
+  const roles = Array.isArray(value) && value.every((role) => typeof role === "string" && ROLES.includes(role));
+  if (!roles || new Set(value).size !== value.length) {
+    throw new Refusal(
+      "none_on_this_desk is a list of roles the preview's ask_about named, each named once: " +
+        `${ROLES.slice(0, -1).join(", ")} or ${ROLES.at(-1)}. ${H.NOTHING}`,
+    );
+  }
+  return [...value];
+}
+
 function updateDeskTool(args = {}) {
-  const c = change("update_desk", args, ["desk", "handle", "now", "apply", "plan"]);
+  const c = change("update_desk", args, ["desk", "handle", "now", "apply", "plan", "none_on_this_desk"]);
   if (args.apply !== undefined && typeof args.apply !== "boolean") {
     throw new Refusal(`apply is true or false: false (or left out) previews the update on a copy. ${H.NOTHING}`);
   }
-  const opts = { today: c.moment.slice(0, 10), now: c.moment, time: c.moment.slice(11, 16), handle: c.handle };
+  const noneOnThisDesk = noneOnThisDeskArg(args.none_on_this_desk);
+  const opts = { today: c.moment.slice(0, 10), now: c.moment, time: c.moment.slice(11, 16), handle: c.handle, noneOnThisDesk };
   if (!args.apply) {
     const p = updating(() => previewUpdate(c.root, opts));
     return {
@@ -554,6 +575,7 @@ function updateDeskTool(args = {}) {
       applied: false,
       preview: p.text,
       plan: p.plan,
+      ask_about: p.askAbout,
       changed: p.changed,
       flags: p.flags,
       pages_before: p.pagesBefore,
@@ -659,7 +681,8 @@ const TOOLS = [
       "needs-attention from a whole-desk check) and the generated sent list on each person, firm " +
       "and family page, and each path page already under celorus/views/ (path-to-<file name>.md) " +
       "as who_can_introduce writes it, then log the change. Returns each page's path to show it " +
-      "from. An absent path page is not written.",
+      "from. An absent path page is not written." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: { desk: DESK, handle: HANDLE, now: NOW },
@@ -675,7 +698,8 @@ const TOOLS = [
       "celorus/merges/ is written first, links are repointed, the other page is removed last, " +
       "the views are rebuilt and the change logged. Returns what the merge could not put right " +
       "(still_named, points_at_itself, named_only_holds_details). Refuses, changing nothing, a " +
-      "merge that would be wrong or could not be undone.",
+      "merge that would be wrong or could not be undone." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -696,7 +720,8 @@ const TOOLS = [
       "Undo a merge from its record under celorus/merges/: the record named, or the newest " +
       "standing record of the pair named by kept and merged, or the newest standing record. " +
       "Puts back every page it changed and the removed page, marks the record undone, rebuilds " +
-      "the views and logs the change; refuses, changing nothing, when a page changed since.",
+      "the views and logs the change; refuses, changing nothing, when a page changed since." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -715,12 +740,16 @@ const TOOLS = [
   {
     name: "update_desk",
     description:
-      "Move the desk to the newest layout and model version in twelve steps, as install-desk's " +
-      "update.md says. With apply false (the default) it previews on a copy, changes nothing, " +
-      "and returns the plan's digest; with apply true and that plan it updates the desk and " +
-      "logs the change, and refuses, changing nothing, when the desk no longer gives that plan. " +
+      "Move the desk to the newest layout and model version in thirteen steps, as install-desk's " +
+      "update.md says, and records none on this desk in the systems table for each role passed " +
+      "in none_on_this_desk. With apply false (the default) it previews on a copy, changes " +
+      "nothing, and returns the plan's digest and ask_about, the roles recorded still to connect " +
+      "with no connector named; with apply true and that plan it updates the desk and logs the " +
+      "change, and refuses, changing nothing, when the desk or the roles passed no longer give " +
+      "that plan. " +
       "It never deletes a page, never writes through a link, and stops naming the step before a " +
-      "move would overwrite or a value be made up; a stop after a write names what changed.",
+      "move would overwrite or a value be made up; a stop after a write names what changed." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -731,6 +760,15 @@ const TOOLS = [
         plan: {
           type: "string",
           description: "With apply true: the plan the preview returned, the one the person said yes to.",
+        },
+        none_on_this_desk: {
+          type: "array",
+          items: { type: "string", enum: [...ROLES] },
+          uniqueItems: true,
+          description:
+            "The roles the person said the firm has no system for, each a role the preview's " +
+            "ask_about named; each is recorded none on this desk. With apply true: the same roles " +
+            "the preview was given. Left out, nothing is recorded.",
         },
       },
       required: ["handle"],

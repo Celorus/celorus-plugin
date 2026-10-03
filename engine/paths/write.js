@@ -328,8 +328,21 @@ function rewrite(dir, file, rel, bytes) {
   try {
     // The open may have gone through a folder that became a link after the look, and back again.
     if (!openedInPlace(dir, fd, file)) throw placeChanged(rel, "nothing was written to it.");
-    if (!fs.fstatSync(fd).isFile()) throw notPlain(rel, "not a plain file");
-    const before = readWhole(fd);
+    // DESK-160: a look at, or a read of, the page that faults before any byte is written is said
+    // as the open's fault is: the page desk-relative, the error's code, and nothing written.
+    let held;
+    try {
+      held = fs.fstatSync(fd);
+    } catch (err) {
+      throw new Refusal(`${rel} could not be looked at (${codeOf(err)}), so the path page was not written.`);
+    }
+    if (!held.isFile()) throw notPlain(rel, "not a plain file");
+    let before;
+    try {
+      before = readWhole(fd);
+    } catch (err) {
+      throw new Refusal(`${rel} could not be read (${codeOf(err)}), so the path page was not written.`);
+    }
     if (!owned(before)) {
       throw new Refusal(
         `${rel} is on the desk and its header does not say generated_by: celorus-plugin <version> ` +
@@ -337,13 +350,20 @@ function rewrite(dir, file, rel, bytes) {
           "then ask again.",
       );
     }
-    const fault = keepingMode(fd, () => {
-      try {
-        return putWhole(fd, bytes) ? null : "did not read back as it was written";
-      } catch (err) {
-        return `could not be written (${codeOf(err)})`;
-      }
-    });
+    let fault;
+    try {
+      fault = keepingMode(fd, () => {
+        try {
+          return putWhole(fd, bytes) ? null : "did not read back as it was written";
+        } catch (err) {
+          return `could not be written (${codeOf(err)})`;
+        }
+      });
+    } catch (err) {
+      // Only keepingMode's look at the mode, before the write runs, can throw here: the write's
+      // faults are caught inside and said below, and the mode's put-back swallows its own.
+      throw new Refusal(`${rel} could not be looked at (${codeOf(err)}), so the path page was not written.`);
+    }
     // A save by rename or a removal since the open, or a look that cannot tell: the text went into
     // the file the open holds, which the path may no longer name. The look runs after every write,
     // a failed one too (lib/stamp.js's discipline), so the tool says it wrote the page, or that

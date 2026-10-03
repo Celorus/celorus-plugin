@@ -100,8 +100,16 @@ A promise whose date has already passed is queued all the same, with its own dat
 
 Then, when this run wrote at least one row:
 
-- Where a calendar connector exists, offer a hold on the `by` date and create it only when
-  the user says yes. Where none exists, say so in one line.
+- Where a calendar connector exists, offer a hold on the `by` date. On the user's yes, ask
+  what time it starts and ends, and never pick a time for them. List the seat's own calendar
+  for that day through the connector, never another's and never a listing of calendars. Pass
+  its events, each as its start and end alone, to `propose_hold`, with `seat`, `about` (the
+  row's `who`), `start`, `end` and `day`, the day the listing was for; when the listing came
+  back empty, pass an empty list and `listing_empty` as true. Create the event only as
+  `propose_hold` answers it, straight after: its title, start and end exactly, on the seat's
+  own calendar, with no guest, since a guest is an invitation sent. A clash or an unsaid time
+  is refused: ask the person again, and never move the time yourself. Where no calendar
+  connector exists, say so in one line.
 - Update `timestamp` in the queue's frontmatter.
 - The log line for each row is the one `add_follow_up` wrote; write none by hand.
 

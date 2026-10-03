@@ -41,6 +41,7 @@ const SKILL = {
   reply: "log_action",
   "prospect-created": "log_action",
   "book-moment": "log_action",
+  "crm-merged": "log_action",
 };
 const ACTIONS = Object.keys(SKILL);
 // The name each brief kind is logged under, by the same rule: no plugin skill teaches a kind,

@@ -51,20 +51,34 @@ holds_celorus() {
 
 # The name of an entry in folder $1's listing that is `celorus` in another case (`Celorus`,
 # `CELORUS`) and holds an index.md, or nothing: a desk's record folder misnamed, refused by name
-# with the rename, as the engine refuses it. One without an index.md is walked past.
+# with the rename, as the engine refuses it. One this machine gives no permission to look inside,
+# itself or through a link, may be one: its name, returning 3, refused by name too, as the engine
+# refuses it, on the engine's own probe. One
+# without an index.md is walked past.
 misnamed() {
   [ -r "$1" ] || return 0
-  local m
+  local m said
   for m in "$1"/[cC][eE][lL][oO][rR][uU][sS]; do
     [ "$m" = "$1/celorus" ] && continue
     if [ -e "$m/index.md" ] || [ -L "$m/index.md" ]; then printf '%s' "${m##*/}"; return 0; fi
+    # the engine's own probe (lib/desk.js misnamedCelorus): look at $m/index.md without following
+    # it, and read the machine's no permission (EACCES, EPERM) as refused by name, a link into a
+    # folder that cannot be searched included; a test of $m itself cannot see through such a link
+    said="$(LC_ALL=C ls -d -- "$m/index.md" 2>&1 >/dev/null)" && { printf '%s' "${m##*/}"; return 0; }
+    case "$said" in *"Permission denied"*|*"Operation not permitted"*) printf '%s' "${m##*/}"; return 3 ;; esac
   done
 }
 
-# The line for a misnamed entry $1, found by the door $2 says in words.
+# The line for a misnamed entry $1, found by the door $2 says in words; $3 is misnamed's status (3:
+# the entry cannot be searched).
 misnamed_said() {
   local walked=""
   case "$2" in "the first "*) walked=", and the walk stops there: no desk above it is used" ;; esac
+  if [ "${3:-0}" -eq 3 ]; then
+    printf '%s/ cannot be looked inside: this machine gives no permission to search it, so the desk tools cannot tell whether it holds an index.md, and they read a desk only from a folder named exactly celorus/, so %s is no desk the tools can read%s. Give %s/ back its permissions, or rename it to celorus/ if it holds a desk'"'"'s record, then ask again. Nothing was changed.' \
+      "$1" "$2" "$walked" "$1"
+    return 0
+  fi
   printf '%s/ holds an index.md, but the desk tools read a desk only from a folder named exactly celorus/, so %s is no desk the tools can read%s. Rename %s/ to celorus/, then ask again. Nothing was changed.' \
     "$1" "$2" "$walked" "$1"
 }
@@ -75,14 +89,14 @@ misnamed_said() {
 # line naming what is wrong, by its path under that folder, and returns 2 otherwise: never a desk
 # above it. Returns 1, printing nothing, when the walk finds no celorus entry.
 find_desk() {
-  local d where m named="${CELORUS_DESK:-}"
+  local d where m mk named="${CELORUS_DESK:-}"
   local shape="A desk's celorus/ is a plain folder holding a plain, readable index.md: make it one, then ask again."
   local walk="the first folder on the walk up from the working folder that holds a celorus entry"
   if [ -n "$named" ]; then
     d="$named"
     if ! holds_celorus "$d"; then
-      m="$(misnamed "$d")"
-      if [ -n "$m" ]; then misnamed_said "$m" "the folder CELORUS_DESK names, ${named},"; return 2; fi
+      m="$(misnamed "$d")"; mk=$?
+      if [ -n "$m" ]; then misnamed_said "$m" "the folder CELORUS_DESK names, ${named}," "$mk"; return 2; fi
       printf 'CELORUS_DESK names %s, which holds no celorus/index.md. Set CELORUS_DESK to the desk folder (the one holding celorus/index.md), or name that folder as `desk`.' "$named"
       return 2
     fi
@@ -90,8 +104,8 @@ find_desk() {
   else
     d="${PWD}"
     while [ -n "$d" ] && [ "$d" != "/" ] && ! holds_celorus "$d"; do
-      m="$(misnamed "$d")"
-      if [ -n "$m" ]; then misnamed_said "$m" "$walk"; return 2; fi
+      m="$(misnamed "$d")"; mk=$?
+      if [ -n "$m" ]; then misnamed_said "$m" "$walk" "$mk"; return 2; fi
       d="$(dirname "$d")"
     done
     [ -n "$d" ] && [ "$d" != "/" ] || return 1
@@ -248,5 +262,6 @@ fi
 
 emit "A Celorus desk is installed at ${desk} for ${desk_name:-this desk}: ${seat_line}.
 Today's board is ${board}; ${due_line}.
-Open the day with the day-open skill. The chain and the layout are in celorus/index.md."
+Open the day with the day-open skill. The chain and the layout are in celorus/index.md.
+Before your first answer, read how you speak on this desk with the read_soul tool."
 exit 0

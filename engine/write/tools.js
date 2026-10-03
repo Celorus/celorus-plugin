@@ -76,7 +76,8 @@ const TOOLS = [
     "Write a conversation page for a call or meeting, and its line in log.md. named: [{slug, name, " +
       "note}], people of the family named on the call; heard: [{subject, connection, target, words, " +
       "said_by}]. Refused before anything is written: a seat or page not on the desk, and words the " +
-      "screen refuses. Answers the page's path.",
+      "screen refuses. Answers the page's path." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     {
       seat: SEAT,
       family: TEXT("The family's page slug."),
@@ -95,12 +96,13 @@ const TOOLS = [
   writer(
     "log_action",
     "Add a desk-log row, and its line in log.md: mail, call, meeting-set, handed-over, meeting-held, " +
-      "reply, prospect-created or book-moment. A hand-over's outcome is \"to <handle>\", the handle of " +
-      "a seat on this desk, never the person's name.",
+      "reply, prospect-created, book-moment or crm-merged. A hand-over's outcome is \"to <handle>\", the handle of " +
+      "a seat on this desk, never the person's name." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     {
       seat: SEAT,
       family: TEXT("The family's page slug."),
-      action: TEXT("mail, call, meeting-set, handed-over, meeting-held, reply, prospect-created or book-moment."),
+      action: TEXT("mail, call, meeting-set, handed-over, meeting-held, reply, prospect-created, book-moment or crm-merged."),
       outcome: TEXT("What came of it, in a few words."),
       minutes: { type: "integer", description: "Minutes spent, or left out." },
     },
@@ -110,7 +112,8 @@ const TOOLS = [
   writer(
     "add_follow_up",
     "Add a follow-up owed by us or them, due by a date, from a conversation page the desk has, and " +
-      "its line in log.md.",
+      "its line in log.md." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     {
       seat: SEAT,
       owed_by: TEXT("us or them."),
@@ -124,7 +127,8 @@ const TOOLS = [
   ),
   writer(
     "assign_lead",
-    "Give a family to a seat, from a named list: a row in queues/supplied.md, and its line in log.md.",
+    "Give a family to a seat, from a named list: a row in queues/supplied.md, and its line in log.md." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     {
       by_seat: TEXT("The seat giving the lead."),
       family: TEXT("The family's page slug."),
@@ -139,7 +143,8 @@ const TOOLS = [
     "Save a room brief (kind room) or a reach-out card (kind reach-out) for a family: sections " +
       "[{heading, paragraphs}]. Answers the page's path, and its line in log.md. Unlike the demo's writer, a " +
       "brief already made today is never written over for another seat, and is rewritten for the same seat only " +
-      "with replace: true, which loses any notes added by hand to it.",
+      "with replace: true, which loses any notes added by hand to it." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     {
       seat: SEAT,
       family: TEXT("The family's page slug."),
@@ -160,9 +165,11 @@ const TOOLS = [
       "Answer the git commands that commit the desk as the seat, for the skill to run in order, " +
       "filling each word in braces from the line an earlier command printed; the engine runs none. Only what every seat shares is staged, by name: a seat's own pages " +
       "(celorus/.views) never are, pages only the overnight may change (families/, people/, firms/) " +
-      "are held back, and a file desk_sync's table does not name is left out and named. push is " +
+      "and its merge record are held back, and a file desk_sync's table does not name is left out and named. overnight " +
+      "is true only from the overnight skill, after its run: then those pages and the merge record are staged too. push is " +
       "true only when the person has just asked, in words, for the " +
-      "desk to go up: then the pull and the push are answered too, to the branch's upstream alone.",
+      "desk to go up: then the pull and the push are answered too, to the branch's upstream alone." +
+      " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {
       type: "object",
       properties: {
@@ -170,15 +177,19 @@ const TOOLS = [
         seat: SEAT,
         message: TEXT("The commit message: what changed on the desk, in a sentence."),
         push: { type: "boolean", description: "True only when the person has just asked, in words, for the desk to go up." },
+        overnight: {
+          type: "boolean",
+          description: "True only from the overnight skill, after its run: the family, person and firm pages and the merge record, which only the overnight commits, are staged too.",
+        },
       },
       required: ["seat", "message"],
       additionalProperties: false,
     },
     run(args = {}) {
       const { deskFor, deskNamed, onlyArguments } = require("../lib/tools.js");
-      onlyArguments("desk_sync", args, ["desk", "seat", "message", "push"]);
+      onlyArguments("desk_sync", args, ["desk", "seat", "message", "push", "overnight"]);
       const version = pluginVersion();
-      const root = deskFor(args.desk);
+      const root = deskFor(args.desk, { writes: true });
       return deskSync({ version, root, celorus: path.join(root, "celorus"), shown: deskShown(deskNamed(args.desk), root) }, args);
     },
   },

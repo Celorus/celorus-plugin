@@ -179,4 +179,36 @@ function drawnRefusal(view, words, plain, skip = undefined) {
   return shownRefusal(units, skip);
 }
 
-module.exports = { checked, drawnRefusal, rowRefs };
+// The sentences with each one `carries` answers true for left out, and how many were (row E11,
+// live/live.js: a sentence that carries a refused row's name, handle or number). A sentence is one
+// text the schema took: a line, a list's item, a section's paragraph, a gist, a family's line. A
+// section whose heading is left out goes with it, counted once.
+function withoutCarried(view, words, carries) {
+  let setAside = 0;
+  const keep = (text) => {
+    if (!carries(text)) return true;
+    setAside += 1;
+    return false;
+  };
+  const out = {};
+  for (const [slot, value] of Object.entries(words)) {
+    const kind = PROSE[view][slot];
+    if (kind === "gists" || kind === "by_family") {
+      out[slot] = Object.fromEntries(Object.entries(value).filter(([, text]) => keep(text)));
+    } else if (kind === "sections") {
+      out[slot] = [];
+      for (const item of value) {
+        if (typeof item === "string") {
+          if (keep(item)) out[slot].push(item);
+        } else if (!Object.hasOwn(item, "heading") || keep(item.heading)) {
+          out[slot].push(Object.hasOwn(item, "paragraphs") ? { ...item, paragraphs: item.paragraphs.filter(keep) } : item);
+        }
+      }
+    } else {
+      out[slot] = value.filter(keep);
+    }
+  }
+  return { words: out, setAside };
+}
+
+module.exports = { checked, drawnRefusal, rowRefs, withoutCarried };

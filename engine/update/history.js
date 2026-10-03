@@ -744,8 +744,9 @@ function askPage(file, st, rewritten) {
 //   update moves and then rewrites, the page it is now (a rename keeps its inode, owner and ACL,
 //   so asking it through itself is exact);
 // - then every page not there, which the call makes (writeWhole), owner-writable. The folder that
-//   is there on its way is asked by its access (a folder that cannot take a new folder is
-//   refused here), and must be the desk's own. Then every folder it is made in that is not there
+//   is there on its way must be the desk's own, asked for every such page before any folder is
+//   made, and is asked by its access (a folder that cannot take a new folder is refused here).
+//   Then every folder it is made in that is not there
 //   is MADE, outermost first (kind b: making a folder cannot be asked), and, once per folder,
 //   the page's own folder is asked from inside: its access, then the probe (probeFolder), so the
 //   entries it took from its parent are met as the call's own write meets them.
@@ -778,6 +779,10 @@ function ahead(pairs) {
       }
       fresh.push(file);
     }
+    // Every folder there at call start on the way to a page made new is the desk's own, a folder
+    // and no file, asked for every such page before the first folder is made or probed: a link
+    // there is refused with nothing made (standingFolder).
+    for (const file of fresh) standingFolder(file);
     const probed = new Set();
     for (const file of fresh) {
       const standing = standingFolder(file);

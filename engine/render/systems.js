@@ -56,6 +56,8 @@ const MESSAGE_FIELDS = ["at", "from_name", "from_seat"];
 const HOLD_FIELDS = ["start", "title"];
 const IST_TIME = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,6})?)?\+05:30$/;
 const IST_EXAMPLE = "2026-09-21T10:00:00+05:30";
+// A day, or a day and a time in any zone or none: what a connector writes where a time belongs.
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}(?::?\d{2})?)?)?$/;
 
 // Whether the digits of an IST time name a day and a time that exist (no 30 Feb, no 25:61).
 function exists(match) {
@@ -64,7 +66,18 @@ function exists(match) {
   return month >= 1 && month <= 12 && day >= 1 && day <= days && hour <= 23 && minute <= 59 && second <= 59;
 }
 
-function checkTime(where, value) {
+// Whether a value is a time written in IST that exists.
+function istTime(value) {
+  const match = typeof value === "string" ? IST_TIME.exec(value) : null;
+  return match !== null && exists(match);
+}
+
+// `held` is true where the live-row contract reads the rows next (live/live.js): there a value that
+// is no time at all, words or a number where a time belongs, is the row's own fault and refuses the
+// row by its rule, so its text is never quoted here. A time in another zone, or of a day that does
+// not exist, is refused whole either way, quoted: it is a time by its shape, never anything else.
+function checkTime(where, value, held) {
+  if (held && !(typeof value === "string" && TIMESTAMP.test(value))) return;
   const match = typeof value === "string" ? IST_TIME.exec(value) : null;
   if (match === null) {
     refuse(
@@ -83,26 +96,27 @@ function checkFields(where, row, fields) {
 }
 
 // What a row holds beyond its own fields: a thread's messages, a proposal's hold, and its times.
-function checkRow(role, list, i, row) {
+function checkRow(role, list, i, row, held) {
   const where = `${role}.${list}[${i}]`;
-  for (const field of TIMES[`${role}.${list}`] || []) checkTime(`${where}.${field}`, row[field]);
+  for (const field of TIMES[`${role}.${list}`] || []) checkTime(`${where}.${field}`, row[field], held);
   if (role === "calendar" && list === "proposals") {
     checkFields(`${where}.hold`, row.hold, HOLD_FIELDS);
-    checkTime(`${where}.hold.start`, row.hold.start);
+    checkTime(`${where}.hold.start`, row.hold.start, held);
   }
   if (role === "mail" && list === "threads") {
     if (!Array.isArray(row.messages)) refuse(`holds ${where}.messages as something other than a list`);
     if (!row.messages.length) refuse(`says ${where}.messages holds no message: a thread carries at least one, and a page reads its last`);
     row.messages.forEach((message, j) => {
       checkFields(`${where}.messages[${j}]`, message, MESSAGE_FIELDS);
-      checkTime(`${where}.messages[${j}].at`, message.at);
+      checkTime(`${where}.messages[${j}].at`, message.at, held);
     });
   }
 }
 
 // The systems argument, checked for its shape and filled out: every role and list present, a
-// role not given holding empty lists. `given` names the roles the caller handed over.
-function systemsOf(value) {
+// role not given holding empty lists. `given` names the roles the caller handed over. `held` is
+// passed by the doors that put the rows under the live-row contract next (checkTime has why).
+function systemsOf(value, { held = false } = {}) {
   const out = { given: [] };
   for (const [role, lists] of Object.entries(ROLES)) {
     out[role] = {};
@@ -121,7 +135,7 @@ function systemsOf(value) {
       if (!Array.isArray(rows)) refuse(`holds ${role}.${list} as something other than a list`);
       rows.forEach((row, i) => {
         checkFields(`${role}.${list}[${i}]`, row, fields);
-        checkRow(role, list, i, row);
+        checkRow(role, list, i, row, held);
       });
       out[role][list] = rows;
     }
@@ -200,15 +214,17 @@ function calendarProposals(st, seat, from) {
   );
 }
 
-// The chat a seat has not answered: asked of it, with no later post of its own on the channel.
+// The chat a seat has not answered: asked of it, with no later post of its own on the channel. A
+// message is sent to a seat, as text, or to a list of seats: text is matched whole, never as a
+// part of another seat's handle.
 function chatUnread(st, seat) {
   const msgs = st.chat.messages;
   return msgs.filter(
     (m) =>
       m.needs_reply &&
-      (m.to || []).includes(seat) &&
+      (Array.isArray(m.to) ? m.to.includes(seat) : m.to === seat) &&
       !msgs.some((x) => x.channel === m.channel && x.from === seat && x.at > m.at),
   );
 }
 
-module.exports = { ROLES, systemsOf, mailSearch, calendarEvents, calendarProposals, chatUnread, sortedBy, compareKeys };
+module.exports = { ROLES, systemsOf, istTime, mailSearch, calendarEvents, calendarProposals, chatUnread, sortedBy, compareKeys };

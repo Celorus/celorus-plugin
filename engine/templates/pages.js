@@ -20,20 +20,35 @@ function truthyAttr(rows, key) {
   return rows.filter((r) => W.truthy(r[key]));
 }
 
-// Level one: the card read standing up, sixty seconds before a first call.
+// Level one: the card read standing up, sixty seconds before a first call. With the CRM not
+// counted (its rows not handed over, or set aside), a number is not said as not held and the
+// family is not said as never spoken to: the ring line and the touch line are left out, and the
+// page's "Not counted" block says the hole as a seat's page says it (seats.js holesOf).
 function reachOutCard(v, prose, ctx) {
   const last = v.signal_rows.length ? v.signal_rows[v.signal_rows.length - 1] : null;
   const whoSlot = W.truthy(prose.who_and_why) ? "who_and_why" : "summary";
   const who = W.joinedLine(prose[whoSlot]);
-  // the model's lines, joined as the card shows them, else the desk's own sentence
+  // the model's lines, joined as the card shows them, else the desk's own sentence (its links and
+  // bold read), else the ask to the assistant, whose name is plain text, escaped and never read
+  // for a link or bold
+  const desks = (last ? last.why : "") || v.wealth;
   const whoLine = who
     ? ctx.prose(whoSlot, who)
-    : ctx.delink((last ? last.why : "") || v.wealth || "Ask Milan to write who they are and why now.");
+    : desks
+      ? ctx.delink(desks)
+      : W.e(`Ask ${ctx.persona.name} to write who they are and why now.`);
   let c = `${P.ladder("one")}\n`;
   c += `<div class="who-why"><p>${whoLine}</p></div>\n`;
   const people = [...v.members, ...v.contacts];
   const lead = people.find((p) => W.truthy(p.decision_maker)) || null;
   const kin = people.filter((p) => !W.truthy(p.decision_maker));
+  // a person's number, or that none is held; nothing at all when the CRM, which holds the numbers,
+  // is not counted
+  const ring = (p, lead) => {
+    if (!p.phone && !v.crm_counted) return "";
+    const n = `<span class="n${p.phone ? "" : " nil"}">${e(p.phone || "no number held")}</span>`;
+    return lead ? `<div class="dm-num"><span class="w">Ring</span>${n}</div>\n` : n;
+  };
   c += `<section class="block" id="family">${P.head("The family", people.length)}\n`;
   if (people.length) {
     c += '<div class="fam-card">\n';
@@ -41,7 +56,7 @@ function reachOutCard(v, prose, ctx) {
       c +=
         '<div class="dm">\n' +
         `<div class="dm-who"><b>${e(lead.name)}</b>${lead.role ? `<span class="role">${e(lead.role)}</span>` : ""}<span class="chip ok">Decides</span></div>\n` +
-        `<div class="dm-num"><span class="w">Ring</span><span class="n${lead.phone ? "" : " nil"}">${e(lead.phone || "no number held")}</span></div>\n` +
+        ring(lead, true) +
         "</div>\n";
     }
     if (kin.length) {
@@ -49,7 +64,7 @@ function reachOutCard(v, prose, ctx) {
       for (const p of kin) {
         c +=
           `<li><div><b>${e(p.name)}</b>${p.role ? `<span class="role">${e(p.role)}</span>` : ""}</div>` +
-          `<span class="n${p.phone ? "" : " nil"}">${e(p.phone || "no number held")}</span></li>\n`;
+          `${ring(p, false)}</li>\n`;
       }
       c += "</ul>\n";
     }
@@ -90,14 +105,14 @@ function reachOutCard(v, prose, ctx) {
     }
     c += "</ul>\n";
   }
-  if (!v.routes.length) c += '<div class="empty">No route in yet. Ask Milan to look for one.</div>\n';
+  if (!v.routes.length) c += `<div class="empty">No route in yet. Ask ${W.e(ctx.persona.name)} to look for one.</div>\n`;
   c += "</section>\n";
   const opener = W.aslist(prose.opener);
   c += '<div class="pair words">\n';
   c += `<section class="block" id="opener">${P.head("Opener")}\n<div class="opener">\n`;
   c += opener.length
     ? opener.map((line) => `<p class="pad">${ctx.prose("opener", line)}</p>`).join("")
-    : '<p class="pad nil">Ask Milan to write the opener.</p>';
+    : `<p class="pad nil">Ask ${W.e(ctx.persona.name)} to write the opener.</p>`;
   c += '<p class="say">The first words out of your mouth. Say the reason, then stop.</p>\n</div>\n</section>\n';
   c += `<section class="block" id="avoid">${P.head("Avoid")}\n<ul class="avoid">\n<li>No figure about their wealth in the opener.</li>\n`;
   c += W.aslist(prose.avoid)
@@ -114,6 +129,7 @@ function reachOutCard(v, prose, ctx) {
   }
   c += "</section>\n";
   c += `${P.block(ctx, "Signals", v.signal_rows, "No signal yet.")}\n`;
+  c += S.holesOf(v);
   return {
     page_name: "Reach-out card",
     theme: "Way in",
@@ -121,7 +137,7 @@ function reachOutCard(v, prose, ctx) {
     say: v.seat ? "Show my brief" : "",
     title: "Reach-out card",
     heading: e(v.title),
-    lede: `<p class="verdict">${e(v.touch_words)}</p>`,
+    lede: v.touch_words ? `<p class="verdict">${e(v.touch_words)}</p>` : "",
     page_css: css("reach-out-card"),
     content: c,
   };
@@ -146,7 +162,7 @@ function roomBrief(v, prose, ctx) {
     '<aside class="colophon">\n' +
     '<p class="said"><span class="tag">Written at the desk</span>The brief an RM writes from this desk\'s own pages before walking in. Every fact on it says where it came from, and where the desk does not know, it says so.</p>\n' +
     '<p class="apart">Not the meeting brief a console links to: that is a different page, built elsewhere from its own sources.</p>\n' +
-    `<span class="when">${e(v.touch_words)}</span>\n` +
+    (v.touch_words ? `<span class="when">${e(v.touch_words)}</span>\n` : "") +
     "</aside>\n";
   if (truthyAttr(sections, "heading").length) {
     // the contents row draws every heading as a pill on one line, so the model's are read joined
@@ -167,8 +183,10 @@ function roomBrief(v, prose, ctx) {
       `<div class="sh-b">${P.paragraphs(ctx, s.paragraphs, put)}</div>\n` +
       "</div>\n";
   });
-  if (!sections.length) c += '<p class="nothing">No room brief yet. Ask Milan to make one.</p>\n';
+  if (!sections.length) c += `<p class="nothing">No room brief yet. Ask ${W.e(ctx.persona.name)} to make one.</p>\n`;
   c += "</section>\n";
+  // the CRM not counted is said as a seat's page says it, never as no touch
+  c += S.holesOf(v);
   return {
     page_name: "Room brief",
     theme: "Bearings",

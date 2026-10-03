@@ -4,7 +4,8 @@
 // demo kit's template files, which the engine cannot ship as they were (it ships only .js and
 // .json). Two edits to the kit's bytes: the page loads no web font, so the three font links are
 // gone and the comment that named them says so; and the mark carries no xmlns attribute, which
-// a drawing set inside an HTML page does not need.
+// a drawing set inside an HTML page does not need. Where the look speaks of the assistant it
+// holds the token {{assistant}}, which base.js fills with the desk's name (lib/persona.js).
 
 const BASE = [
   "<!doctype html>",
@@ -82,7 +83,7 @@ const BASE = [
   ".k-due .dot, .dot.k-due { background: var(--semantic-color-status-warn); }",
   ".k-quiet .dot { background: var(--semantic-color-fg-faint); }",
   ".status { display: inline-flex; gap: 7px; align-items: center; }",
-  "/* a pill is the words a person says to Milan, outlined: a button that copies them (a page cannot call a tool) */",
+  "/* a pill is the words a person says to {{assistant}}, outlined: a button that copies them (a page cannot call a tool) */",
   ".pill { cursor: pointer; background: transparent; display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px/1 var(--sans);",
   "  color: var(--semantic-color-accent-default); border: 1px solid var(--semantic-color-accent-default);",
   "  border-radius: var(--semantic-radius-pill); padding: 6px 11px 6px 9px; white-space: nowrap; }",
@@ -428,7 +429,7 @@ const BASE = [
   "</script>",
   "<p class=\"sr\" id=\"copied\" role=\"status\" aria-live=\"polite\"></p>",
   "<script>",
-  "/* A pill copies its line for Milan and says so on itself for a moment; where the page may not reach the",
+  "/* A pill copies its line for {{assistant}} and says so on itself for a moment; where the page may not reach the",
   "   clipboard, it says the line to say instead. */",
   "(function () {",
   "  var told = document.getElementById(\"copied\");",
@@ -452,8 +453,8 @@ const BASE = [
   "      clearTimeout(pill._back);",
   "      pill._back = setTimeout(function () { words.textContent = pill.getAttribute(\"data-words\"); pill.classList.remove(\"is-copied\"); }, 2600);",
   "    }",
-  "    copy(line).then(function () { say(pill.getAttribute(\"data-note\") || \"Copied. Paste it to Milan.\"); },",
-  "                    function () { say(\"Say to Milan: \" + line); });",
+  "    copy(line).then(function () { say(pill.getAttribute(\"data-note\") || \"Copied. Paste it to {{assistant}}.\"); },",
+  "                    function () { say(\"Say to {{assistant}}: \" + line); });",
   "  });",
   "})();",
   "</script>",
@@ -1321,7 +1322,7 @@ const PAGE_CSS = {
     "   the sheet on the other family page stands under its own banner */",
     ".wrap > * { max-width: 960px; }",
     ".wrap > .block + .block { margin-top: 26px; }",
-    "/* who they are and why now, the line Milan wrote for this card, set off by a petrol rule */",
+    "/* who they are and why now, the line {{assistant}} wrote for this card, set off by a petrol rule */",
     ".who-why { margin: 16px 0 0; max-width: 80ch; padding: 1px 0 1px 16px; border-left: 2px solid var(--semantic-color-accent-default); }",
     ".who-why p { font: 16.5px/1.5 var(--serif); color: var(--semantic-color-fg-strong); margin: 0; }",
     "",

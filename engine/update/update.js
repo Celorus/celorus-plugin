@@ -2,7 +2,7 @@
 // The desk update (design section 7): it moves a desk to the newest layout and model version.
 // It previews on a copy first, never deletes a page, stops and names the step before a move
 // would overwrite or a value would have to be made up, and changes nothing when run twice.
-// install-desk's update.md says the same twelve steps in words.
+// install-desk's update.md says the same thirteen steps in words.
 //
 // A header line the update does not change is kept as written: a flat header is put together
 // from the old header's own lines wherever a detail keeps its name and value.
@@ -44,6 +44,8 @@ const {
 // under the desk, so its own folder is the one holding celorus/.
 const DESK_FOLDER = "the desk folder";
 const { sha256 } = require("./digest.js");
+// The systems table scaffold_desk writes at the end of desk.md, read back as it reads it.
+const S = require("../scaffold/systems.js");
 
 const PLUGIN = path.resolve(__dirname, "..", "..");
 const INSTALL = path.join(PLUGIN, "skills", "install-desk");
@@ -62,6 +64,7 @@ const STEP_NAMES = [
   "renaming words",
   "writing the model pages and settings",
   "stamping the versions",
+  "recording none on this desk",
   "rebuilding the views",
   "logging the update",
 ];
@@ -511,6 +514,9 @@ function planDigest(inputs, result, pagesBefore, pagesAfter) {
     pagesBefore,
     pagesAfter,
   };
+  // The roles recorded as none on this desk, only when there are any: an update given none has
+  // the digest of one with the input left out.
+  if (result.recorded.length) said.none_on_this_desk = result.recorded;
   return sha256().update(JSON.stringify(said)).hex();
 }
 
@@ -1456,6 +1462,107 @@ function stampVersions(run, target, packDir) {
   run.notes.push(`The desk moves to model version ${target}.`);
 }
 
+// ---- recording none on this desk ----
+
+// The roles of the systems table's rows recorded still to connect with no connector named, in
+// the table's order: the rows the update asks about (update.md), and the only rows it records
+// as none on this desk.
+function askable(rows) {
+  return rows.filter((r) => r.state === S.STILL && r.connector === null).map((r) => r.role);
+}
+
+// Where desk.md's body starts in its text: after its header, as readHead splits them.
+function bodyStart(text) {
+  const m = PAGE_FRONT.exec(text);
+  return m ? m[0].length : 0;
+}
+
+// The roles the preview asks about, read from the desk (`desk`) as it stands, before the run: none
+// where desk.md or its systems table is not there. A desk.md that cannot be read gives none, and
+// the run stops on it in its own words.
+function askAbout(desk) {
+  const file = path.join(desk, "celorus", "desk.md");
+  if (!isFile(file)) return [];
+  let text;
+  try {
+    text = readText(file);
+  } catch (err) {
+    if (err instanceof UpdateFault) return [];
+    throw err;
+  }
+  const systems = S.readTables(text.slice(bodyStart(text))).systems;
+  return systems === null ? [] : askable(systems.rows);
+}
+
+function notStill(role) {
+  return new UpdateFault(`${role} is not recorded still to connect with no connector named, so it is not recorded as none on this desk`);
+}
+
+// Before any write: each role passed must be recorded in desk.md's systems table still to connect
+// with no connector named. Returns them in the table's order.
+function checkNone(run, roles) {
+  const wanted = [...new Set(roles)];
+  if (!wanted.length) return [];
+  const text = isFile(path.join(run.root, "desk.md")) ? run.read("celorus/desk.md") : null;
+  const systems = text === null ? null : S.readTables(text.slice(bodyStart(text))).systems;
+  if (systems === null) throw new UpdateFault("desk.md holds no systems table, so no role is recorded as none on this desk");
+  const asked = askable(systems.rows);
+  for (const role of wanted) {
+    if (!asked.includes(role)) {
+      throw notStill(role);
+    }
+  }
+  return asked.filter((role) => wanted.includes(role));
+}
+
+// The index in `lines` (desk.md's body) of the systems table's row readTables reads for `role`,
+// or -1. Each row is read with the rows above it, as readTables reads the table, so a row it
+// names as unread, or as a role named a second time, is never the one found.
+function systemsRowAt(lines, role, shape) {
+  const top = lines.findIndex((line) => line.replace(/\s+$/u, "") === shape.systems.title);
+  if (top === -1) return -1;
+  let i = top + 1;
+  while (i < lines.length && !lines[i].trim().startsWith("|") && !lines[i].startsWith("## ")) i += 1;
+  const table = [];
+  while (i < lines.length && lines[i].trim().startsWith("|")) {
+    table.push(i);
+    i += 1;
+  }
+  let counted = 0;
+  for (let n = 3; n <= table.length; n += 1) {
+    const rows = S.readTables([shape.systems.title, ...table.slice(0, n).map((k) => lines[k])].join("\n"), shape).systems.rows;
+    if (rows.length > counted && rows.at(-1).role === role) return table[n - 1];
+    counted = rows.length;
+  }
+  return -1;
+}
+
+// A row's line with its state cell's text made none on this desk: the bars, the other cells and
+// the blank space around the state's words stay as written.
+function stateMadeNone(line) {
+  const last = line.lastIndexOf("|");
+  const before = line.lastIndexOf("|", last - 1);
+  return line.slice(0, before + 1) + line.slice(before + 1, last).replace(S.STILL, S.NONE_HERE) + line.slice(last);
+}
+
+// Step 11: the state of each role in `roles` (checkNone's, in the table's order) becomes none on
+// this desk in desk.md's systems table; the rest of the page keeps its text, written with LF line
+// ends as the update writes every page.
+function recordNone(run, roles) {
+  if (!roles.length) return;
+  const text = run.read("celorus/desk.md");
+  const start = bodyStart(text);
+  const lines = text.slice(start).split("\n");
+  const shape = S.shapes();
+  for (const role of roles) {
+    const at = systemsRowAt(lines, role, shape);
+    if (at === -1) throw notStill(role);
+    lines[at] = stateMadeNone(lines[at]);
+  }
+  run.write("celorus/desk.md", text.slice(0, start) + lines.join("\n"));
+  run.notes.push(`None on this desk, recorded in the systems table: ${roles.join(", ")}.`);
+}
+
 // The views, the sent lists and every path page, as render_views rebuilds them, from the desk as
 // the update has left it. The path pages (views/tools.js pathPagesOf) are worked out first, and
 // an entry among them that is not a plain page is asked, and so refused by name, before the first
@@ -1520,9 +1627,11 @@ function retold(run, err) {
   return err;
 }
 
-function logUpdate(run, target, time, handle) {
+// The line names step 11's roles when it recorded any.
+function logUpdate(run, target, time, handle, recorded) {
   const text = run.read("celorus/log.md");
-  const entry = logEntry(time, handle, "install-desk", `updated the desk to model version ${target}`);
+  const none = recorded.length ? `, recording none on this desk: ${recorded.join(", ")}` : "";
+  const entry = logEntry(time, handle, "install-desk", `updated the desk to model version ${target}${none}`);
   run.write("celorus/log.md", withLogEntry(text, run.today, entry));
 }
 
@@ -1647,14 +1756,17 @@ function runUpdate(desk, opts, scratch) {
 }
 
 // The update's steps, on `run`.
-function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, time, handle, plan = null }) {
+// `noneOnThisDesk` lists the roles step 11 records as none on this desk; the apply's preview is
+// given the same roles, so a plan previewed with other roles is not the one it confirms.
+function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, time, handle, plan = null, noneOnThisDesk = [] }) {
+  const roles = noneOnThisDesk || [];
   refuseLinks(run.desk);
   // The up-front set, read off the confirmed plan (checkAhead).
   let upFront = null;
   if (plan !== null && plan !== undefined) {
     let fresh;
     try {
-      fresh = previewUpdate(run.desk, { modelDir, packDir, today, now, time, handle });
+      fresh = previewUpdate(run.desk, { modelDir, packDir, today, now, time, handle, noneOnThisDesk: roles });
     } catch (err) {
       // A write that stopped on the preview's copy: the update did not run (scratchStop).
       if (err instanceof UpdateStopped && typeof err.scratch === "string") {
@@ -1725,6 +1837,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
   });
   const changesList = step("renaming words", () => pending(modelDir, have, target));
   const drawn = step("flattening headers", () => drawnKinds(modelView(modelDir, packDir, run.workingLeft)));
+  const recording = step("recording none on this desk", () => checkNone(run, roles));
   // Last before the first write, so a check above that stops leaves nothing it made.
   const aheadMade = upFront === null ? [] : checkAhead(run, upFront);
 
@@ -1739,9 +1852,10 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
     step("renaming words", () => renameWords(run, modelDir, changesList));
     step("writing the model pages and settings", () => writeModelPagesAndSettings(run, modelDir, packDir));
     step("stamping the versions", () => stampVersions(run, target, packDir));
+    step("recording none on this desk", () => recordNone(run, recording));
     if (run.touched().length) {
       step("rebuilding the views", () => rebuildViews(run));
-      step("logging the update", () => logUpdate(run, target, time, handle));
+      step("logging the update", () => logUpdate(run, target, time, handle, recording));
     }
     // "Nothing is deleted" is the preview's first promise, so it is read off the desk, not said.
     where = "the check that nothing is deleted";
@@ -1766,6 +1880,8 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
     leftInPlace: [...run.leftInPlace, ...run.workingLeft],
     workingLeft: run.workingLeft,
     target,
+    // The roles step 11 recorded as none on this desk, in the table's order.
+    recorded: recording,
   };
 }
 
@@ -1774,7 +1890,8 @@ function countPages(root) {
 }
 
 // The update run on a copy of the desk (its own history, .git, left out), and what it would do,
-// with `plan`, the digest apply takes to hold the desk to this preview. A desk holding a link is
+// with `plan`, the digest apply takes to hold the desk to this preview, and `askAbout`, the roles
+// update.md asks about before showing it (askAbout). A desk holding a link is
 // refused here as the apply refuses it, so the copy is the desk as the apply will see it: no
 // link is followed into it. A pipe, a socket or a device anywhere the copy reaches is refused
 // before it, since the copy cannot copy one as a file (refuseOddEntries).
@@ -1805,8 +1922,10 @@ function previewUpdate(desk, opts) {
   return out;
 }
 
-// The preview's run on `copy`, its copy of the desk.
+// The preview's run on `copy`, its copy of the desk. `askAbout` is read off the copy before the
+// run, so every preview of one desk gives one list, whatever roles it was given.
 function previewOn(copy, inputs, rest) {
+  const asking = askAbout(copy);
   const before = countPages(path.join(copy, "celorus"));
   const result = runUpdate(copy, rest, true);
   const after = countPages(path.join(copy, "celorus"));
@@ -1814,14 +1933,14 @@ function previewOn(copy, inputs, rest) {
   const workingLeft = [...result.workingLeft];
   const left = workingLeft.map((said) => `\n${said}`).join("");
   if (!result.changed.length) {
-    return { text: `No file changes: the desk is already up to date.${left}`, changed: [], moved: {}, flags: [], pagesBefore: before, pagesAfter: after, target: result.target, plan, workingLeft };
+    return { text: `No file changes: the desk is already up to date.${left}`, changed: [], moved: {}, flags: [], pagesBefore: before, pagesAfter: after, target: result.target, plan, workingLeft, askAbout: asking };
   }
   const lines = [...result.notes];
   lines.push(
     `${count(result.changed.length, "file changes", "files change")}. Nothing is deleted: ${before} pages before, ${after} after.`,
   );
   lines.push(...result.flags.map((flag) => `Decide: ${flag}`));
-  return { text: lines.join("\n") + left, changed: result.changed, moved: result.moved, flags: result.flags, pagesBefore: before, pagesAfter: after, target: result.target, plan, workingLeft };
+  return { text: lines.join("\n") + left, changed: result.changed, moved: result.moved, flags: result.flags, pagesBefore: before, pagesAfter: after, target: result.target, plan, workingLeft, askAbout: asking };
 }
 
 module.exports = {

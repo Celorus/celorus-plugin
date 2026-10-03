@@ -67,8 +67,10 @@ function delinker(desk) {
 // What a page is drawn with: `delink` for the desk's own sentences, and `prose` for the
 // sentences the model sent, which draws them the same way and keeps, by slot, the text each
 // one shows, so render_view screens what the page says and not what was sent (a link's words
-// and a list's joined lines read only once they are drawn).
-function pageContext(desk) {
+// and a list's joined lines read only once they are drawn). `persona` is the one the page
+// speaks for, read by the render tools from the desk (lib/persona.js) and handed over; a page says
+// its `name`.
+function pageContext(desk, persona) {
   const delink = delinker(desk);
   const shown = [];
   // the same texts with each link in the sender's own words (delink.own), for the path rule
@@ -85,16 +87,17 @@ function pageContext(desk) {
       shownOwn.push([slot, texts.map((text) => delink.own(text)).join(" ")]);
     }
   };
-  return { delink, prose, sideBySide, shown, shownOwn };
+  return { delink, prose, sideBySide, shown, shownOwn, persona };
 }
 
-// A pill copies the line to say to Milan: "Milan, " and its words, or the line the row gives it.
-// A line that ends open is finished by the person, and `note` says so.
-function pill(glyph, words, line = "", note = "") {
-  const said = line || `Milan, ${words.slice(0, 1).toLowerCase()}${words.slice(1)}`;
+// A pill copies the line to say to the assistant `to`: its name, a comma, and the pill's words, or
+// the rest of the line the row gives it. A line that ends open is finished by the person, and
+// `note` says so.
+function pill(to, glyph, words, rest = "", note = "") {
+  const said = `${to}, ${rest || `${words.slice(0, 1).toLowerCase()}${words.slice(1)}`}`;
   return (
     `<button type="button" class="pill" data-say="${e(said)}"${note ? ` data-note="${e(note)}"` : ""}` +
-    ` title="Say to Milan: ${e(said)}"><span class="pg" aria-hidden="true">${e(G[glyph])}</span>` +
+    ` title="Say to ${e(to)}: ${e(said)}"><span class="pg" aria-hidden="true">${e(G[glyph])}</span>` +
     `<span class="pw">${e(words)}</span></button>`
   );
 }
@@ -137,16 +140,17 @@ function toCalendar(ctx, rows) {
       `<div class="top"><span class="from">${e(title)}</span><span class="tag">Proposal</span></div>\n` +
       `<p class="said">${ctx.delink(r.why)}</p>\n` +
       `<div class="meta"><span class="when">${e(r.why_today)}</span>${status("act", "not on the calendar")}</div>\n` +
-      `<div class="pills">${pill("add", "Add to calendar", `Milan, add the ${r.title} meeting to the calendar`)}` +
+      `<div class="pills">${pill(ctx.persona.name, "add", "Add to calendar", `add the ${r.title} meeting to the calendar`)}` +
       `${pill(
+        ctx.persona.name,
         "due",
         "Add to calendar at a time",
-        `Milan, add the ${r.title} meeting to the calendar at `,
-        "Copied. Add the time, then paste it to Milan.",
+        `add the ${r.title} meeting to the calendar at `,
+        `Copied. Add the time, then paste it to ${ctx.persona.name}.`,
       )}</div>\n` +
       `${
         i === rows.length - 1
-          ? '<p class="say">A meeting off the calendar is never recorded. A pill copies its line for Milan; with the second, add the time.</p>'
+          ? `<p class="say">A meeting off the calendar is never recorded. A pill copies its line for ${e(ctx.persona.name)}; with the second, add the time.</p>`
           : ""
       }</article>\n`;
   });
@@ -395,8 +399,8 @@ function families(ctx, rows, title = "To reach", id = "reach", kind = "", empty 
       if (say) {
         pills =
           say === "Hand it to an SDR"
-            ? pill("card", say, `Milan, assign the ${r.title} to `, "Copied. Add the SDR's name, then paste it to Milan.")
-            : pill("card", say, `Milan, ${say.slice(0, 1).toLowerCase()}${say.slice(1)} for the ${r.title}`);
+            ? pill(ctx.persona.name, "card", say, `assign the ${r.title} to `, `Copied. Add the SDR's name, then paste it to ${ctx.persona.name}.`)
+            : pill(ctx.persona.name, "card", say, `${say.slice(0, 1).toLowerCase()}${say.slice(1)} for the ${r.title}`);
         pills = `<div class="pills">${pills}</div>`;
       }
       out +=
@@ -440,6 +444,25 @@ function holes(rows = []) {
   return `${out}</ul></div></section>\n`;
 }
 
+// What a page says when a connector's rows were handed over and set aside (row E11, the live-row
+// contract, live/live.js): a refused row drops its whole role back to the desk's own count, so the
+// page reads that role as it does when its rows are not handed over, and says here that they were
+// read and left out. A line for each role, in words, never a count of rows and never a row's own
+// text; nothing at all when no role fell back. The assistant is the page's `ctx.persona.name`.
+const SET_ASIDE = { crm: "the CRM", calendar: "the calendar", mail: "the mailbox", chat: "the chat" };
+function fellBack(ctx, roles = []) {
+  if (!roles.length) return "";
+  let out = `<section class="block" id="set-aside">${head("Set aside")}\n`;
+  out += '<div class="card"><ul class="list">\n';
+  for (const role of roles) {
+    const from = e(SET_ASIDE[role]);
+    out +=
+      `<li><span class="g" aria-hidden="true">${e(G.row)}</span><div><span class="more">${e(ctx.persona.name)} read rows from ${from} and set them all aside, ` +
+      `because a row among them cannot go on a page of this desk. Where this page reads ${from}, it reads as it does when the rows are not handed over.</span></div></li>\n`;
+  }
+  return `${out}</ul></div></section>\n`;
+}
+
 // An RM's week: when, the meeting, and whether its brief is made; a brief not made says what to ask
 // for. `links` is what each meeting links to, by `<family> <start>`.
 function meetings(ctx, rows, links = {}) {
@@ -453,7 +476,7 @@ function meetings(ctx, rows, links = {}) {
       if (k.meeting) {
         act = `<a class="go" href="${e(k.meeting)}">Meeting brief<span class="sr"> for ${e(r.title)}</span><span aria-hidden="true"> \u2192</span></a>`;
       } else if (!r.ref) {
-        act = pill("card", "Make the room brief", `Milan, make the room brief for the ${r.title}`);
+        act = pill(ctx.persona.name, "card", "Make the room brief", `make the room brief for the ${r.title}`);
       }
       out +=
         `<li><span class="t">${e(when)}</span><div><b>${ctx.delink(what || r.title)}</b>` +
@@ -466,7 +489,7 @@ function meetings(ctx, rows, links = {}) {
   return `${out}</section>\n`;
 }
 
-// An RM's book moments: the family, the signal, what might fit, and the line to ask Milan for.
+// An RM's book moments: the family, the signal, what might fit, and the line to ask the assistant for.
 // `slot` names the sentences' slot, as the page's schema does (row E6: the RM console's upsell).
 function book(ctx, rows, lines = {}, slot = "lines") {
   let out = `<section class="block" id="book">${head("Grow the book", rows.length)}\n`;
@@ -485,7 +508,7 @@ function book(ctx, rows, lines = {}, slot = "lines") {
         `<p class="said">${signalLine(ctx, r.why)}</p>\n` +
         `${W.truthy(lines[r.family]) ? `<p class="subj">${ctx.prose(slot, lines[r.family])}</p>` : ""}` +
         `<div class="tags">${chips}</div>\n` +
-        `<div class="pills">${pill("card", "Write the grow-the-book line", `Milan, write the grow-the-book line for the ${r.title}`)}</div>\n` +
+        `<div class="pills">${pill(ctx.persona.name, "card", "Write the grow-the-book line", `write the grow-the-book line for the ${r.title}`)}</div>\n` +
         `</article>\n`;
     }
     out += "</div>";
@@ -529,6 +552,7 @@ module.exports = {
   families,
   exceptions,
   holes,
+  fellBack,
   meetings,
   book,
   paragraphs,

@@ -360,7 +360,8 @@ function closeAll(open) {
 // (by default the files given). Only then is each written and moved, in the order given. On a
 // refusal every spare not yet moved is taken away, and so is every folder made that is left
 // empty. Answers { written, removed, kept, unlisted }: the paths written, the leftover spares
-// removed and not, and the folders of the sweep set it could not look in.
+// removed and not, and the folders of the sweep set it could not look in. A refusal after a file
+// was moved carries those paths as `written`.
 function writeAll(root, files, targets = files.map((f) => f.rel)) {
   const made = [];
   const open = [];
@@ -404,7 +405,11 @@ function writeAll(root, files, targets = files.map((f) => f.rel)) {
     const left = [];
     for (const f of open.slice(written.length)) if (!discard(root, f.at, f.fd)) left.push(f.at);
     left.push(...unmake(root, made));
-    throw new Refusal(`${why(err)} ${ledger(written, left, swept)}`);
+    // the paths already placed ride the refusal too, for a caller that must know whether any
+    // file was (render/key.js keeps a new key once a file it sealed is on the disk)
+    const refused = new Refusal(`${why(err)} ${ledger(written, left, swept)}`);
+    refused.written = [...written];
+    throw refused;
   } finally {
     closeAll(open);
   }

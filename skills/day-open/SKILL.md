@@ -3,10 +3,10 @@ name: day-open
 description: >-
   Open the sales day from the desk workspace: what moved overnight, what is due today,
   what is on the clock. Use when someone says "open my day", "what changed", "did anyone
-  reply", "what's due today", or at the start of the working day; the Celorus session
-  bootstrap points here. Reads the desk's queues and, where the harness has them, the
-  mailbox, calendar and CRM for replies and meetings; writes today's board. Runs with no
-  Celorus account.
+  reply", "what's due today", "show my brief for tomorrow", or at the start of the working
+  day; the Celorus session bootstrap points here. Reads the desk's queues and, where the
+  harness has them, the mailbox, calendar and CRM for replies and meetings; writes today's
+  board. Runs with no Celorus account.
 ---
 
 # Open the day
@@ -34,7 +34,7 @@ they forbid, they win.
   handle as `seat`. The view is the one the seat's role is counted by (the `role` in
   `celorus/seats/<handle>.md`): `view` `brief` for a seat whose role is `rm`, `desk-head` or
   `rep`, and `team_rollup` as well for a `desk-head` seat's team. The desk's install writes a
-  seat's role as one of `rm`, `desk-head`, `operator` or `other`, and an SDR seat's is `rep`.
+  seat's role as one of `rep`, `rm`, `desk-head`, `operator` or `other`, and an SDR seat's is `rep`.
   `desk_count` has no view for an `operator` or `other` seat: for one, call no `desk_count` and
   draw no brief; work from `book_query` and the queues, and say no count for the seat.
 - Pass `systems` only when a connector's rows already come in the desk's row shape, as the
@@ -98,16 +98,89 @@ is ready. Say "update my desk" to see what changes first." Never update from day
    and people already on the desk (queued, named, in the book), read the threads in
    full, not just their headers. Connecting a source is the consent to read it. The
    scope is those accounts and never the whole mailbox.
-6. The calendar and the CRM, through their connectors when they exist: today's events
-   and the account's own rows, read in full, for the same accounts and no others.
+6. The calendar, the CRM and chat, through their connectors when they exist: today's
+   events, the account's own rows and the messages that name the account, read in full,
+   for the same accounts and no others.
 
 What matters from those reads lands on the account's page as source-tagged lines, each
 one dated and labelled with the source it came from, and removable in one operation.
 The desk's files are yours: nothing read here is uploaded, and it never reaches
 Celorus.
 
-When a connector is absent, say so in one line inside the block it would have fed, and
-list it in the board's `sources_missing`. Never invent a reply or a meeting.
+## Which sources the desk has
+
+The day's sources are the calendar, mail, the CRM and chat. Before anything is read, look
+through the tools this session holds and find each source by what a tool does, never by a
+tool's or a server's name: a tool that lists or reads calendar events is the calendar; a tool
+that searches or reads mail threads is mail; a tool that searches or reads contact, account or
+deal records is the CRM; a tool that reads channel or direct messages is chat. A connector may
+sit under a name that says nothing of what it does, and it is found all the same. The plugin
+brings none of these connectors: they are the ones this seat's harness has connected.
+
+A tool found this way is admitted as its source only when either of these holds:
+
+- The desk's systems table (below) names its connector for that source's role. The table
+  vouches for it, and it is admitted, even when its data is a stand-in.
+- The table does not name it, and it reads the seat's own account: the calendar, mail, CRM or
+  chat the seat itself connected.
+
+Never admit this plugin's own tools as a source when the table does not name them: they read the
+record or the desk, never the seat's account. Never admit a tool the table does not name when
+its own description, or its server's, says its data is synthetic, a stand-in or a demo.
+
+The systems table is read for its `connector` and for its `state`, and the uses never mix. Its
+`connector` column admits a tool: a tool whose connector the table names for the role is
+admitted, as above. Its `state` column never blocks a read: an admitted tool is read whether the
+row says `connected` or `still to connect`, since a system connected after set-up still reads
+`still to connect` there.
+
+This look comes before the table's state: an admitted tool is read, whatever the row's state
+says. When its read succeeds, the source is read. When its read fails, the source is present but
+unreadable, with the reason the connector gave, as it came.
+
+Only when the session holds no admitted tool for a source does the systems table say what the
+desk has. It is the table
+the set-up wrote at the end of `celorus/desk.md`, under `## Systems`, with the columns `role`,
+`connector` and `state`: its `connector` is the name the harness showed at set-up, or `·` where
+it showed none, and its `state` is `connected` or `still to connect`, or `none on this desk`.
+The table is what the set-up recorded; afterwards the update changes only a row's `state`, from
+`still to connect` to `none on this desk`, where the person said the firm has no such system.
+Read it for the source's role (`calendar`, `mail`, `crm` or `chat`):
+
+- A row that names a connector, `connected` or `still to connect`: the source is present but
+  unreadable, in these words: "recorded at set-up as <its name>, no tool in this session reads
+  it", with the name as the row gives it.
+- A row whose `connector` is `·` and whose `state` is `still to connect`: the desk has none.
+- A row whose `state` is `none on this desk`: the desk has none, said in its role's words alone:
+  "no calendar on this desk", "no mail on this desk", "no CRM on this desk" or "no chat on this
+  desk", with no sentence after it, so its Sources line is "- CRM: no CRM on this desk." for a
+  CRM row. The set-up or the update wrote that state only on the person's word that the firm
+  has no such system.
+- No row for the role: the desk has none.
+- No systems table in `desk.md` at all, as on a desk set up before the table, or no `desk.md`:
+  the desk has none.
+
+A source the desk has none of, other than a row `none on this desk`, is said as "no calendar on
+this desk", "no mail on this desk", "no CRM on this desk" or "no chat on this desk", followed by
+this sentence, as it is: "If the
+desk has such a system, connect it in your account's connectors; then say "check my desk
+setup" to see it listed as connected."
+
+When the table's row for the role has `·` as its `connector` and `still to connect` as its
+`state`, that sentence is followed by this sentence, as it is: "If the firm has none, say
+"update my desk" to record that." It follows no other case: not a role with no row, not a desk
+with no systems table, and never a row recorded `none on this desk`.
+
+So every source is in the state that fits it, and in no other: read; none on this desk; or
+present but unreadable, with the reason. The board's `## Sources` block (below) names the
+calendar, mail, the CRM and chat on every board, each in its state: absence is said, never left
+out. A source that is not read is also said in one line inside the block it would have fed, in
+the same words. Never say that a source the desk does not have could not be read, and never
+invent a reply or a meeting.
+
+In the board's header, `sources_read` holds the queue files and each source read (`calendar`,
+`mail`, `crm`, `chat`), and `sources_missing` holds only the sources present but unreadable. A
+source the desk has none of is in neither.
 
 ## The morning brief
 
@@ -137,8 +210,8 @@ timestamp: <now>
 date: <date>
 seat: <handle>
 opened_at: "<HH:MM>"
-sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, mail, calendar, crm]
-sources_missing: []
+sources_read: [queues/follow-ups.md, queues/supplied.md, queues/book.md, calendar, chat]
+sources_missing: [mail]
 ---
 
 # <weekday> <day> <month> <year>
@@ -147,7 +220,8 @@ sources_missing: []
 
 - <Name> replied on <date>: <subject line>. · yours · <date>
 - New names on list <list id> (<date>): <each name, in the list's order>.
-- Nothing read: no mail connector on this harness.   (when there is none)
+- Nothing read: mail present but unreadable: recorded at set-up as <its name>, no tool in this session reads it.   (when the desk has it and it cannot be read)
+- Nothing read: no mail on this desk.   (when the desk has none)
 
 ## Due today
 
@@ -158,6 +232,13 @@ sources_missing: []
 
 - <HH:MM> <event title> with <names>; page: `people/<slug>.md` where one exists.
 
+## Sources
+
+- Calendar: read.
+- Mail: present but unreadable: recorded at set-up as <its name>, no tool in this session reads it.
+- CRM: no CRM on this desk. If the desk has such a system, connect it in your account's connectors; then say "check my desk setup" to see it listed as connected.
+- Chat: read.
+
 ## Today's calls
 
 Ordered by triage.
@@ -165,6 +246,9 @@ Ordered by triage.
 ## Done
 
 ```
+
+The example's sources show each state: the calendar and chat read, mail present but
+unreadable and so in `sources_missing`, and no CRM on this desk, in neither list.
 
 Every line under "Moved overnight", "Due today" and "On the clock" is the desk's own
 knowledge and carries the register label `yours` with the date. A reply is a fact about
@@ -182,7 +266,9 @@ Then:
   `| <date> | <handle> | day | · | · | open | opened | · | day-open |`.
   The outcome says no number until a desk tool counts the day's new names, due follow-ups and
   events. Run twice in one day and the board's first three blocks are refreshed in place,
-  "Today's calls" and "Done" are left alone, and no second header row is written.
+  as is its sources block; "Today's calls" and "Done" are left alone, and no second header row
+  is written. A board written earlier with no `## Sources` block has the block added after
+  "On the clock", and its `sources_read` and `sources_missing` are set to agree with it.
 - Append one line to `celorus/log.md`, directly under today's heading `## <date>` (add it
   above the older days if missing) and above the day's earlier lines, newest first as the
   desk tools write them, with `<time>` as two-digit `HH:MM`:

@@ -29,17 +29,28 @@ changed." and stop.
    the desk safe then is this preview on a copy, which meets the same stop first, names the
    step, and ends "Nothing was changed." too, since only its copy had changed. So never skip
    it.
-3. Show the person the answer's `preview` as it came: one plain line per kind of change, then
+3. If the answer's `ask_about` names any role, ask about each of them before showing the
+   preview, all in one message, each said with the role's own word (mail, calendar, files,
+   chat, CRM, client book, product list), shown here for the CRM:
+   "The desk has its CRM down as still to connect, with nothing named. Does the firm have a CRM, or is there none on this desk?"
+   Keep only the roles the person says the firm has none of, and never guess one: a role
+   they say the firm has, or leave unanswered, stays `still to connect`. If they keep any,
+   call `update_desk` again with the same `handle`, `apply` left out, and those roles as
+   `none_on_this_desk`; that answer's preview is the one to show. Each run of the update
+   asks about each such role once, and the desk keeps no record that it asked. When
+   `ask_about` is empty, as it always is on a desk with no systems table, ask nothing.
+4. Show the person the answer's `preview` as it came: one plain line per kind of change, then
    "N files change. Nothing is deleted: X pages before, Y after.", then each thing they must
    decide, each starting "Decide:". If nothing would change, the preview is one line,
    "No file changes: the desk is already up to date.", and then
    the update ends there: nothing else runs, not even `check-desk`, which would write views
    and a log line on a desk the person was just told nothing would change. Change nothing
    until they say yes. On a yes, call `update_desk` again with the same `handle`,
-   `apply: true`, and the preview's `plan` as it came. The update then works the plan out
-   again and runs only if it is the one the person saw; if the desk changed since, it refuses,
-   changing nothing, and you preview again and ask again. Every number you say is one the tool
-   returned.
+   `apply: true`, the preview's `plan` as it came, and the same `none_on_this_desk` that
+   preview was given, or none when it was given none. The update then works the plan out
+   again and runs only if it is the one the person saw; if the desk changed since, or the
+   roles passed are not the ones that preview was given, it refuses, changing nothing, and you
+   preview again and ask again. Every number you say is one the tool returned.
 
 ## The steps
 
@@ -110,10 +121,19 @@ changed." and stop.
    the update never writes one.
 10. **Stamping the versions.** Set `model_version`, and `pack` and `pack_version` when there
     is a pack, in `desk.md`.
-11. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
+11. **Recording none on this desk.** Only for the roles passed as `none_on_this_desk`, each one
+    the person said the firm has none of when asked before the preview. In the systems table at
+    the end of `desk.md`, each such row's `state` becomes `none on this desk`; its role and its
+    blank connector stay, and nothing else in the page changes. Each role must be one the
+    preview's `ask_about` named, recorded `still to connect` with no connector named (`·`): a
+    role recorded any other way, or a desk with no systems table, stops the update before
+    anything is written. With no role passed, this step does nothing.
+12. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
     `render_views` does.
-12. **Logging the update.** Only if something changed: one line under today's heading,
+13. **Logging the update.** Only if something changed: one line under today's heading,
     `* <time> · <handle> · install-desk · updated the desk to model version <N> · yours`.
+    When step 11 recorded a role, the line names it:
+    `* <time> · <handle> · install-desk · updated the desk to model version <N>, recording none on this desk: <roles> · yours`.
 
 ## After
 
