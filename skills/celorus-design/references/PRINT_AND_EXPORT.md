@@ -4,8 +4,8 @@ How Celorus artifacts leave the screen: browser print, PDF export, and press. Ap
 
 ## Print stylesheet rules (already implemented in the templates)
 
-1. **Canvas goes white in print.** Bone `#E9E7E0` is a *screen* decision; on paper, the stock itself supplies warmth. Printing bone wastes ink and muddies text. Cards keep hairline borders instead of background tints where possible.
-2. **Petrol survives; charcoal areas shrink.** Accents, eyebrows, and rules stay petrol. Full-bleed charcoal sections (close/CTA) are reduced to a charcoal-bordered white block — a page of solid charcoal is a toner accident, not a brand moment.
+1. **Canvas goes white in print.** Cream `#EBF1EC` is a *screen* decision; on paper, the stock itself supplies the body. Printing cream wastes ink and muddies text. Cards keep hairline borders instead of background tints where possible.
+2. **Petrol survives; deep-teal areas shrink.** Accents, eyebrows, and rules stay petrol. Full-bleed charcoal sections (close/CTA) are reduced to a deep-teal-bordered white block — a page of solid deep-teal is a toner accident, not a brand moment.
 3. **Chrome is hidden:** topbar, nav, progress bar, presenter notes, interactive controls (`display:none`).
 4. **Page setup:** A4 default, 18–20mm margins, `@page` footer with page number + provenance line. US Letter tolerated (content column is narrower than both).
 5. **No mid-component breaks:** `break-inside: avoid` on tiles, callouts, table rows, stat groups. Headings carry `break-after: avoid`.
@@ -29,7 +29,7 @@ DOCX/XLSX/PPTX carry brand font *names*; machines without the fonts substitute s
 | Token | Hex | CMYK approx |
 |---|---|---|
 | Petrol `accent` | `#155A6B` | C80 M16 Y0 K58 |
-| Charcoal (text) | `#0B0B0D` | K100 (small text) / rich black C30 M20 Y20 K100 (areas) |
-| Bone `canvas` | `#E9E7E0` | C0 M1 Y4 K9 — or unprinted warm stock, preferred |
+| Deep teal (text on dark, dark surfaces) | `#051212` | K93 (small text) / rich black C30 M20 Y20 K100 (areas) |
+| Cream `canvas` | `#EBF1EC` | C2 M0 Y2 K5 — or unprinted stock, preferred |
 
 No Pantone match is on file yet — flagged in RISKS.md. Petrol is the only color where a press mismatch is a brand failure; get it proofed first.

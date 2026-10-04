@@ -101,20 +101,20 @@
 
 
 /* ── SHARED COLLATERAL CHROME ─────────────────────────────────────────
-   The charcoal topbar + eyebrow→h2 rhythm that make these read as the
-   same family as report.html / deck.html. Charcoal is reserved for
-   weight (the masthead); bone canvas everywhere else. */
+   The deep-teal topbar + eyebrow→h2 rhythm that make these read as the
+   same family as report.html / deck.html. Deep teal is reserved for
+   weight (the masthead); cream canvas everywhere else. */
 
 .coll-topbar{
   display:flex;align-items:center;justify-content:space-between;
   background:var(--semantic-color-bg-inverse);color:var(--semantic-color-fg-on-inverse);
   padding:15px var(--semantic-space-gutter);
-  border-bottom:1px solid var(--primitive-color-charcoal-850);
+  border-bottom:1px solid var(--primitive-color-deep-teal-850);
 }
 .coll-topbar .brand{display:flex;align-items:center;gap:13px}
-/* WORDMARK — bg.inverse FLIPS (charcoal in light, bone in dark), so the mark
+/* WORDMARK — bg.inverse FLIPS (deep teal in light, cream in dark), so the mark
    has to flip with it. Ship both sanctioned assets and swap on the theme:
-   mono-white on charcoal (18.0:1), primary/petrol on bone (6.3:1). A single
+   mono-white on deep teal (17:1), primary/petrol on cream (6.9:1). A single
    white mark scored 1.13:1 in dark, i.e. invisible.
    Sizing MUST live in a class and never inline on the <img> — an inline
    display:block outranks the display:none below and renders BOTH marks.
@@ -156,7 +156,7 @@
   letter-spacing:.02em;text-transform:none;font-size:var(--primitive-fontSize-xs);
 }
 
-/* Scope chip — used in headers to declare filing scope (form, FY, subject). */
+/* Scope chip. Used in headers to declare the scope of the record (form, FY, subject). */
 .scope-chip{
   display:inline-flex;align-items:center;gap:6px;
   background:var(--component-chip-outline-bg);border:1px solid var(--component-chip-outline-border);
@@ -211,16 +211,16 @@
   outline-offset:var(--component-focus-ring-offset);
 }
 /* On the inverse surface the icon takes the on-inverse accent, which flips
-   with the surface (petrol.300 on charcoal, petrol.600 on bone). Binding this
-   to the petrol.300 primitive froze it at 2.30:1 once the surface went bone. */
+   with the surface (petrol.300 on deep teal, petrol.600 on cream). Binding this
+   to the petrol.300 primitive froze it at 2.30:1 once the surface went cream. */
 .on-dark .cite-ic{border-color:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-accent-on-inverse);background:transparent}
 .on-dark .cite-ic:hover{background:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-bg-inverse)}
 
 
 /* ── 3. CITATION CARD POPOVER ─────────────────────────────────────────
    The modal a cite-ic / cite-chip opens. Carries the full contract:
-   what-it-shows + Filing(form) · Financial year · Section · SRN · Page ·
-   "open source filing" link. Metadata values are mono (data face).
+   what-it-shows + Record(form) · Financial year · Section · SRN · Page ·
+   a link that opens the source record. Metadata values are mono (data face).
    Matches the CITE-01 card design (form · FY · what-it-shows · SRN · page).
    Screen-only; print hides it. */
 .cite-modal{
@@ -319,7 +319,7 @@
    delta + inline cite. Four-up on desktop, two-up ≤720px. The value is
    serif (weight); the delta is a small pill; the cite icon rides the
    value so number and source stay together. `.kfi-grid.on-dark` is the
-   charcoal-weight variant (dark KFI strip). */
+   deep-teal-weight variant (dark KFI strip). */
 .kfi-grid{
   display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
   background:var(--line);border:1px solid var(--line);border-radius:var(--semantic-radius-card-lg);
@@ -340,16 +340,16 @@
 .delta.is-turn{color:var(--semantic-color-fg-on-accent);background:var(--semantic-color-status-good)}
 .delta.is-flat{color:var(--muted);background:var(--semantic-color-bg-panel)}
 .delta.is-na{color:var(--primitive-color-ink-300);background:var(--semantic-color-bg-well)}
-/* Charcoal-weight KFI strip (guide: charcoal reserved for weight).
-   This band is deliberately ALWAYS charcoal — unlike .coll-topbar, it is not a
+/* Deep-teal-weight KFI strip (guide: deep teal reserved for weight).
+   This band is deliberately ALWAYS deep-teal — unlike .coll-topbar, it is not a
    contrast band, so it does not flip. That makes the dark-ink primitives below
-   correct in both themes. It previously mixed the two models: a fixed charcoal
-   grid holding tiles bound to bg.inverse, so in dark the tiles turned BONE
-   inside a charcoal frame and every label on them fell to ~1.2:1.
+   correct in both themes. It previously mixed the two models: a fixed deep-teal
+   grid holding tiles bound to bg.inverse, so in dark the tiles turned CREAM
+   inside a deep-teal frame and every label on them fell to ~1.2:1.
    Rule of thumb: a surface that flips takes semantics, a surface that is
    fixed takes primitives. Never mix them on one component. */
-.kfi-grid.on-dark{background:var(--primitive-color-charcoal-850);border-color:var(--primitive-color-charcoal-950)}
-.kfi-grid.on-dark .kfi-tile{background:var(--primitive-color-charcoal-950)}
+.kfi-grid.on-dark{background:var(--primitive-color-deep-teal-850);border-color:var(--primitive-color-deep-teal-950)}
+.kfi-grid.on-dark .kfi-tile{background:var(--primitive-color-deep-teal-950)}
 .kfi-grid.on-dark .kt-label{color:var(--primitive-color-dark-ink-300)}
 .kfi-grid.on-dark .kt-value{color:var(--primitive-color-petrol-300)}
 .kfi-grid.on-dark .kt-value .kt-unit{color:var(--primitive-color-dark-ink-400)}
@@ -426,7 +426,7 @@
      on filed figures, not itself filed. `title` should name the formula.
 
    .c-as-filed — the scale note carried next to filed values:
-     "as filed (INR Lakh)". Makes the filing's own rounding explicit so a
+     "as filed (INR Lakh)". Makes the record's own rounding explicit so a
      reader never mistakes lakh for crore. */
 .c-not-available{
   display:inline-flex;align-items:center;gap:6px;
@@ -458,7 +458,7 @@
 /* ── 10. PERIOD-COLUMN TABLE ──────────────────────────────────────────
    Financial statement table with period columns (FY 2023-24 / FY 2022-23
    headers), right-aligned mono numbers, group/sub/total row treatments,
-   and a per-row cite column so every line traces to its filing. Negative
+   and a per-row cite column so every line traces to its source record. Negative
    values use the bad token; the not-available state uses .c-not-available
    inline (never a zero placeholder). */
 .period-table{width:100%;border-collapse:collapse;font-size:var(--primitive-fontSize-sm);margin-top:4px}
@@ -489,7 +489,7 @@
 /* ── 11. ANNEXURE COLLAPSIBLE ─────────────────────────────────────────
    A <details> wrapper around a full statement table. Collapsed by
    default to keep the report scannable; a mono source tag on the summary
-   names the filing. Print forces it open (annexures must print).*/
+   names the source record. Print forces it open (annexures must print).*/
 details.annexure{
   margin-top:12px;border:1px solid var(--line);border-radius:var(--semantic-radius-card);
   overflow:hidden;background:var(--paper);
@@ -511,7 +511,7 @@ details.annexure .ann-inner{padding:6px 15px 14px}
 
 
 /* ── 12. EVENT-TIMELINE ROW ───────────────────────────────────────────
-   A dated event with a form chip (PAS-3 / MGT-7 / AOC-4), a description,
+   A dated event with a form chip naming the record's form, a description,
    and a cite — the "event spine" for cap-table capital movements. The
    date is mono; the form chip is petrol-soft; a quiet left rule threads
    the rows into a timeline. */
@@ -533,6 +533,9 @@ details.annexure .ann-inner{padding:6px 15px 14px}
   letter-spacing:.03em;padding:2px 8px;border-radius:5px;font-family:var(--mono);white-space:nowrap;
   color:var(--brand-700);background:var(--semantic-color-accent-soft);border:1px solid var(--semantic-color-accent-soft-border);
 }
+/* .is-good is the ruled spelling for new markup; the legacy alias grouped below it
+   must keep working: external consumers ship their own markup against this stylesheet. */
+.form-chip.is-good,
 .form-chip.is-mgt7{color:var(--semantic-color-status-good-text);background:var(--semantic-color-status-good-bg);border-color:var(--semantic-color-status-good)}
 .form-chip.is-neutral{color:var(--muted);background:var(--semantic-color-bg-panel);border-color:var(--line)}
 
@@ -587,7 +590,7 @@ details.annexure .ann-inner{padding:6px 15px 14px}
 .fb-note[hidden]{display:none}
 
 /* Feedback tray — a sticky panel that shows accumulated marks + copy /
-   download actions. Charcoal so it reads as system chrome, not content. */
+   download actions. Deep teal so it reads as system chrome, not content. */
 .fb-tray{
   position:sticky;bottom:0;z-index:var(--primitive-zIndex-sticky);
   background:var(--semantic-color-bg-inverse);color:var(--semantic-color-fg-on-inverse);
@@ -605,8 +608,8 @@ details.annexure .ann-inner{padding:6px 15px 14px}
   background:transparent;border:1px solid var(--semantic-color-border-inverse-strong);
   color:var(--semantic-color-fg-on-inverse);
 }
-/* Hover must lift off whichever surface the tray currently is: charcoal in
-   light, bone in dark. A fixed charcoal here went dark-on-bone in dark. */
+/* Hover must lift off whichever surface the tray currently is: deep teal in
+   light, cream in dark. A fixed deep-teal here went dark-on-cream in dark. */
 .fb-tray-btn:hover{background:var(--semantic-color-bg-inverse-raised)}
 .fb-tray-btn.is-primary{background:var(--semantic-color-accent-on-inverse);border-color:var(--semantic-color-accent-on-inverse);color:var(--semantic-color-bg-inverse)}
 .fb-tray-btn:focus-visible{

@@ -35,25 +35,25 @@
   }
 
   /**
-   * Ordinal palette for categorical series (max 6). Petrol first, then warm
-   * neutrals from the ink/bone ramp so a rainbow never happens — this is a
-   * one-hue-family system, not a "distinct color per category" system.
-   * Order chosen for max perceptual separation within the family:
+   * Ordinal palette for categorical series (max 6). Palette of 2026-09-28:
+   * petrol leads, orange second, then the lighter petrol, blue, a neutral,
+   * and tan last (tan is light-fragile — see its token description). Order
+   * chosen for max perceptual separation:
    *   1. petrol.600 (primary accent)
-   *   2. ink.700 (charcoal-adjacent neutral)
+   *   2. orange.500 (secondary accent)
    *   3. petrol.300 (dark-legible petrol, reads as a lighter teal in light mode)
-   *   4. bone.400 (warm stone neutral)
-   *   5. petrol.800 (deepest petrol)
-   *   6. ink.400 (mid warm neutral)
+   *   4. blue.base (UI-safe both themes)
+   *   5. ink.700 (charcoal-adjacent neutral)
+   *   6. tan.base (highlight fill; weak on light, strong on dark)
    */
   function celorusChartPalette() {
     return [
       cssVar('--primitive-color-petrol-600'),
-      cssVar('--primitive-color-ink-700'),
+      cssVar('--primitive-color-orange-500', '--primitive-color-petrol-400'),
       cssVar('--primitive-color-petrol-300'),
-      cssVar('--primitive-color-bone-400'),
-      cssVar('--primitive-color-petrol-800'),
-      cssVar('--primitive-color-ink-400'),
+      cssVar('--primitive-color-blue-base', '--primitive-color-petrol-200'),
+      cssVar('--primitive-color-ink-700'),
+      cssVar('--primitive-color-tan-base', '--primitive-color-bone-400'),
     ];
   }
 
@@ -224,10 +224,11 @@
   /**
    * ACCESSIBILITY NOTE — categorical color (read before using this palette)
    * -------------------------------------------------------------------
-   * This is a one-hue-family palette (petrol + warm neutrals), by design —
-   * PHASE0 personality lock forbids a rainbow accent system. That means
-   * several series sit close together in hue and can be hard to tell apart
-   * for users with color vision deficiency, or at a glance for anyone.
+   * The palette is now multi-hue (petrol + orange + blue + tan, with one
+   * neutral) — the palette adopted 2026-09-28. The hues sit further apart
+   * than the old one-hue family, but color alone is still not an encoding:
+   * tan is light-fragile, and adjacent series can still blur
+   * for users with color vision deficiency.
    * Do NOT encode meaning by hue alone. Always pair color with one of:
    *   - Direct labeling: label series at the line/bar end or in a visible
    *     legend with text, not just a color swatch.

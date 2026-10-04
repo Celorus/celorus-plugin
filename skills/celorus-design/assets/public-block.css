@@ -3,22 +3,22 @@
  * marketing/public/ templates. Every color derives from tokens.json primitives;
  * gate: tools/check-public-block.mjs. */
 :root {
-  --public-ground-daylight: #E9E7E0; /* bone200=#E9E7E0 */
-  --public-ground-signal: #0B0B0D; /* charcoal950=#0B0B0D */
+  --public-ground-daylight: #EBF1EC; /* bone200=#EBF1EC */
+  --public-ground-signal: #051212; /* charcoal950=#051212 */
   --public-accent-daylight: #155A6B; /* petrol600=#155A6B */
   --public-accent-signal: #3FA6BB; /* petrol300=#3FA6BB */
   --public-ink: #111111; /* ink900=#111111 */
   --public-ink-sub: #4A4A48; /* ink700=#4A4A48 */
   --public-ink-label: #686866; /* ink500=#686866 */
   --public-ink-foot: #6C675B; /* ink400=#6C675B */
-  --public-dark-ink: #F2F2F0; /* darkInk0=#F2F2F0 */
-  --public-dark-sub: #A8A8AC; /* darkInk200=#A8A8AC */
-  --public-dark-prov: #888885; /* darkInk300=#888885 */
-  --public-paper-line: #C9C6BB; /* bone400=#C9C6BB */
-  --public-warmwhite: #F5F5F2; /* bone50=#F5F5F2 */
+  --public-dark-ink: #F0F4F1; /* darkInk0=#F0F4F1 */
+  --public-dark-sub: #A6B3AE; /* darkInk200=#A6B3AE */
+  --public-dark-prov: #86928D; /* darkInk300=#86928D */
+  --public-paper-line: #C3CEC3; /* bone400=#C3CEC3 */
+  --public-warmwhite: #F5F9F5; /* bone50=#F5F9F5 */
   --public-foot-line-dark: rgba(255,255,255,.12); /* bone0=#FFFFFF */
   --public-mesh: radial-gradient(42% 55% at 20% 28%, rgba(21,90,107,.60), transparent 70%), radial-gradient(40% 52% at 84% 20%, rgba(63,166,187,.30), transparent 68%), radial-gradient(52% 60% at 70% 84%, rgba(14,63,75,.62), transparent 72%), radial-gradient(30% 42% at 8% 92%, rgba(63,166,187,.16), transparent 70%); /* petrol600=#155A6B petrol300=#3FA6BB petrol800=#0E3F4B petrol300=#3FA6BB */
-  --public-vignette: radial-gradient(130% 100% at 50% -10%, transparent 42%, rgba(11,11,13,.72) 100%); /* charcoal950=#0B0B0D */
+  --public-vignette: radial-gradient(130% 100% at 50% -10%, transparent 42%, rgba(5,18,18,.72) 100%); /* charcoal950=#051212 */
   --public-glow-text: 0 0 30px rgba(63,166,187,.55), 0 0 64px rgba(63,166,187,.24); /* petrol300=#3FA6BB petrol300=#3FA6BB */
   --public-grain-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   --public-display-1: 160px;
