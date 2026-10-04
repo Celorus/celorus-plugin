@@ -100,6 +100,36 @@ topbar rows in the missing half, reporting "51 pairs passed" the whole time.
 5. **Blind spots are declared** — a "?" value ships with an enable action, never as an
    unexplained gap.
 
+Rules 6 to 13 were taken from outside design skills on 2026-10-04 (D43 records what was
+taken and what was refused). They bind the same way.
+
+6. **Button labels stay on one line** at desktop width. Shorten the label before you
+   shrink the type.
+7. **One label per intent.** Two controls on one page that do the same thing carry the
+   same words.
+8. **Re-read every visible string before it ships**: headings, labels, buttons, captions,
+   alt text, error messages. Rewrite anything ungrammatical, anything whose referent is
+   unclear, and anything that reads clever instead of plain (`brand/VOICE.md`).
+9. **Every animation has a reason**: hierarchy, sequence, feedback or a change of state.
+   No reason, no animation. Duration comes from the motion tokens
+   (`--semantic-motion-duration-fast` 80ms, `-quick` 120ms, `-base` 200ms, `-slow` 320ms)
+   and easing from `--semantic-motion-easing-{standard,out,in}`. The reduced-motion rule
+   in the foundation block stays in force.
+10. **Design every state of an interactive element**: rest, hover, focus, disabled,
+    loading, error and empty. A state left to the browser default is a gap, not a design.
+11. **The browser's own parts take tokens**: text selection, the text caret, scrollbars,
+    the focus ring, link underline offset, and tabular numerals
+    (`font-variant-numeric: tabular-nums`) in every column of numbers. The foundation
+    block ships the focus ring today. Until it ships the rest, the maker sets them from
+    semantic tokens.
+12. **Self-checking is bounded.** One inspection round that covers both themes and both
+    widths (desktop, and narrow below the 820px `md` breakpoint), one batch of fixes, at
+    most one confirming round. This binds a maker's own checking. Lane review is
+    unchanged.
+13. **Spacing rhythm.** More space above a heading than below it: a section opens on the
+    60px section space (`--semantic-space-section`) and its h2 keeps 8px beneath. Body
+    text runs 65 to 75 characters a line; cap prose blocks with a `max-width` in `ch`.
+
 ## Running it
 
 ```bash

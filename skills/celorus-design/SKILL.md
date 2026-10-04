@@ -240,8 +240,9 @@ website is the SOURCE of this register system and does not change.
 
 ## Snapshot provenance & regeneration
 
-The bundled snapshot was cut from `Celorus/design-system` on **25 Aug 2026** (skill v1.7 —
-`celorus-deck-builds.js` bundled + the VOICE.md re-sync that `tools/check-skill-sync.mjs` now
+The bundled snapshot was cut from `Celorus/design-system` on **04 Oct 2026** (skill v1.8:
+COMPOSITION rules 6 to 13 and the self-check short forms below, D43; v1.7 bundled
+`celorus-deck-builds.js` + the VOICE.md re-sync that `tools/check-skill-sync.mjs` now
 gates; v1.6 added consumer-contract gates on both collateral selectors and foundation tokens,
 corrected 23-reader census; v1.5 added the on-inverse token family + two-asset wordmark rule;
 see step 7/7a):
@@ -285,4 +286,16 @@ directly. Full single-source sync law: `kit/README.md`.
   `assets/embedded-fonts.css`; PDF/office paths use the vendored `brand/fonts/` TTFs.
 - Public-profile assets follow the Public register section: correct register per
   `registers.json`, the shared grammar, provenance foot, no photography.
+- Every visible string re-read: plain, grammatical, clear referents. Button labels on one
+  line at desktop width; one label per intent.
+- Every interactive element has all its states designed: rest, hover, focus, disabled,
+  loading, error, empty. Selection, caret, scrollbars, focus ring and underline offset take
+  tokens; number columns use tabular numerals.
+- Every animation has a reason (hierarchy, sequence, feedback, state change) and uses the
+  motion tokens (80ms to 320ms).
+- More space above a heading than below it; body text 65 to 75 characters a line.
+- Check once, both themes and both widths; fix in one batch; confirm at most once more.
+- Where the `web-design-guidelines` skill is available, run it on app UI and HTML pages after
+  building. This system wins on heading case, date and number formats, and first-person
+  taglines.
 - Would it sit next to another Celorus artifact and read as the same company? If unsure, fix.

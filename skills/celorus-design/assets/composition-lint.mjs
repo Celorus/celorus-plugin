@@ -140,8 +140,8 @@ function lintFile(path) {
     "tier-1 hosted artifact without embedded brand fonts (inline tokens/dist/embedded-fonts.css — CSP blocks font CDNs)");
 
   // WORDMARK vs THEME. The topbar/hero sits on bg.inverse, which is deep teal in
-  // light and CREAM in dark. celorus-mono-white.svg is a fixed #F5F5F2 asset, so
-  // on a surface that flips it drops to 1.05:1 — invisible — while every text
+  // light and CREAM in dark. celorus-mono-white.svg is a fixed #F0F4F1 asset (D44), so
+  // on a surface that flips it drops to 1.03:1 — invisible — while every text
   // token around it flips correctly and the page still lints clean. If a file
   // can flip (declares the bridge) and ships the white mark, it must also ship
   // the light-surface mark and swap them on [data-theme]. Found 2026-08-10;
@@ -153,7 +153,7 @@ function lintFile(path) {
     report("wordmark",
       !usesWhiteMark || !canFlip || hasCounterpart,
       "white wordmark (celorus-mono-white.svg) on a theme-flipping surface with no light-surface counterpart — " +
-      "bg.inverse turns CREAM in dark and the mark vanishes (1.05:1). Ship celorus-primary.svg too and swap on [data-theme]; " +
+      "bg.inverse turns CREAM in dark and the mark vanishes (1.03:1). Ship celorus-primary.svg too and swap on [data-theme]; " +
       "keep the sizing in a class, never inline on the <img> (an inline display beats display:none and shows both).");
   }
 
