@@ -138,7 +138,12 @@ The `celorus-data` server exposes three tools for retrieval:
   warning_messages[], provenance }`; a **relationship** (a connection to
   another party — a holding, a directorship) carries
   `{ counterparty_subject_id, counterparty_canonical_name, rel_type,
-  role_detail, valid_from, valid_to, raw_context, provenance }`. Each row's
+  role_detail, valid_from, valid_to, raw_context, provenance }`.
+  `counterparty_canonical_name` is `null` when the counterparty has no name on
+  record (rare) — render it as "name not on record", never as a blank or a
+  guess; on a charge row whose counterparty is the LENDER (`rel_type`
+  `CHARGE_HELD_BY`) and whose lender is disclosed, name it by `charge.holder_name`
+  instead, said as printed on the charge. Each row's
   `provenance` is `{ doc_id, srn, section_kind, section_id, page_start,
   page_end, cite_url }`. A subdomain with none of either simply carries an
   empty `events[]`/`relationships[]` — honest, not a gap. Weave in what's

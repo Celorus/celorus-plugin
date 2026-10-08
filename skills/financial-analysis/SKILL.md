@@ -112,6 +112,9 @@ narrative pre-compiled and pre-cited. Every tool returns an envelope with a
 
 `resolve_subject`'s `data` is a **dict** (one object: `subject_id`,
 `canonical_name`, plus `candidates[]` on `clarify`). Read its fields directly.
+`canonical_name` — on a proceed and on every candidate — is `null` only when the
+entity has no name on record anywhere (rare); say "no name on record" then, never
+invent one.
 
 `resolve_subject`'s envelope may also carry a **top-level** `compiled_knowledge`
 field (beside `data`, never inside it):
@@ -152,7 +155,11 @@ change) carries `{ event_type, event_date, parties, terms, confidence,
 warnings[], warning_messages[], provenance }`. A **relationship** (a connection
 to another party — a holding, a directorship) carries
 `{ counterparty_subject_id, counterparty_canonical_name, rel_type, role_detail,
-valid_from, valid_to, raw_context, provenance }`. Both cite exactly like a
+valid_from, valid_to, raw_context, provenance }`. `counterparty_canonical_name`
+is `null` when the counterparty has no name on record (rare) — render it as
+"name not on record", never as a blank or a guess; on a charge row whose counterparty is the LENDER (`rel_type`
+`CHARGE_HELD_BY`) and whose lender is disclosed, name it by `charge.holder_name`
+instead, said as printed on the charge. Both cite exactly like a
 signal or a section. **A subdomain with none of either simply carries an empty
 `events[]`/`relationships[]` — that is honest, not a gap, and is never called
 out** (see *Weaving in events and relationships* below). Sections, events and

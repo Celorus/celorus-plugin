@@ -244,7 +244,9 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
 - **`stop`** (no such subject — do not invent one).
 
 `resolve_subject`'s `data` is a **dict**: `subject_id`, `canonical_name`, plus
-`candidates[]` on `clarify`. Use the `subject_id` for the next call.
+`candidates[]` on `clarify`. `canonical_name` — on a proceed and on every
+candidate — is `null` only when the entity has no name on record anywhere (rare);
+say "no name on record" then, never invent one. Use the `subject_id` for the next call.
 
 `get_captable(subject_id, view="all")` returns `data` as a **list of view
 objects**, one per view, each self-describing its own `view` id and `status`
