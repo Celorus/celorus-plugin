@@ -53,6 +53,30 @@ On Claude Code the desk announces itself when a session starts. Everywhere else,
 
 Not sure where to start? Ask what Celorus can do.
 
+<!-- entitled-accounts:begin -->
+### Entitled accounts
+
+For asset and wealth management firms, and any desk whose work turns on people as well as
+companies, an entitled account adds:
+
+- **Leads.** Find more of whom you sell to. Celorus reads public listings about people, such
+  as committee and trust seats, business lists, alumni and industry bodies and professional
+  registers, and gives each lead its signal and date. Every lead carries the source it came
+  from.
+- **Roles and holdings.** On a person's profile: the director and key managerial roles they
+  hold, and the shares they hold in those companies, as the record states them. Each line
+  has its company and source, and its date where the record gives one. Old roles and
+  holdings are marked stale.
+
+A figure that is not on the record reads "not available". We never estimate one.
+
+Entitled access is off by default. Celorus switches it on one account at a time, after the
+desk signs the entitlement terms.
+
+What we hold about people, and how anyone can ask, correct, object or be removed: write to
+grievance@celorus.com.
+<!-- entitled-accounts:end -->
+
 ## The honesty contract
 
 - **Read, never invent.** Every record figure comes from a source record; every web line
