@@ -3,12 +3,12 @@
 One page. For anyone — person or agent — writing copy that carries the Celorus name.
 
 > **The thread lives upstream, not here.** The one paragraph that generates every
-> Celorus decision (the brand thread, ratified 2026-07-28) is **§0 of
-> `celorus-os/17_Content_Hub/00_SPINE.md`** — founder-private, so it is referenced
-> here rather than copied, and it is not duplicated in this repo. Read it before
-> writing anything that carries the name; when a rule below does not settle a
-> question, the question to ask is *does it hold the thread?* The one-liner is
-> **"Celorus is the machinery around the person."**
+> Celorus decision (the brand thread, ratified 2026-07-28) is kept in Celorus's
+> private content hub, so it is referenced here rather than copied, and it is not
+> duplicated in this repo. Writers inside Celorus read it before writing anything
+> that carries the name; everyone else works from the rules on this page. When a
+> rule below does not settle a question, the question to ask is *does it hold the
+> thread?* The one-liner is **"Celorus is the machinery around the person."**
 
 ## The stance
 

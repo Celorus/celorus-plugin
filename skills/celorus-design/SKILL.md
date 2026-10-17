@@ -1,6 +1,6 @@
 ---
 name: celorus-design
-description: Apply the Celorus design language when creating ANY Celorus-branded artifact — HTML pages, reports, decks, presentations, dashboards, status pages, forms, Word/DOCX documents, Excel/XLSX spreadsheets, PDFs, PPTX, banners, social images, emails, one-pagers, app UI, charts, or plugin views — internal or external. Triggers include - make/create/build/draft a Celorus report, dashboard, deck, doc, letter, spreadsheet, page, mockup, or any collateral for Celorus. Enforces token-bound styles (petrol/bone/charcoal), WCAG AA, provenance footers, honesty contract on data, and operator voice.
+description: Apply the Celorus design language when creating ANY Celorus-branded artifact — HTML pages, reports, decks, presentations, dashboards, status pages, forms, Word/DOCX documents, Excel/XLSX spreadsheets, PDFs, PPTX, banners, social images, emails, one-pagers, app UI, charts, or plugin views — internal or external. Triggers include - make/create/build/draft a Celorus report, dashboard, deck, doc, letter, spreadsheet, page, mockup, or any collateral for Celorus. Enforces token-bound styles (cream canvas, petrol primary, orange secondary, deep teal), WCAG AA, provenance footers, honesty contract on data, and operator voice.
 ---
 
 # Celorus Design Language
@@ -9,10 +9,9 @@ Celorus artifacts must be recognizably one family: **cool, institutional, audit-
 Cream canvas `#EBF1EC` (never pure white at page level), petrol `#155A6B` as the PRIMARY accent
 (`#3FA6BB` on dark surfaces) with orange `#DA6925` the secondary accent, used sparingly
 (text on light: `#AD4F0D`; orange.500 is graphics/UI only on light). Tan `#C99963` and
-blue `#568ABE` live in charts and highlights only. Two mist greys carry the named blocks: the
-light mist `#CFDADA` for muted structural headers (product and card name blocks; petrol.700
-text) and the deep mist `#95C4C1` for small attention blocks only (chips and pills; deep-teal
-text). Deep teal `#051212` reserved for
+blue `#568ABE` live in charts and highlights only. The pale sea `#E3EEF0` (`block.muted`, D50) carries the structural blocks (KFI
+tiles, quote blocks, verdict bands, card-name headers; petrol.700 text) and the deep mist
+`#95C4C1` the small attention blocks only (chips and pills; deep-teal text). Deep teal `#051212` reserved for
 moments of weight, serif headings (Source Serif 4), sans body (IBM Plex Sans), mono data
 (IBM Plex Mono), quiet borders, no gradients, no third accent, no emoji as icons.
 Borders are quiet infrastructure. Nothing shouts. (Palette adopted 2026-09-28. Bound values
@@ -240,7 +239,9 @@ website is the SOURCE of this register system and does not change.
 
 ## Snapshot provenance & regeneration
 
-The bundled snapshot was cut from `Celorus/design-system` on **04 Oct 2026** (skill v1.8:
+The bundled snapshot was cut from `Celorus/design-system` on **05 Oct 2026** (skill v1.9:
+the front matter description names the D42 palette, cream canvas, petrol primary, orange
+secondary and deep teal, in place of the retired bone and charcoal; v1.8:
 COMPOSITION rules 6 to 13 and the self-check short forms below, D43; v1.7 bundled
 `celorus-deck-builds.js` + the VOICE.md re-sync that `tools/check-skill-sync.mjs` now
 gates; v1.6 added consumer-contract gates on both collateral selectors and foundation tokens,

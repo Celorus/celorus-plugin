@@ -61,6 +61,51 @@
   --primitive-color-traffic-red: #FF5F57;
   --primitive-color-traffic-amber: #FFBD2E;
   --primitive-color-traffic-green: #28CA41;
+  --primitive-color-sky-50: #F7FBFB;
+  --primitive-color-sky-100: #EDF5F6;
+  --primitive-color-sky-200: #E2EFF1;
+  --primitive-color-sky-300: #C6E0E6;
+  --primitive-color-sky-400: #A8D0DA;
+  --primitive-color-spruce-300: #70887E;
+  --primitive-color-spruce-500: #4C6B63;
+  --primitive-color-spruce-700: #2A4640;
+  --primitive-color-spruce-900: #0D211D;
+  --primitive-color-sea-200: #98CDC9;
+  --primitive-color-sea-300: #55AFBA;
+  --primitive-color-sea-400: #2C8B98;
+  --primitive-color-sea-500: #177585;
+  --primitive-color-sea-600: #0F5F6F;
+  --primitive-color-sea-700: #0A4B59;
+  --primitive-color-sea-tint-soft: #E3EEF0;
+  --primitive-color-moss-300: #BCCB8E;
+  --primitive-color-moss-400: #A2B36D;
+  --primitive-color-moss-600: #758B4D;
+  --primitive-color-moss-700: #5D7340;
+  --primitive-color-evergreen-300: #84A693;
+  --primitive-color-evergreen-500: #42705D;
+  --primitive-color-evergreen-700: #285040;
+  --primitive-color-evergreen-900: #14332A;
+  --primitive-color-heather-300: #D2A7B7;
+  --primitive-color-heather-500: #AC6781;
+  --primitive-color-heather-700: #884861;
+  --primitive-color-heather-tint-soft: #F5EAEF;
+  --primitive-color-sun-base: #F5D489;
+  --primitive-color-cloud-base: #FBFDFD;
+  --primitive-color-rock-200: #C7C2B8;
+  --primitive-color-rock-300: #A9A49B;
+  --primitive-color-rock-400: #8B867E;
+  --primitive-color-rock-500: #6E6A64;
+  --primitive-color-dusk-200: #D9D2E4;
+  --primitive-color-dusk-300: #BFB4D2;
+  --primitive-color-dusk-400: #A394BE;
+  --primitive-color-abyss-300: #4A7A8F;
+  --primitive-color-abyss-500: #2E5A6E;
+  --primitive-color-abyss-700: #1E4253;
+  --primitive-color-snow-100: #F2F5F7;
+  --primitive-color-snow-300: #DCE4EB;
+  --primitive-color-slate-600: #4A5560;
+  --primitive-color-dawn-200: #F0E2D4;
+  --primitive-color-dawn-300: #E4CBB6;
   /* primitive · font */
   --primitive-font-serif: "Source Serif 4", Georgia, serif;
   --primitive-font-sans: "IBM Plex Sans", system-ui, sans-serif;
@@ -137,6 +182,8 @@
   --primitive-radius-md: 11px;
   --primitive-radius-lg: 13px;
   --primitive-radius-xl: 16px;
+  --primitive-radius-2xl: 20px;
+  --primitive-radius-3xl: 28px;
   --primitive-radius-pill: 999px;
   /* primitive · shadow */
   --primitive-shadow-none: none;
@@ -169,7 +216,7 @@
   /* semantic · color */
   --semantic-color-bg-canvas: #EBF1EC;
   --semantic-color-bg-sheet: #F5F9F5;
-  --semantic-color-bg-paper: #FFFFFF;
+  --semantic-color-bg-paper: #F7FBFB;
   --semantic-color-bg-panel: #EEF3EF;
   --semantic-color-bg-well: #ECF2ED;
   --semantic-color-bg-inverse: #051212;
@@ -183,7 +230,7 @@
   --semantic-color-fg-on-inverse: #F0F4F1;
   --semantic-color-fg-on-inverse-muted: #D2DAD6;
   --semantic-color-fg-on-inverse-faint: #86928D;
-  --semantic-color-border-default: #DDE6DD;
+  --semantic-color-border-default: #C6E0E6;
   --semantic-color-border-strong: #C3CEC3;
   --semantic-color-border-inverse: rgba(255,255,255,0.08);
   --semantic-color-border-inverse-strong: rgba(255,255,255,0.16);
@@ -205,7 +252,7 @@
   --semantic-color-highlight-tan: #C99963;
   --semantic-color-highlight-blue: #568ABE;
   --semantic-color-highlight-blue-strong: #3A6FA0;
-  --semantic-color-block-muted: #CFDADA;
+  --semantic-color-block-muted: #E3EEF0;
   --semantic-color-block-muted-fg: #0E4D5E;
   --semantic-color-block-attention: #95C4C1;
   --semantic-color-block-attention-fg: #051212;
@@ -220,6 +267,39 @@
   --semantic-color-status-bad-text: #AA352A;
   --semantic-color-status-bad-bg: #F2DCD8;
   --semantic-color-focus-ring: #155A6B;
+  --semantic-color-storybook-canvas: #E2EFF1;
+  --semantic-color-storybook-sheet: #F7FBFB;
+  --semantic-color-storybook-border: #C6E0E6;
+  --semantic-color-storybook-ink-strong: #0D211D;
+  --semantic-color-storybook-ink: #2A4640;
+  --semantic-color-storybook-ink-muted: #4C6B63;
+  --semantic-color-storybook-ink-faint: #70887E;
+  --semantic-color-storybook-accent: #0F5F6F;
+  --semantic-color-storybook-accent-hover: #0A4B59;
+  --semantic-color-storybook-accent-soft: #E3EEF0;
+  --semantic-color-storybook-warm: #AC6781;
+  --semantic-color-storybook-warm-text: #884861;
+  --semantic-color-storybook-warm-soft: #F5EAEF;
+  --semantic-color-storybook-on-accent: #FFFFFF;
+  --semantic-color-storybook-focus-ring: #0F5F6F;
+  --semantic-color-scene-sky-top: #A8D0DA;
+  --semantic-color-scene-sky-mid: #C6E0E6;
+  --semantic-color-scene-sky-horizon: #EDF5F6;
+  --semantic-color-scene-sun: #F5D489;
+  --semantic-color-scene-cloud: #FBFDFD;
+  --semantic-color-scene-cloud-shade: #E2EFF1;
+  --semantic-color-scene-sea-far: #98CDC9;
+  --semantic-color-scene-sea-mid: #2C8B98;
+  --semantic-color-scene-sea-near: #0F5F6F;
+  --semantic-color-scene-dune-back: #BCCB8E;
+  --semantic-color-scene-dune-front: #A2B36D;
+  --semantic-color-scene-forest-far: #84A693;
+  --semantic-color-scene-forest-mid: #42705D;
+  --semantic-color-scene-forest-near: #285040;
+  --semantic-color-scene-forest-deep: #14332A;
+  --semantic-color-scene-grass: #758B4D;
+  --semantic-color-scene-grass-deep: #5D7340;
+  --semantic-color-scene-heather-bells: #D2A7B7;
   /* semantic · font */
   --semantic-font-heading: "Source Serif 4", Georgia, serif;
   --semantic-font-body: "IBM Plex Sans", system-ui, sans-serif;
@@ -253,6 +333,8 @@
   --semantic-radius-card-lg: 13px;
   --semantic-radius-container: 16px;
   --semantic-radius-pill: 999px;
+  --semantic-radius-storybook-card: 20px;
+  --semantic-radius-storybook-container: 28px;
   /* semantic · shadow */
   --semantic-shadow-card: 0px 1px 2px 0px rgba(5,18,18,0.06);
   --semantic-shadow-raised: 0px 6px 28px 0px rgba(0,0,0,0.07);
@@ -270,7 +352,7 @@
   --component-button-primary-bg-hover: #0E4D5E;
   --component-button-primary-bg-active: #0E3F4B;
   --component-button-primary-fg: #FFFFFF;
-  --component-button-secondary-bg: #FFFFFF;
+  --component-button-secondary-bg: #F7FBFB;
   --component-button-secondary-bg-hover: #ECF2ED;
   --component-button-secondary-fg: #4A4A48;
   --component-button-secondary-border: #C3CEC3;
@@ -286,7 +368,7 @@
   --component-button-font-size: 12.5px;
   --component-button-font-weight: 600;
   /* component · input */
-  --component-input-bg: #FFFFFF;
+  --component-input-bg: #F7FBFB;
   --component-input-fg: #111111;
   --component-input-border: #C3CEC3;
   --component-input-placeholder: #686866;
@@ -301,9 +383,9 @@
   --component-input-padding-y: 10px;
   --component-input-font-size: 14px;
   /* component · card */
-  --component-card-bg: #FFFFFF;
+  --component-card-bg: #F7FBFB;
   --component-card-fg: #4A4A48;
-  --component-card-border: #DDE6DD;
+  --component-card-border: #C6E0E6;
   --component-card-bg-active: #EEF2F2;
   --component-card-border-active: #DAE2E3;
   --component-card-bg-inactive: #EEF3EF;
@@ -313,24 +395,24 @@
   /* component · table */
   --component-table-header-bg: #F5F9F5;
   --component-table-header-fg: #686866;
-  --component-table-row-bg: #FFFFFF;
+  --component-table-row-bg: #F7FBFB;
   --component-table-row-bg-hover: #ECF2ED;
   --component-table-row-fg: #4A4A48;
-  --component-table-border: #DDE6DD;
+  --component-table-border: #C6E0E6;
   --component-table-cell-padding-x: 16px;
   --component-table-cell-padding-y: 12px;
   /* component · modal */
   --component-modal-overlay-bg: rgba(5,18,18,0.5);
-  --component-modal-bg: #FFFFFF;
+  --component-modal-bg: #F7FBFB;
   --component-modal-fg: #4A4A48;
-  --component-modal-border: #DDE6DD;
+  --component-modal-border: #C6E0E6;
   --component-modal-shadow: 0px 12px 40px 0px rgba(0,0,0,0.12);
   --component-modal-radius: 13px;
   --component-modal-padding: 24px;
   --component-modal-max-width: 512px;
   /* component · nav */
   --component-nav-bg: rgba(245,249,245,0.96);
-  --component-nav-border: #DDE6DD;
+  --component-nav-border: #C6E0E6;
   --component-nav-link-fg: #686866;
   --component-nav-link-fg-hover: #111111;
   --component-nav-link-bg-hover: #ECF2ED;
@@ -344,7 +426,7 @@
   --component-tab-fg-active: #155A6B;
   --component-tab-fg-hover: #111111;
   --component-tab-border-active: #155A6B;
-  --component-tab-border: #DDE6DD;
+  --component-tab-border: #C6E0E6;
   /* component · toast */
   --component-toast-bg: #051212;
   --component-toast-fg: #F0F4F1;
@@ -359,7 +441,7 @@
   --component-chip-soft-bg: #EEF2F2;
   --component-chip-soft-fg: #0E4D5E;
   --component-chip-soft-border: #DAE2E3;
-  --component-chip-outline-bg: #FFFFFF;
+  --component-chip-outline-bg: #F7FBFB;
   --component-chip-outline-fg: #4A4A48;
   --component-chip-outline-border: #C3CEC3;
   --component-chip-radius: 999px;
@@ -370,6 +452,8 @@
   --component-focus-ring-width: 2px;
   --component-focus-ring-offset: 2px;
   --component-focus-ring-style: solid;
+  /* component · link */
+  --component-link-underline-offset: 0.18em;
 
   /* ============================================================ */
   /* LEGACY ALIASES (DEPRECATED) — map old v2 names to new tokens */
@@ -545,11 +629,15 @@ h2 { font-size: var(--semantic-text-h2); line-height: var(--primitive-lineHeight
 h3 { font-size: var(--semantic-text-h3); line-height: var(--primitive-lineHeight-h3); margin-bottom: var(--primitive-space-1-5); }
 p { color: var(--semantic-color-fg-default); line-height: var(--primitive-lineHeight-relaxed); margin-bottom: var(--primitive-space-3); }
 strong { color: var(--semantic-color-fg-strong); font-weight: var(--primitive-fontWeight-semibold); }
-a { color: var(--semantic-color-accent-default); }
+a { color: var(--semantic-color-accent-default); text-underline-offset: var(--component-link-underline-offset); }
 :focus-visible {
   outline: var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);
   outline-offset: var(--component-focus-ring-offset);
 }
+/* The browser's own parts (COMPOSITION rule 11, D46). Each colour pair is in the contrast gate, both themes. */
+::selection { background: var(--semantic-color-accent-default); color: var(--semantic-color-fg-on-accent); }
+html { scrollbar-color: var(--semantic-color-fg-faint) transparent; caret-color: var(--semantic-color-accent-default); }
+table { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

@@ -52,14 +52,14 @@
    =====================================================================
    This file is not only <link>ed. Builders in OTHER REPOS read it at
    build time and PASTE it into generated HTML, then ship their own
-   markup against it: celorus-app's room-brief skill and the four L1
-   Experiments briefs — five build-time consumers at last count. CI here
+   markup against it: the room-brief skill and four internal briefs,
+   five build-time consumers at last count. CI here
    cannot see any of them, and their CI does not run when this repo
    changes. The larger file this one sits on top of,
    `tokens/dist/foundation-block.css`, is inlined the same way at wider
    scale — 23 files across three repos read its contents at build time
-   (2026-08-10 census; 12 of them behind one shared helper in
-   celorus-os; the census with its unit lives in
+   (2026-08-10 census; 12 of them behind one shared internal
+   helper; the census with its unit lives in
    tokens/consumer-contract.json) — and is where the dark-mode token
    flip that caused the original bug actually originated. Its
    custom-property names are pinned there and gated by
@@ -121,7 +121,7 @@
 
    BACK-COMPAT: `.coll-topbar .brand img` is kept alongside `.wm` because this
    file is INLINED by external consumers whose markup predates .wm and ships an
-   unclassed <img> (the room-brief skill in celorus-app does exactly this).
+   unclassed <img> (the room-brief skill does exactly this).
    Dropping it rendered their wordmark at intrinsic SVG size — full-viewport.
    Because that selector is (0,2,1), the display rules below carry the
    `img.wm-*` forms so they still outrank it. */

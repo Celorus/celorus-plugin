@@ -120,8 +120,15 @@ taken and what was refused). They bind the same way.
 11. **The browser's own parts take tokens**: text selection, the text caret, scrollbars,
     the focus ring, link underline offset, and tabular numerals
     (`font-variant-numeric: tabular-nums`) in every column of numbers. The foundation
-    block ships the focus ring today. Until it ships the rest, the maker sets them from
-    semantic tokens.
+    block ships all six (D46): selection in solid petrol with on-accent text, the caret in
+    petrol, the scrollbar thumb in `fg.faint` on a clear track, links offset by
+    `--component-link-underline-offset`, and tabular numerals on every `table`. Three gaps
+    stay with the maker: selectable text on a solid petrol fill (a solid chip, a primary
+    button) swaps the pair in its own `::selection` (`fg.on-accent` ground, `accent.default`
+    text), since petrol on petrol does not show; a column of numbers outside a `table`
+    (a KFI grid, a stacked list) sets `tabular-nums` itself; and an app built on
+    `tokens.css` rather than the foundation block sets all six from the same tokens. A
+    browser without `scrollbar-color` support keeps its own scrollbar; leave it.
 12. **Self-checking is bounded.** One inspection round that covers both themes and both
     widths (desktop, and narrow below the 820px `md` breakpoint), one batch of fixes, at
     most one confirming round. This binds a maker's own checking. Lane review is
@@ -129,6 +136,27 @@ taken and what was refused). They bind the same way.
 13. **Spacing rhythm.** More space above a heading than below it: a section opens on the
     60px section space (`--semantic-space-section`) and its h2 keeps 8px beneath. Body
     text runs 65 to 75 characters a line; cap prose blocks with a `max-width` in `ch`.
+14. **The pale sea carries the structural blocks (D50).** KFI tiles, quote blocks, verdict
+    bands and card-name headers sit on `block.muted` (`sea.tint-soft`, the pale sea) with
+    `block.muted-fg` or the body inks. `bg.paper` is for content cards, tiles and callouts,
+    which lift off the canvas by hairline (`border.default`, the sky hairline) and shadow,
+    not by value. Orange UI never sits on `block.muted`: `accent2.default` measures 2.95:1
+    there, so the Quarter mark goes on paper or on the canvas, never on a muted block. In dark
+    mode, small petrol or orange text never sits on a muted block inside a card (the composite
+    measures about 4.1 and 4.3:1, under AA; founder's ruling, 17 Oct): headings there take
+    `block.muted-fg`, and large values, chips, icons and lines in the two inks pass and stay.
+15. **Identity rules (D49).** The mark is the Quarter (`brand/logos/celorus-mark.svg`) and
+    the wordmark is the drawn asset: never re-type the wordmark in a font, never redraw
+    either, never change their proportions; only the fill changes with context, and the
+    orange appears once per element, never recoloured. Minimums: mark 16 px (the one-ink
+    marks 24 px), wordmark 90 px wide, horizontal lockup 28 px high, Milan 32 px; under the
+    wordmark's minimum the Quarter stands alone. Milan, the mark with her face, belongs to
+    product and desk surfaces only: never the storybook scenes, decks or collateral.
+16. **Identity motion on the web is hover only, never idle.** Mark: the face fades in over
+    240 ms and blinks once at 380 ms (`scaleY` 1 to 0.1 to 1, 70 ms each way), then fades
+    out on leave. Wordmark: the eye appears in the o over 220 ms and blinks once at 360 ms
+    (140 ms). Under `prefers-reduced-motion` the face and eye appear and nothing blinks. In
+    product Milan may blink idly every 4 to 8 s.
 
 ## Running it
 
