@@ -408,6 +408,17 @@ Copy every page in this skill's `model/` folder into `celorus/model/`, byte for 
 the `changes-v<N>.md` pages. In desk mode, also copy every page in the desk bundle's `model/`
 folder (the pack). Never edit a copied page; an update replaces it.
 
+## The starter rules (when the desk has a pack)
+
+When `pack` names a pack whose starter rules the plugin holds, each rule is set out as a
+proposal: one page `celorus/learnings/starter-<id>.md` of kind `learning`, with
+`learning_status: proposed`, `origin: starter`, the rule's `bucket` and `rule`, and one
+`sources` entry naming the record the rule came from; and, after the rulebook's own text, a
+section `## Proposed by the <shape> shape` listing each rule with a link to its page, where
+`<shape>` is the shape that record names, which need not be the pack's own name. The desk
+accepts, rewrites or strikes each on its page; none is a rule of the desk until it is ratified.
+A desk with no pack, or with a pack the plugin holds no starter rules for, gets neither.
+
 ## The empty folders
 
 `celorus/today/`, `celorus/people/`, `celorus/families/`, `celorus/firms/`,

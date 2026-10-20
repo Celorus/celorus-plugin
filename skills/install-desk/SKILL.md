@@ -134,7 +134,9 @@ skill.
    installed, say so and fall back to seat mode's questions for this one seat.
 2. Ask each seat seat mode's questions in turn, or let the operator answer for them. Call
    `scaffold_desk` once, with every seat (this machine's first), the systems, and `pack`
-   and `pack_version` from the bundle.
+   and `pack_version` from the bundle. If the plugin holds the pack's starter rules, the call
+   sets each out as a proposal in `celorus/learnings/` and lists them in the rulebook; tell
+   the operator the desk accepts, rewrites or strikes each one there.
 3. Write `motion-spec.md` from the bundle (its `charter_version` and `bundle_version`
    copied from the bundle); seed `register.md` with the Charter's signals, each with
    `build: unbuilt` and `compliance: unreviewed` unless the bundle says otherwise; seed

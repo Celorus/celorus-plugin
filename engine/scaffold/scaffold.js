@@ -23,6 +23,7 @@ const { hasLink } = require("../check/text.js");
 const S = require("./systems.js");
 const { soulCopy } = require("../soul/pages.js");
 const { pluginVersion } = require("../lib/version.js");
+const T = require("./starter.js");
 
 const PLUGIN = path.resolve(__dirname, "..", "..");
 const NOTHING = "Nothing was written.";
@@ -405,8 +406,12 @@ function planOf(a) {
     } else {
       body = fill(body, values(first));
     }
+    // A pack's starter rules are listed after the rulebook's own text, as proposals (starter.js).
+    if (rel === T.RULEBOOK && a.starter) body += T.rulebookSection(a.starter);
     file(fill(rel, values(first)), Buffer.from(body, "utf8"));
   }
+  // One learning page per starter rule, each a proposal (starter.js).
+  if (a.starter) for (const page of T.starterPages(a.starter, a.now)) file(page.rel, Buffer.from(page.text, "utf8"));
   // Read as the update reads them when it writes them (history.js readText, a listed site).
   for (const name of modelPages()) {
     const page = H.readText(path.join(PLUGIN_MODEL, name));
@@ -534,12 +539,14 @@ function said(rows) {
   return rows.map((r) => (r.connector === null ? r.role : `${r.role} (${r.connector})`)).join(", ");
 }
 
-// The set-up. `args` is checked whole before anything is written.
-function scaffoldDesk(args, { readBack }) {
+// The set-up. `args` is checked whole before anything is written. `starterDir` is where the
+// pack's starter rules are read from: the plugin's own folder but in the engine's tests.
+function scaffoldDesk(args, { readBack, starterDir = T.STARTER_DIR }) {
   const name = deskName(args.name);
   const seats = seatsOf(args.seats);
   const systems = systemsOf(args.systems);
   const pack = packOf(args.pack, args.pack_version);
+  const starter = T.readStarter(pack.version === "0" ? null : pack.pack, starterDir);
   const now = H.momentOf(args.now);
   const home = homeOf();
   const { folder, made: madeFolder } = deskFolder(args.desk, home.home);
@@ -562,7 +569,7 @@ function scaffoldDesk(args, { readBack }) {
     ...(home.made ? [{ what: S.MADE[S.POINTER_FOLDER], path: S.POINTER_FOLDER }] : []),
     { what: S.POINTER_SAID, path: pointerRel },
   ];
-  const a = { name, seats, systems, pack, now, deskId, made, madeFolder, ignore, modelVersion: modelVersion() };
+  const a = { name, seats, systems, pack, starter, now, deskId, made, madeFolder, ignore, modelVersion: modelVersion() };
   const { plan, pointer } = planOf(a);
   if (pointer.rel !== pointerRel) throw new Error("the scaffold's seat pointer is not at ~/.celorus/seat-<desk_id>");
   const done = execute(folder, home, plan, pointer, a);
