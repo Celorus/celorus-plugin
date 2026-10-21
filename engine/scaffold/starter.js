@@ -13,9 +13,9 @@
 //
 // A shape's rule must stay distinguishable from a house rule, which may carry `starter` too: its
 // page names the shape in its body and the industry record it came from in `sources` (the record's
-// file, read off the rule's own source line; never the commit or the line number). The shape is
-// the one the record names, its folder with spaces for underscores, which need not be the pack's
-// name: one file's rules all cite the same shape.
+// file, read off the rule's own source line; never the repository, the commit or the line number,
+// which stay in the rules file). The shape is the one the record names, its folder with spaces for
+// underscores, which need not be the pack's name: one file's rules all cite the same shape.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -28,8 +28,8 @@ const WORD = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const RULE_MAX = 160;
 // An id names its page, starter-<id>.md: short enough for any file system to write.
 const ID_MAX = 64;
-// celorus-industries <commit> <shape folder>/shape/starter-rules.md:<line>
-const SOURCE = /^celorus-industries [0-9a-f]{7,40} (([a-z0-9_]+)\/shape\/starter-rules\.md):[1-9][0-9]*$/u;
+// <repo> <commit> <shape folder>/shape/starter-rules.md:<line>, <repo> words joined by hyphens
+const SOURCE = /^[a-z0-9]+(?:-[a-z0-9]+)* [0-9a-f]{7,40} (([a-z0-9_]+)\/shape\/starter-rules\.md):[1-9][0-9]*$/u;
 const RULEBOOK = "celorus/rules/rulebook.md";
 
 function unreadable(pack, why) {
@@ -115,7 +115,7 @@ function readStarter(pack, dir = STARTER_DIR) {
     if (!source) throw unreadable(pack, `rule ${id}'s source is not a line of a shape's starter rules`);
     if (folder !== null && source[2] !== folder) throw unreadable(pack, `rule ${id} cites another shape than the rules before it`);
     folder = source[2];
-    return { id, bucket, rule: said, why, record: `celorus-industries ${source[1]}` };
+    return { id, bucket, rule: said, why, record: source[1] };
   });
   return { pack, shape: folder.split("_").join(" "), version: head.version, rules };
 }
