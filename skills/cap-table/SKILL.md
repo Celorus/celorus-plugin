@@ -52,6 +52,9 @@ In brief:
 1. **Missing data is "not available"** — never an estimate, never general
    knowledge. Distinguish a true absence (null/absent `value`) from a real
    **0**, and from a filed boolean/enum/text answer.
+   A line from the web may stand beside the answer only on its own line, with its
+   link, its date and the mark `web` (rule 1 of the honesty rules); it never takes
+   the place of "not available".
 2. **Every figure carries its provenance** — filed figures cite the row
    they came from; a derived figure (share price, pre/post-money, dilution)
    cites its formula + model version and is labelled **"derived, not

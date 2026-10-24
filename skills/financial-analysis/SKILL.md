@@ -50,6 +50,9 @@ The three, in brief:
    true absence (null/absent `value`) from a real **0** and from a filed
    boolean/enum/text answer — the fetched body gives the exact `value` /
    `value_type` test.
+   A line from the web may stand beside the answer only on its own line, with its
+   link, its date and the mark `web` (rule 1 of the honesty rules); it never takes
+   the place of "not available".
 2. **Every figure carries its provenance.** Each number and each quoted claim
    cites its source from the same tool response — read the citation off that row.
    Never print a number without it. (See *Rendering provenance* below.)

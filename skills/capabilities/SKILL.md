@@ -85,6 +85,9 @@ one only spends a second refusal.
 The three, in brief:
 
 1. **Missing data is "not available", never an estimate, never general knowledge.**
+   A line from the web may stand beside the answer only on its own line, with its
+   link, its date and the mark `web` (rule 1 of the honesty rules); it never takes
+   the place of "not available".
 2. **Every figure carries its provenance**, read off the tool response.
 3. **`clarify` is a question to the user, never a guess.** If a tool returns `clarify`,
    stop and ask, offering at least two choices; for a missing year with no stream

@@ -54,8 +54,8 @@ Celorus, as *Signing in* below says.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
   list, and never write the change some other way.
-- A figure from the web is the source's, written with its URL and date; it is never a number
-  of yours. No desk tool yet measures the minutes a research took, so this skill says and
+- A figure from the web is the source's, written with its URL and date, and keeps that mark in
+  every copy of the page; it is never a number of yours. No desk tool yet measures the minutes a research took, so this skill says and
   writes no minutes of its own (below).
 
 ## Find the desk

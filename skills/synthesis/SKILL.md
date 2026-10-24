@@ -60,6 +60,9 @@ The three, in brief:
    sub-request the tools cannot answer at all. Distinguish a true absence
    (null/absent `value`) from a real **0** and from a filed boolean/enum/text
    answer — the fetched body gives the exact `value` / `value_type` test.
+   A line from the web may stand beside the answer only on its own line, with its
+   link, its date and the mark `web` (rule 1 of the honesty rules); it never takes
+   the place of "not available".
 2. **Every figure and quoted claim carries its provenance.** Each number or
    summarised statement cites its source from the same tool response — read the
    citation off that row. Never give a figure without it.

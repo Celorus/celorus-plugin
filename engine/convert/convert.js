@@ -19,7 +19,7 @@ const { readDesk, readPage, readCommon, hiddenName } = require("../lib/desk.js")
 // A page of the desk, as its reader takes pages: a .md file under no hidden name (lib/desk.js
 // hiddenName). A .md file under one, Obsidian's bin among them, is a file like any other.
 const isPage = (rel) => rel.endsWith(".md") && !rel.split("/").some(hiddenName);
-const { linksIn, hasLink } = require("../check/text.js");
+const { linksIn, hasLink, LINK_BRACKETS } = require("../check/text.js");
 const { deskMd, seatsOf: declaredSeats } = require("../write/facts.js");
 const { writePage, makeFolders, NotOwnFolder } = require("../update/history.js");
 const { sha256 } = require("../update/digest.js");
@@ -92,7 +92,24 @@ const HANDLE = /^[a-z0-9][a-z0-9-]*$/u;
 const MOMENT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}/u;
 // A path token: a run of path characters ending in `.md`, not inside a longer one; a full stop
 // after it that ends a sentence is not part of it (`see celorus/x.md.` names `celorus/x.md`).
-const PATH_TOKEN = /(?<![A-Za-z0-9_./-])((?:celorus\/)?[A-Za-z0-9_][A-Za-z0-9_./-]*\.md)(?![A-Za-z0-9_/-]|\.[A-Za-z0-9_/-])/gu;
+// A path inside a web address is part of the address and is not re-pointed, so a web line keeps
+// its link in every copy (W2-1d-0). The address starts at a scheme's colon and its two slashes, or
+// at a host and a slash (`example.com/`), and runs to the first space, angle bracket, bracket,
+// parenthesis or pipe: a desk path after a space, as a Markdown link's target or in the next table
+// cell is still a token. A host-and-slash address whose whole text is path characters ending in
+// `.md` (`example.com/docs/notes.md`) still matches, whole: `repoint` in the apply rewrites only a
+// path a placed page has, so it is handed back as written and counted nowhere, and the parity walk
+// skips a path that names no desk file. A comma does not end an address, as Markdown links the
+// whole run. Past its scheme's two slashes or its host's slash, the address is read back at most
+// 2,048 characters, about the longest one in common use, so a long line costs time in step with
+// its length, never its square. The two brackets come from check/text.js, where links are read
+// (DESK-60), so the pattern is built, its source the one the parity walk writes out.
+const PATH_TOKEN = new RegExp(
+  "(?<![A-Za-z0-9_./-])(?<!(?::\\/{2}|(?<![A-Za-z0-9_.-])[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}\\/)" +
+    `[^\\s<>|()${LINK_BRACKETS.replace(/./gu, (c) => `\\${c}`)}]{0,2048})` +
+    "((?:celorus\\/)?[A-Za-z0-9_][A-Za-z0-9_./-]*\\.md)(?![A-Za-z0-9_/-]|\\.[A-Za-z0-9_/-])",
+  "gu",
+);
 
 class ConvertStopped extends Refusal {}
 
@@ -1283,4 +1300,4 @@ function drawViews(firm, seats, now, kept) {
   return { views_drawn, views_not_drawn };
 }
 
-module.exports = { STEPS, RECORD, ConvertStopped, previewConvert, applyConvert, derive, belongs, graphStamps, copyName, besideDesk };
+module.exports = { STEPS, RECORD, PATH_TOKEN, ConvertStopped, previewConvert, applyConvert, derive, belongs, graphStamps, copyName, besideDesk };

@@ -251,6 +251,11 @@ function holdsLinkBracket(text) {
   return typeof text === "string" && /[[\]]/u.test(text);
 }
 
+// The square brackets a page reads as part of a link, written here, where links are read, for a
+// reader elsewhere that stops at either: the converter's path token ends a web address at one
+// (convert/convert.js PATH_TOKEN, W2-1d-0), and DESK-60 lets no file but this one write them.
+const LINK_BRACKETS = "[]";
+
 module.exports = {
   linkSpans,
   linkName,
@@ -268,5 +273,6 @@ module.exports = {
   contactInText,
   holdsContactDetails,
   holdsLinkBracket,
+  LINK_BRACKETS,
   Page,
 };

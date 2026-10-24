@@ -69,6 +69,9 @@ is "not available" — never estimated; every figure carries its provenance;
 `clarify` is a question, never a guess). That spine's authoritative wording lives
 in **one server-fed source**, not copied here: *How it works* opens by fetching it,
 and the returned rule bodies (`data.semantic[]`) are binding exactly as they stand.
+A line from the web may stand beside the answer only on its own line, with its
+link, its date and the mark `web` (rule 1 of the honesty rules); it never takes
+the place of "not available".
 
 On top of the spine, this skill's own display rules are:
 
