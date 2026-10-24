@@ -4,10 +4,10 @@ description: >-
   Set up a Celorus desk: the workspace folder the workday skills read and write. Use
   when someone says "set up my desk", "install the desk", "create my Celorus workspace",
   "check my desk setup" or "refresh my desk setup", or when any workday skill finds no
-  desk. Two modes: a single seat (five minutes, no account needed) and a whole desk (the
-  operator, from the desk's private bundle). Also checks a desk's setup, or updates a desk
-  to the newest model when someone says "update my desk". Runs entirely on the user's
-  side: it never connects to Celorus and never sends anything anywhere.
+  desk. Two modes: a single seat (five minutes, with a free Celorus sign-in first) and a
+  whole desk (the operator, from the desk's private bundle). Also checks a desk's setup, or
+  updates a desk to the newest model when someone says "update my desk". Free: the desk is
+  set up on this machine, and each change it makes to the desk asks for the free sign-in before it is made.
 ---
 
 # Install the desk
@@ -44,6 +44,7 @@ Where a section below seems to ask for something they forbid, they win.
 - **"update my desk"** moves a desk to the newest model, after a preview and one yes, and
   records `none on this desk` for a system the person says the firm has none of. It never deletes
   a page.
+- **On a seat's graph** (`celorus/desk.md` says `layout_version: 3`), the desk was made by its conversion, never by this skill: set nothing up and update nothing. "Check my desk setup" there reads `celorus/desk.md` only, and says the rest is the desk server's.
 
 ## Where the desk lives: the one path convention
 
@@ -58,6 +59,17 @@ Where a section below seems to ask for something they forbid, they win.
 Never write an absolute path inside the workspace. Every link is relative to `celorus/`.
 The workspace carries a `desk_id`; the seat pointer is keyed on it, so the folder can be
 moved, renamed or synced and every skill finds it again.
+
+## First, the free sign-in
+
+Setting up a desk begins with `celorus-link`'s `sign_in`: call it before the first question.
+When it answers "You are signed in to Celorus on this computer.", go on. When it answers a
+page to open, show that page for the person to open in their own browser, say that the
+sign-in is free and that the link waits five minutes for it, and ask the questions below
+while they sign in. Set nothing up (no folder, no page, no line in `.gitignore`, no seat
+note) until `sign_in`, called again, answers that they are signed in. Any other answer: say
+it as it came, and set nothing up. Checking a desk's setup only reads, and asks for no
+sign-in.
 
 ## Seat mode: ask only what is missing
 
@@ -116,8 +128,8 @@ this machine's seat pointer. It writes the first line of `log.md` itself, under 
 label `yours` marks what came from the desk itself; nothing here came from the web or the
 record.
 
-Then call `render_views` with the same `desk`, the seat's `handle` and `now`, so `views/`
-holds its three pages from the first day.
+Then, through `make`, call `render_views` with the same `desk`, the seat's `handle` and
+`now`, so `views/` holds its three pages from the first day.
 
 ## Desk mode: the operator
 
@@ -189,7 +201,7 @@ the systems table has none, and its answer says so.
 
 Follow `update.md` in this skill's folder exactly: take a commit or a dated copy first, show
 the preview, change nothing until the person says yes, then run the steps in order. It never
-deletes a page and never sends anything. If a step stops, name the step and say the desk is
+deletes a page, and sends nothing but what `make` sends the desk server. If a step stops, name the step and say the desk is
 as it was.
 
 ## Say at the end (set-up and refresh)
@@ -241,10 +253,38 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Signing in
 
-This skill runs in full with no Celorus account and never calls the Celorus tools.
-Connecting adds nothing to the install.
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 
@@ -253,6 +293,7 @@ Connecting adds nothing to the install.
 - Never read a message, an event or a document while testing a connector.
 - Never write outside the desk folder; the one seat pointer is the tool's to write.
 - Never overwrite a data file on refresh; never delete anything in verify.
-- Never send anything anywhere.
+- Never send anything anywhere but through `make`, which sends the desk server only what the
+  change it makes needs.
 
 **Next:** `day-open`. When this skill is done the scaffold exists and `log.md` has its first line.

@@ -18,10 +18,12 @@ You are the way in. Two doors lead out, and both are first-class:
   `day-open` (what moved overnight), `triage` (who to call first, with the reason),
   `research-lead` (a lead researched in one pass), `call-review` (what they said, what we
   owe), `follow-up` (what comes back, and when), `check-desk` (what needs attention on the
-  desk, and who can introduce you to whom). These run with no Celorus account.
+  desk, and who can introduce you to whom). These are free: they read the desk on this
+  machine without signing in, and each change they make to the desk asks for a free Celorus
+  sign-in before it is made.
 - **The record.** What the official record holds on a company and the people behind it:
   a templated report (Financial Health, Cap Table) on the paved road, or a free-form,
-  cited answer on the open road. This door needs an account connected.
+  cited answer on the open road. This door needs a sign-in to the record.
 
 Orient, route, and get the request right. You never invent what Celorus can do, and you
 never invent what a company has on record: both are read from the tools and the desk.
@@ -38,6 +40,14 @@ never invent what a company has on record: both are read from the tools and the 
 These hold over every section of this skill. Where a section below seems to ask for something
 they forbid, they win.
 
+Until a `celorus-data` call has come back with data in this session, a `celorus-data` or
+`celorus-check` answer that is not data (a sign-in ask, a refusal, an error, an empty or
+unreadable reply), and a session with no `celorus-data` tool to call, are not a tool that
+cannot run: they are the cases *When this session is not signed in to the record* below exists for, and that
+section decides what you call, what you write and what you say. After data has come back,
+the rule on a tool that cannot run holds for every call, as it does for every tool that
+section does not govern.
+
 This skill says no count of the desk's: a question about the desk's numbers goes to the
 workday skill that asks the desk tools. Every number it says about a company is one the
 record's tools returned, verbatim, as the hard rules below say.
@@ -46,11 +56,13 @@ record's tools returned, verbatim, as the hard rules below say.
 
 - **No desk workspace here** (no `celorus/index.md` found by walking up from the working
   directory, and `CELORUS_DESK` unset): say the day can be set up with
-  `install-desk`, and that the record door is open meanwhile.
+  `install-desk`, and that the record door needs no desk.
 - **A desk, and the day not yet opened**: point at `day-open`.
-- **They named a company or a person**: the record door if the tools are connected and
-  the ask is a report or a figure; `research-lead` if the ask is "who is this" or the
-  tools are not connected. Ask a short either/or when it is unclear; never guess.
+- **They named a company or a person**: the record door if the ask is a report or a
+  figure; `research-lead` if the ask is "who is this". If the record door's first call
+  settles that this session is not signed in to the record, *When this session is not signed in to the record* below decides what you
+  say, and nothing calls the record again. Ask a short either/or when it is unclear; never
+  guess.
 
 ## The three hard rules (non-negotiable)
 
@@ -59,7 +71,18 @@ three rules** every Celorus skill enforces; their authoritative wording lives in
 server-fed source**. **Fetch them at runtime and follow them verbatim.** Once at the start
 of any record work, call **`get_semantic_metadata(product_id="aoc4",
 kind="honesty_rules")`**; it returns the rules as data (`data.semantic[]`), each with a
-`title` and the binding `body`. The three, in brief:
+`title` and the binding `body`.
+
+**That first call is also the sign-in test.** It is the first thing this skill asks
+of the server, so its answer is what tells you whether this session is signed in to the record at all. Data coming back is what settles it, and nothing else does. If the answer is
+not data — it asks you to sign in or to re-authorize, it refuses for want of
+authorization, it errors, it comes back empty, or you cannot read it as data — stop
+there and follow *When this session is not signed in to the record* below, which decides it under its
+four outcomes: the tools being listed does not mean the account behind them is
+authorized, and every tool here sits behind the same sign-in, so calling a second
+one only spends a second refusal.
+
+The three, in brief:
 
 1. **Missing data is "not available", never an estimate, never general knowledge.**
 2. **Every figure carries its provenance**, read off the tool response.
@@ -72,8 +95,16 @@ kind="honesty_rules")`**; it returns the rules as data (`data.semantic[]`), each
    from the stream you switched to; ask the user only if that re-ask comes back empty
    too. `available_years` and `candidates` stay the user's to choose.
 
-If `get_semantic_metadata` is unavailable, the three summaries above are your floor;
-never relax the honesty contract because the definitions could not be fetched.
+If `get_semantic_metadata` is unavailable, the three summaries above are your
+floor — apply them; never relax the honesty contract because the definitions
+could not be fetched.
+The floor is for a call that came back with data and no definitions in it. It is
+not for an answer that was not data. If the call did not come back with data — it
+asked you to sign in or to re-authorize, it refused for want of authorization, it
+errored, it came back empty, or you cannot read it as data — the floor does not
+apply: this session is not signed in to the record until a `celorus-data` call comes back with
+data, *When this session is not signed in to the record* below governs it and decides it under its
+four outcomes, and you stop there rather than carry on under the summaries.
 
 ## While you work, speak to the user, not your plumbing
 
@@ -86,13 +117,16 @@ subdomains or internal fields.
 
 ### 1. Orient: what can Celorus do?
 
-When the user opens cold or asks what reports exist, call **`list_capabilities()`** and
+When the user opens cold or asks what reports exist, make the honesty-rules call above
+before anything else (it is the sign-in test), then call **`list_capabilities()`** and
 present what it returns: the paved-road report types (each `report_type` with its
 `title`) and, alongside them, the open road, that you can also answer a specific
 question or explore any data domain from the same records. **Draw the pitch entirely
 from the tool**; never recite a report list from memory, because a hardcoded list goes
 stale the moment a new report type ships. Everything is company-scoped, so once they
-know the menu, ask which company they are interested in.
+know the menu, ask which company they are interested in. If the honesty-rules call
+settles that this session is not signed in to the record, *When this session is not signed in to the record* below governs; with no
+company named yet, ask which company they mean before you pick its case.
 
 ### 2. Route to a road
 
@@ -153,10 +187,39 @@ honesty failure.
 You **never** write HTML or CSS for a report, build a workbook or deck with code, or use a
 generic document skill (`xlsx`, `pptx`, `docx`, `pdf`, `theme-factory`, or any
 non-Celorus document tool) to make a Celorus file. `generate_collateral`, run by the
-report skill, is the only path. If a tool is **unavailable** or errors, say so and stop;
-a missing file is honest, a hand-built one is not.
+report skill, is the only path. If a tool is **unavailable** or errors, say so and stop
+(before any `celorus-data` call has come back with data, an answer that is not data goes to
+*When this session is not signed in to the record*, as the house rules say); a missing file is honest, a
+hand-built one is not.
 
-## When no account is connected
+## When this session is not signed in to the record
+
+**A listed tool is not a sign-in.** The `celorus-data` tools can all be
+listed, and the panel can report the server connected, while the account behind
+them is not authorized: a sign-in that has aged out leaves every tool in place and
+every call refused. Tool-list membership is therefore silent on exactly the case
+this section exists to catch, and neither it nor the word "connected" is the test. Signing in to the desk with `celorus-link`'s `sign_in` is not the test either: it does not sign this session in to the record.
+
+The test is a call. This session is signed in to the record when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
+it. Its answer is binding:
+
+- **Data comes back.** The record is signed in. Carry on.
+- **The call asks you to sign in or to re-authorize, or refuses for want of
+  authorization.** The record is not signed in, whatever the tool list or the
+  panel says. Stop on that first answer: do not call again, do not try a different
+  tool to see whether that one works, and do not attempt the report or the answer.
+  Every tool here sits behind the same sign-in, so a second call only spends a
+  second refusal to learn what the first one already said.
+- **No `celorus-data` tool is there to call.** The record is not signed in either,
+  and there is nothing here to attempt.
+- **Anything else: an error, an empty answer, or a reply you cannot read as one of
+  the three above.** It settles nothing, and it is not a sign-in; do not read it as one. Make one more `celorus-data` call and let its answer decide, under these
+  same four outcomes. That is the last call: if the second answer is also
+  unreadable, treat this session as not signed in to the record, stop there, and do not
+  attempt the report or the answer.
+
+Never fill what you could not read from memory or the web; a web answer is
+`research-lead`'s job and it carries the web register's label.
 
 Say what the record can answer for this company, never what it says. No count, no
 figure, no URL, on any lane. Pick the case the check found, then close with the

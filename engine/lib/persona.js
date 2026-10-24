@@ -33,6 +33,7 @@ const { screen } = require("../render/screen.js");
 const { readPage } = require("./desk.js");
 const { shippedSoul } = require("../soul/default.js");
 const { holdsLinkBracket } = require("../check/text.js");
+const { LAYOUT, PERSONAL, commonOfGraph } = require("../layout/layout.js");
 
 const DEFAULT_NAME = "Milan";
 
@@ -221,10 +222,11 @@ function mannerHeld(head) {
   return Object.fromEntries(MANNER_KEYS.map((key) => [key, mapping && Object.hasOwn(head, key) ? mannerValue(key, head[key]) : null]));
 }
 
-// The header of the page `rel` under the desk's celorus folder when it reads whole as a page of
-// `type`, else null (no page, one that cannot be read, or one of another type).
-function headOf(root, rel, type) {
-  const page = readPage(path.join(root, "celorus"), rel);
+// The header of the page `rel` under the folder `dir` when it reads whole as a page of `type`,
+// else null (no folder, no page, one that cannot be read, or one of another type).
+function headOf(dir, rel, type) {
+  if (dir === null) return null;
+  const page = readPage(dir, rel);
   const head = page.problem ? null : page.head;
   return head !== null && typeof head === "object" && !Array.isArray(head) && head.type === type ? head : null;
 }
@@ -253,13 +255,25 @@ function soulFor(name) {
   return parts.join("");
 }
 
-// The manner `seat` is spoken to with on the desk at `root`: per key, the seat's own, else the
-// desk's, else null; `address` only ever the seat's own. A seat that is absent or not written as
-// a handle has only the desk's.
-function mannerFor(root, seat) {
-  const desk = { ...mannerHeld(headOf(root, SOUL_PAGE, "soul")), address: null };
+// Where the desk at `root`, on `layout`, keeps its soul page and its seats' manner pages, as
+// { soul, manner }: two folders, each the one the page's rel (SOUL_PAGE, mannerRel) is read under.
+// Both are the desk's celorus folder on layouts 1 and 2. On a seat's graph (layout 3) the soul is
+// the firm's, in the common space beside the graph (null where the graph has none beside it,
+// layout.js commonOfGraph), and the seat's manner is its own, in the graph's personal part.
+function soulFolders(root, layout) {
+  const celorus = path.join(root, "celorus");
+  if (layout !== LAYOUT) return { soul: celorus, manner: celorus };
+  return { soul: commonOfGraph(root), manner: path.join(celorus, PERSONAL) };
+}
+
+// The manner `seat` is spoken to with on the desk at `root` (on `layout`): per key, the seat's
+// own, else the desk's, else null; `address` only ever the seat's own. A seat that is absent or
+// not written as a handle has only the desk's.
+function mannerFor(root, seat, layout) {
+  const at = soulFolders(root, layout);
+  const desk = { ...mannerHeld(headOf(at.soul, SOUL_PAGE, "soul")), address: null };
   const handle = typeof seat === "string" && SEAT_HANDLE.test(seat) ? seat : null;
-  const page = handle === null ? null : headOf(root, mannerRel(handle), "manner");
+  const page = handle === null ? null : headOf(at.manner, mannerRel(handle), "manner");
   // A page copied under another seat's name is not that seat's: its for_seat must name the seat.
   const own = mannerHeld(page !== null && page.for_seat === `[[${handle}]]` ? page : null);
   return Object.freeze(Object.fromEntries(MANNER_KEYS.map((key) => [key, own[key] !== null ? own[key] : desk[key]])));
@@ -282,7 +296,7 @@ function persona(options) {
   const empty = value === null || value === undefined || value === "";
   const refused = empty ? null : refusalOf(value);
   const name = empty || refused ? DEFAULT_NAME : value;
-  const manner = mannerFor(options.desk.root, options.seat);
+  const manner = mannerFor(options.desk.root, options.seat, stamps.layout_version);
   return Object.freeze({ name, introduction: INTRODUCTION, refused, soul: soulFor(name), manner });
 }
 

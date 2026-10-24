@@ -1799,7 +1799,7 @@ function tableOf(overnight) {
   return overnight ? NIGHTLY : TABLE;
 }
 
-module.exports = { deskSync, TABLE, rowOf, globPattern, staging, VIEWS, OVERNIGHT, HELD_BACK, ignoreRules, ignoredBy };
+module.exports = { deskSync, TABLE, rowOf, tableOf, globPattern, staging, VIEWS, OVERNIGHT, HELD_BACK, ignoreRules, ignoredBy };
 
 // The folders a staged row's glob would take whole (E9 fix round 3, item 2). git reads a glob
 // pathspec as the table reads its row, file by file, but for one thing: a pathspec that matches a

@@ -12,7 +12,8 @@
 // words, never a pass. It writes nothing.
 
 const { Refusal } = require("../lib/refusal.js");
-const { readDesk, DESK_ARGUMENT } = require("../lib/desk.js");
+const { DESK_ARGUMENT } = require("../lib/desk.js");
+const { readView } = require("../layout/graph.js");
 const { Desk } = require("./desk.js");
 const { systemsOf } = require("./systems.js");
 const C = require("./counts.js");
@@ -215,7 +216,7 @@ function checkReconcileTool(args = {}) {
   onlyArguments(TOOL, args, ARGUMENTS);
   const day = dayOf(args.date);
   systemsOf(args.systems, { held: true });
-  const read = readDesk(deskFor(args.desk));
+  const read = readView(deskFor(args.desk));
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so nothing is reconciled. Run check_desk to see why.`);
   }
@@ -233,7 +234,7 @@ function checkReconcileTool(args = {}) {
   const told = (answer) => ({ ...answer, fell_back: contract.fell_back, dropped: contract.dropped });
   const hole = (why) => told({ day, snapshot: rel, reconciled: false, hole: why });
   if (!(plainFolder(root, "celorus") && plainFolder(root, VIEWS_REL) && plainFile(root, rel))) {
-    return hole(`There is no snapshot of ${day} at ${rel}, so there is nothing to hold to the views. Take one with render_view (view snapshot) first.`);
+    return hole(`There is no snapshot of ${day} at ${rel}, so there is nothing to hold to the views. Take one with render_snapshot first.`);
   }
   const html = readPlain(root, rel);
   if (!drawnHere(html)) {
@@ -246,7 +247,7 @@ function checkReconcileTool(args = {}) {
   const moment = `${day}T${taken[1]}:${taken[2]}:00+05:30`;
   const record = recordOf(html);
   if (!record) {
-    return hole(`${rel} carries no record of the desk-log rows it read, so it cannot be drawn again as it was taken. Take it again with render_view (view snapshot).`);
+    return hole(`${rel} carries no record of the desk-log rows it read, so it cannot be drawn again as it was taken. Take it again with render_snapshot.`);
   }
   // the desk as the snapshot read it (round 5, row A13): the desk log holds its first rows, as
   // many as the record read, and no row logged since. Only the desk log is rolled back; every

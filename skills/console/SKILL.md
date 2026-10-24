@@ -5,7 +5,9 @@ description: >-
   prospect, put a proposed meeting on the calendar, or write the grow-the-book line for one
   family. Use when someone says "show my console", "my work list", "what's on my list",
   "make them a prospect", "add it to the calendar", or "write the grow-the-book line for the
-  Lakeview family". Draws the page from the desk tools' counts; never sends anything.
+  Lakeview family". Draws the page from the desk tools' counts; never sends a mail or a
+  message, and a change made through `make` sends the Celorus desk server the desk pages it
+  needs.
 ---
 
 # The console
@@ -45,7 +47,7 @@ they forbid, they win.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
   list, and never write the change some other way.
-- To show a page: `render_view(...)` answers with a `path` and a `page`. Show the file at
+- To show a page: `render_view(...)`, made through `make`, answers with a `path` and a `page`. Show the file at
   `path` as it is, in the harness's own way of showing a file. The page is built already, so
   do not edit, retype or restyle it, and do not load a design skill for it. Without `desk`, the
   `path` is relative to the desk folder. Then say one line about what the page shows, naming it
@@ -77,7 +79,7 @@ seat's console as the desk head, use the `team-view` skill. No view counts an `o
    one line keyed by the family's page name, naming the signal and the product that fits it
    and why now; if the row says `needs_connection`, write "Connect the product list to see what
    fits."
-3. Call `render_view(view="rep-console", seat=...)` or
+3. Through `make`, call `render_view(view="rep-console", seat=...)` or
    `render_view(view="rm-console", seat=..., prose={"upsell": {...}})` with the same `systems`,
    and show the page.
 
@@ -100,14 +102,14 @@ this page does not show it. Never say a row left or arrived that the count does 
    designation and city, the seat as its owner, and the family's page name as the desk's
    reference. Its answer's id is the new record. If there is no CRM connector, or it refuses,
    say so in one line and stop: nothing was written.
-3. `log_action(at=<now, with its offset>, seat=..., family=<the family's page name>, action="prospect-created", outcome="CRM record <id> created")`,
+3. Through `make`, `log_action(at=<now, with its offset>, seat=..., family=<the family's page name>, action="prospect-created", outcome="CRM record <id> created")`,
    then `desk_sync(...)`, as "Save to the desk's history" says.
    If log_action refuses the outcome, say in one line that the record is made in the CRM and the
    desk did not record it, in the refusal's words, and stop. Never change an id to make the line
    pass.
 4. Count and render the console again as the rule above says: the page's `systems`, with the
    new record added to `crm.records` and the activities as drawn:
-   `desk_count(view=..., seat=..., systems=...)`, then
+   `desk_count(view=..., seat=..., systems=...)`, then, through `make`,
    `render_view(view=..., seat=..., systems=...)` for a seat whose role is `rep`, or
    `render_view(view=..., seat=..., systems=..., prose={"upsell": {...}})` with the prose you
    wrote for a seat whose role is `rm`, and show it. The page counts afresh as it renders, so a
@@ -118,8 +120,8 @@ this page does not show it. Never say a row left or arrived that the count does 
 1. `family_facts(family=<the family's page name>)`: its signals, what it holds, and the
    products that fit.
 2. Write one line: the signal and its date, the product that fits and why now. No figure.
-3. `render_view(view="rm-console", seat=..., prose={"upsell": {...}})` again, with that
-   family's `upsell` line replaced and the rest kept, and show it.
+3. Through `make`, `render_view(view="rm-console", seat=..., prose={"upsell": {...}})` again,
+   with that family's `upsell` line replaced and the rest kept, and show it.
 
 **Who a record in the CRM is** ("who is <name> in the CRM?"):
 1. The CRM is read only for a person on the desk, as "Never" says. The person belongs to the
@@ -152,8 +154,8 @@ this page does not show it. Never say a row left or arrived that the count does 
    refuses, say so in one line and stop.
 5. Say what the connector answered, in its words: the record kept, by its id, and what it says
    of the other. The page on screen does not show the merge.
-6. Only after the connector has answered the merge, and with the family the lookup read the CRM for:
-   `log_action(at=<now, with its offset>, seat=..., family=<the family's page name>, action="crm-merged", outcome="CRM record <the kept id> kept, <the other id> merged into it")`,
+6. Only after the connector has answered the merge, and with the family the lookup read the CRM for,
+   through `make`: `log_action(at=<now, with its offset>, seat=..., family=<the family's page name>, action="crm-merged", outcome="CRM record <the kept id> kept, <the other id> merged into it")`,
    then `desk_sync(...)`, as "Save to the desk's history" says.
    If log_action refuses the outcome, say in one line that the merge is made in the CRM and the
    desk did not record it, in the refusal's words, and stop. Never change an id to make the line
@@ -195,7 +197,7 @@ this page does not show it. Never say a row left or arrived that the count does 
 5. Count and render the page again as "Acting on a row" says for a count after a write: the
    page's `systems`, with the event the create answered added to `calendar.events`, and every
    proposal as drawn:
-   `desk_count(view=..., seat=..., systems=...)` then
+   `desk_count(view=..., seat=..., systems=...)` then, through `make`,
    `render_view(view=..., seat=..., systems=...)`. If the page on screen is the morning brief,
    count and render the brief instead, as `day-open` does. Say the row has left only if the new
    count no longer holds it. If it still does, say the meeting is on the calendar but still on
@@ -232,6 +234,51 @@ or the answer from these instructions instead:
 "The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
 If a desk tool call cannot be made after this skill has written, here or through a connector,
 say what was written and where, and stop; that sentence is never said then.
+
+## Where the desk's pages are
+
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 

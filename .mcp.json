@@ -4,14 +4,15 @@
       "type": "http",
       "url": "https://app.celorus.com/mcp"
     },
-    "celorus-check": {
-      "type": "http",
-      "url": "https://app.celorus.com/open/mcp"
-    },
     "celorus-desk": {
       "type": "stdio",
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/engine/server.js"]
+    },
+    "celorus-link": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/link/server.js"]
     }
   }
 }

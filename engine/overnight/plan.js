@@ -53,15 +53,19 @@ function standing(file) {
   return st.isFile() ? "file" : "other";
 }
 
+// A plan's `place`, on a seat's graph (slice E6b-2c), gives a page's path under celorus/ from its
+// path on layout 2 (overnight.js graphPlace): the run reads and plans every page by its layout 2
+// path, and reads and writes it where the graph keeps it. On any other desk a page is at its own path.
 class Plan {
-  constructor(ctx) {
+  constructor(ctx, place = (rel) => rel) {
     this.ctx = ctx;
+    this.place = place;
     // rel -> { raw: Buffer or null (a page the run makes), text, before }
     this.pages = new Map();
   }
 
   file(rel) {
-    return path.join(this.ctx.celorus, ...rel.split("/"));
+    return path.join(this.ctx.celorus, ...this.place(rel).split("/"));
   }
 
   // Whether the page is there, in the plan or on the desk. A page that is there but is not a
@@ -69,14 +73,14 @@ class Plan {
   holds(rel) {
     if (this.pages.has(rel)) return this.pages.get(rel).text !== null;
     const at = standing(this.file(rel));
-    if (at === "other") refuse(`${rel} is not a plain file (a link or a folder), so nothing was written.`);
+    if (at === "other") refuse(`${this.place(rel)} is not a plain file (a link or a folder), so nothing was written.`);
     return at === "file";
   }
 
   // The page's text as the plan holds it, read for writing: null when it is not there.
   read(rel) {
     if (this.pages.has(rel)) return this.pages.get(rel).text;
-    const owned = readOwned(this.ctx.celorus, rel, this.ctx.desk.id);
+    const owned = readOwned(this.ctx.celorus, this.place(rel), this.ctx.desk.id);
     if (owned === null) return null;
     if (owned.refused) refuse(owned.refused);
     this.pages.set(rel, { raw: owned.raw, text: owned.text, before: owned.text });
@@ -90,11 +94,12 @@ class Plan {
   }
 
   // The steps that put the plan down, in the order the pages were first read or made, and the
-  // pages among them by path; a page read and left as it was is no step.
+  // pages among them by their path under celorus/; a page read and left as it was is no step.
   steps() {
     const out = [];
-    for (const [rel, held] of this.pages) {
+    for (const [key, held] of this.pages) {
       if (held.text === null || held.text === held.before) continue;
+      const rel = this.place(key);
       out.push(held.raw === null ? { kind: "create", rel, text: held.text } : { kind: "rewrite", rel, raw: held.raw, text: held.text });
     }
     return out;
@@ -105,17 +110,18 @@ class Plan {
 function open(plan, rel) {
   const text = plan.read(rel);
   if (text === null) return null;
+  const at = plan.place(rel);
   const split = splitPage(text);
-  if (split === null) refuse(`${rel} has no header, so the overnight does not change it. ${NOTHING}`);
+  if (split === null) refuse(`${at} has no header, so the overnight does not change it. ${NOTHING}`);
   let head;
   try {
     head = parseHeader(split.header);
   } catch (err) {
     if (!(err instanceof HeaderError)) throw err;
-    refuse(`${rel} has a header that does not read, so the overnight does not change it. ${NOTHING}`);
+    refuse(`${at} has a header that does not read, so the overnight does not change it. ${NOTHING}`);
   }
-  if (!isMapping(head)) refuse(`${rel} has no header of keys and values, so the overnight does not change it. ${NOTHING}`);
-  return { rel, header: split.header, head, body: split.body, keys: [] };
+  if (!isMapping(head)) refuse(`${at} has no header of keys and values, so the overnight does not change it. ${NOTHING}`);
+  return { rel, at, header: split.header, head, body: split.body, keys: [] };
 }
 
 // Sets one header key on an opened page: its line replaced where it stands, or added at the
@@ -125,7 +131,7 @@ function setKey(page, key, value) {
   const lines = page.header.split("\n");
   const pattern = new RegExp(`^${key}[ \\t]*:`, "u");
   const at = lines.flatMap((row, i) => (pattern.test(row) ? [i] : []));
-  if (at.length > 1) refuse(`${page.rel} names ${key} more than once in its header, so the overnight does not change it. ${NOTHING}`);
+  if (at.length > 1) refuse(`${page.at} names ${key} more than once in its header, so the overnight does not change it. ${NOTHING}`);
   if (at.length) lines[at[0]] = line;
   else lines.push(line);
   page.header = lines.join("\n");
@@ -145,7 +151,7 @@ function close(plan, page) {
     after = undefined;
   }
   if (after === undefined || !same(after, page.head)) {
-    refuse(`${page.rel} has its ${[...new Set(page.keys)].join(", ")} written over more than one line, so the overnight does not rewrite it. ${NOTHING}`);
+    refuse(`${page.at} has its ${[...new Set(page.keys)].join(", ")} written over more than one line, so the overnight does not rewrite it. ${NOTHING}`);
   }
   plan.put(page.rel, `---\n${page.header}\n---\n\n${T.pyStrip(page.body)}\n`);
 }

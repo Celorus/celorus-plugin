@@ -6,7 +6,7 @@ description: >-
   reply", "what's due today", "show my brief for tomorrow", or at the start of the working
   day; the Celorus session bootstrap points here. Reads the desk's queues and, where the
   harness has them, the mailbox, calendar and CRM for replies and meetings; writes today's
-  board. Runs with no Celorus account.
+  board. Free; each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
 # Open the day
@@ -52,7 +52,7 @@ they forbid, they win.
   out for the desk's today and read the `date` `desk_count` answers; for any other day, ask the
   seat for it as a date and pass that as `date`, like 2026-09-21. For a seat no view counts, call
   `book_query` with no `date` instead and read the day from its `query.today`.
-- `render_view` with `view` `morning-brief` draws the seat's brief as a page.
+- `render_view` with `view` `morning-brief`, through `make`, draws the seat's brief as a page.
 - `check_desk` answers what on the desk needs attention.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
@@ -83,7 +83,9 @@ update or from the desk's history, and open the day without the stamps.
 
 If the desk is on layout 1, or the `model_version` in `celorus/desk.md` is lower than the one
 in the plugin's `../install-desk/model/model.md`, put one line at the top of the board: "A newer desk model
-is ready. Say "update my desk" to see what changes first." Never update from day-open.
+is ready. Say "update my desk" to see what changes first." Never update from day-open. On a
+seat's graph, skip this check and say nothing of it: the desk server does not keep an update
+there for now, and the board is the overnight's.
 
 ## What you read
 
@@ -104,8 +106,9 @@ is ready. Say "update my desk" to see what changes first." Never update from day
 
 What matters from those reads lands on the account's page as source-tagged lines, each
 one dated and labelled with the source it came from, and removable in one operation.
-The desk's files are yours: nothing read here is uploaded, and it never reaches
-Celorus.
+The desk's files are yours. What is read here leaves this computer only in a change made
+through `make`, which sends the Celorus desk server the desk pages it needs, these lines among
+them, the connectors' rows it is handed (`systems`), and the brief's gists.
 
 ## Which sources the desk has
 
@@ -186,8 +189,8 @@ source the desk has none of is in neither.
 
 On a desk with family pages, the seat's day is also a page, for a seat whose role a view
 counts. Call `desk_count` with `view` `brief`, the seat, the day and `systems` where the rows fit
-the desk's shape (above), and read `desk_count.numbers` and its rows. Then call
-`render_view` with `view`
+the desk's shape (above), and read `desk_count.numbers` and its rows. Then, through `make`,
+call `render_view` with `view`
 `morning-brief`, the same seat, day and `systems`, and `prose` with
 only `gists`: for each mail thread in the brief's critical mail, keyed by its id, one text of
 two short sentences, what they asked and what a reply needs. The page carries no written summary: its numbers and
@@ -198,6 +201,11 @@ when the render was called with `desk`; without `desk` it is relative to the des
 first thing to do this morning, and why.
 
 ## What you write
+
+On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the overnight on the desk
+server writes the day's board, at `celorus/personal/today/<date>.md`: read it and show it, and
+never write it by hand. With no board there yet, say that the overnight has not
+written today's board, and go on. On any other desk, this skill writes the board:
 
 `celorus/today/<date>.md`, with this frontmatter and these blocks:
 
@@ -256,6 +264,8 @@ the desk's mailbox, not about the subject.
 
 Then:
 
+On a seat's graph, this skill changes nothing by hand: it marks no follow-up `replied`, writes no day row in `desk-log.md` and no line in `log.md`, since a page changed by hand stops the next pull. It names each reply in the chat instead, and says the desk keeps it when a desk tool does. On any other desk:
+
 - In `celorus/queues/follow-ups.md`, a row whose person replied gets state `replied`.
   The row stays; `follow-up` decides what comes next.
 - Call `check_desk` over the whole desk, and when its `findings` are not empty, add one line
@@ -292,18 +302,58 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-This skill runs in full with no Celorus account: the queues, the mailbox, the calendar and
-the CRM are all on the desk's side, each read through the harness's own connector.
-Connecting adds nothing today; when server-pushed signals land they arrive in
-`signals/inbox/` and appear under "Moved overnight".
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 
 - Never read a source for a name that is not on the desk: the scope is the queued,
   named and booked accounts, never the whole mailbox.
-- Never upload what you read. It stays on the desk and never reaches Celorus.
+- Never upload what you read anywhere but through `make`. The Celorus desk server sees only
+  what a change made through `make` sends it: the desk pages that change needs, and the
+  arguments the step gives it, such as the brief's gists.
 - Never read mail from anyone not named in the queues or the last board.
 - Never invent a reply, a meeting or a signal to fill an empty block.
 - Never send anything.

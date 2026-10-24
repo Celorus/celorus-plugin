@@ -16,6 +16,7 @@ const { walkTo, namesOf: walkNamesOf } = require("./walk.js");
 const { fold } = require("./fold.js");
 const { renderPage, SHOWN_PATHS, NAME_RULE } = require("./page.js");
 const { writePathPage } = require("./write.js");
+const { commonStems } = require("../layout/graph.js");
 // Check 2, the introductions a firm's conversations offered (DESK-92): answer only.
 const { TOOLS: INTRODUCTIONS } = require("./introductions.js");
 
@@ -69,7 +70,7 @@ function targetOf(to, pages) {
 // rebuild of every path page as well as for this tool.
 function pathPage(read, target, now, findings = null) {
   const pages = rules.checkPages(read.pages);
-  const onDesk = new Set(pages.map((page) => page.stem));
+  const onDesk = new Set([...pages.map((page) => page.stem), ...commonStems(read)]);
   const page = pages.find((p) => p.stem === target);
   const title = page && isMapping(page.head) && page.head.title ? String(page.head.title) : target;
   let walk = null;

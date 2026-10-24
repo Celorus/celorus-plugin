@@ -17,7 +17,8 @@
 // union is interim until DESK-172 makes one cite reader); the firm's conversations by linksIn; links
 // are read by check/text.js alone (DESK-60).
 
-const { readDesk, DESK_ARGUMENT, PAGE_UNREAD, HEADER_UNREAD, NOT_UTF8 } = require("../lib/desk.js");
+const { DESK_ARGUMENT, PAGE_UNREAD, HEADER_UNREAD, NOT_UTF8 } = require("../lib/desk.js");
+const { readInPlace } = require("../layout/graph.js");
 const { Refusal } = require("../lib/refusal.js");
 const { pluginVersion } = require("../lib/version.js");
 const { strip, splitLines, compareText, isMapping } = require("../check/values.js");
@@ -119,7 +120,7 @@ function introductionsFrom(args = {}) {
   const { deskFor, onlyArguments } = require("../lib/tools.js");
   onlyArguments(TOOL, args, ["desk", "firm"]);
   const firm = firmOf(args.firm);
-  const read = readDesk(deskFor(args.desk));
+  const read = readInPlace(deskFor(args.desk));
   const { introductions, conversations, notRead, none } = introductionsOf(read, firm);
   const pages = new Set(introductions.map((row) => row.page)).size;
   const unread = notRead.length ? ` ${UNREAD(notRead.length)}` : "";

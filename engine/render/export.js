@@ -18,12 +18,13 @@ const NO_EXPORT = "there is no CRM export under crm/";
 
 class Unreadable extends Error {}
 
-// The export's file name, the newest by the date its name carries, or null.
-function newestExport(root) {
-  const folder = `celorus/${CRM}`;
+// The export's file name in `crm`, the folder under celorus/, the newest by the date its name
+// carries, or null.
+function newestExport(root, crm) {
+  const folder = `celorus/${crm}`;
   if (!plainFolder(root, folder)) return null;
   let newest = null;
-  for (const name of fs.readdirSync(path.join(root, "celorus", CRM))) {
+  for (const name of fs.readdirSync(path.join(root, "celorus", ...crm.split("/")))) {
     const m = EXPORT.exec(name);
     let day = null;
     try {
@@ -88,16 +89,20 @@ function nameKey(value) {
   return String(value).trim().toLowerCase();
 }
 
-// {available: true, file, names} with `names` a set of name keys, or {available: false, reason}.
-function crmExport(deskFolder) {
+// {available: true, file, names} with `names` a set of name keys, or {available: false, reason},
+// with `none` true when the folder holds no export at all.
+// `crm` is the folder under celorus/ the export is in: crm/, or a seat's graph's personal/crm/
+// (render/desk.js Desk crm).
+function crmExport(deskFolder, crm = CRM) {
   let file = null;
+  const none = crm === CRM ? NO_EXPORT : `there is no CRM export under ${crm}/`;
   try {
     const root = deskRoot(deskFolder);
-    const name = newestExport(root);
-    if (name === null) return { available: false, reason: NO_EXPORT };
-    file = `${CRM}/${name}`;
+    const name = newestExport(root, crm);
+    if (name === null) return { available: false, reason: none, none: true };
+    file = `${crm}/${name}`;
     const rel = `celorus/${file}`;
-    if (!plainFile(root, rel)) return { available: false, reason: NO_EXPORT };
+    if (!plainFile(root, rel)) return { available: false, reason: none, none: true };
     const rows = records(readPlain(root, rel));
     const columns = rows.length ? rows[0].map((c) => c.trim()) : [];
     const at = columns.findIndex((c) => c.toLowerCase() === "name");
@@ -116,7 +121,7 @@ function crmExport(deskFolder) {
     return { available: true, file, names };
   } catch (err) {
     const why = err instanceof Unreadable ? err.message : "it is not a plain file the engine can open";
-    return { available: false, reason: file ? `the CRM export ${file} cannot be read: ${why}` : `the crm/ folder cannot be read: ${why}` };
+    return { available: false, reason: file ? `the CRM export ${file} cannot be read: ${why}` : `the ${crm}/ folder cannot be read: ${why}` };
   }
 }
 

@@ -30,16 +30,25 @@
 // is planned first (plan.js), so every refusal comes before the first change; then the pages go
 // down, and last the lines in log.md (house rule 5), one per change as the demo wrote them, and one
 // that says the run happened and whether a person watched it. An unattended run is refused until
-// log.md holds an attended one and the register holds a routine (routines/routines.js).
+// log.md holds an attended one and the register holds a routine (routines/routines.js), but for the
+// server's run (DESK_JOB, below).
+//
+// On a seat's graph (layout 3, slice E6b-2c) the run reads and writes the graph's own pages where
+// the graph keeps them (graphPlace, below): a new person in shared/people/, its records at the
+// graph root (the base's ruling K11), never a page in from-my-team; a hand-over moves a family's
+// owner inside the graph to any seat of the firm, and no other seat's graph is touched (K12); and a
+// new person's name goes into the firm's name list, common/names.md, its line in the graph's own
+// log.md (T12, c/6233107975), the one thing the run writes in the common space.
 
 const path = require("node:path");
 const fs = require("node:fs");
-const { readPage } = require("../lib/desk.js");
+const { hiddenName, readPage } = require("../lib/desk.js");
 const { refuseLinkedFolders } = require("../lib/linkedroot.js");
 const T = require("../write/text.js");
 const { screened, unpathed } = require("../write/screen.js");
-const { seatsOf, seatsNamed } = require("../write/facts.js");
-const { writeSteps } = require("../write/pages.js");
+const { seatsOf, seatsNamed, firmSeats, placedAt, namesFor } = require("../write/facts.js");
+const { readOwned, writeSteps } = require("../write/pages.js");
+const L = require("../layout/layout.js");
 const P = require("./plan.js");
 const R = require("../routines/routines.js");
 
@@ -84,6 +93,44 @@ function isFile(file) {
   }
 }
 
+// The kind of page each folder the run reads holds, by its layout 2 path.
+const KIND = { families: "family", people: "person", firms: "firm", seats: "seat", conversations: "conversation" };
+
+// On a seat's graph, where a page the run plans at its layout 2 path sits under celorus/: the run's
+// records at the graph root as they are (merge-record.md, desk-log.md, log.md); a page where the
+// graph has an entry of its name, from-my-team included, else in its kind's default part
+// (write/facts.js placedAt), so the run never makes a second page of a name. Each path is placed
+// once, so a page keeps its place for the whole run.
+function graphPlace(ctx) {
+  const placed = new Map();
+  return (rel) => {
+    if (!placed.has(rel)) {
+      const cut = rel.indexOf("/");
+      const folder = cut === -1 ? null : rel.slice(0, cut);
+      placed.set(rel, folder !== null && Object.hasOwn(KIND, folder) ? placedAt(ctx.celorus, ctx.desk, rel, KIND[folder]) : rel);
+    }
+    return placed.get(rel);
+  };
+}
+
+// The conversations' file names: in conversations/, or on a seat's graph in its shared part only.
+// Every page the run grows is shared, and a new name goes to the firm's name list, so a call the
+// seat switched to personal is never merged: its words and the people it names stay in it (E6b-2c
+// panel). from-my-team's are a teammate's and are not merged here. None is under a hidden name
+// (lib/desk.js hiddenName: no page is).
+function conversationNames(ctx) {
+  const folders = [ctx.desk.graph ? path.join(ctx.celorus, L.SHARED, "conversations") : path.join(ctx.celorus, "conversations")];
+  const names = new Set();
+  for (const folder of folders) {
+    try {
+      for (const name of fs.readdirSync(folder)) if (name.endsWith(".md") && !hiddenName(name)) names.add(name);
+    } catch {
+      // a part with no conversations/ holds none
+    }
+  }
+  return [...names].sort();
+}
+
 // Whether a page is there, for reading only: the plan's, else the desk's, a link followed as every
 // reader follows one.
 function seen(plan, rel) {
@@ -111,7 +158,7 @@ function viewOf(plan, rel) {
     const page = P.open(plan, rel);
     return page ? { head: page.head, body: page.body } : null;
   }
-  const page = readPage(plan.ctx.celorus, rel);
+  const page = readPage(plan.ctx.celorus, plan.place(rel));
   return page.problem || page.head === null || typeof page.head !== "object" ? null : { head: page.head, body: page.body };
 }
 
@@ -169,6 +216,7 @@ function namedOnly(plan, run, { slug, name, note, conv, family, date, saidBy }) 
   const body = [`# ${T.clean(name)}`, "", `Named on [[${conv}]]. We hold no contact details for this person.`, "", "## Connections", "", proof];
   if (ctx.footer !== null) body.push("", ctx.footer);
   plan.put(`people/${slug}.md`, T.pageText(header, body.join("\n")));
+  run.named.push(slug);
 }
 
 // The person onto the family's own page, under Members (demo reconcile._join_family).
@@ -219,33 +267,24 @@ function grow(plan, run) {
   const footer = ctx.footer;
   const done = mergedConversations(plan);
   const out = [];
-  let names = [];
-  try {
-    names = fs
-      .readdirSync(path.join(ctx.celorus, "conversations"))
-      .filter((name) => name.endsWith(".md"))
-      .sort();
-  } catch {
-    names = [];
-  }
-  for (const name of names) {
+  for (const name of conversationNames(ctx)) {
     const conv = name.slice(0, -3);
     const rel = `conversations/${name}`;
     if (done.has(conv)) continue;
-    const page = readPage(ctx.celorus, rel);
+    const page = readPage(ctx.celorus, plan.place(rel));
     if (page.problem || page.head === null || typeof page.head !== "object") {
-      run.unread.push({ page: rel, why: `${page.problem || "no header"}${page.why ? ` (${page.why})` : ""}; it was not merged` });
+      run.unread.push({ page: plan.place(rel), why: `${page.problem || "no header"}${page.why ? ` (${page.why})` : ""}; it was not merged` });
       continue;
     }
     const day = page.head.date === undefined || page.head.date === null ? null : T.readDate(String(page.head.date));
     if (day === null) {
-      run.unread.push({ page: rel, why: "its date does not read as a date; it was not merged" });
+      run.unread.push({ page: plan.place(rel), why: "its date does not read as a date; it was not merged" });
       continue;
     }
     if (day >= run.at.date) continue;
     const family = T.unlink(page.head.about);
     if (!T.HANDLE.test(family)) {
-      run.unread.push({ page: rel, why: "its about names no page of the desk; it was not merged" });
+      run.unread.push({ page: plan.place(rel), why: "its about names no page of the desk; it was not merged" });
       continue;
     }
     const attended = Array.isArray(page.head.attended) ? page.head.attended : [];
@@ -260,7 +299,7 @@ function grow(plan, run) {
       if (!m) continue;
       const [slug, fullName, note] = m;
       if (!T.HANDLE.test(slug)) {
-        run.unread.push({ page: rel, why: "a person it names has a slug that is not lowercase words joined by hyphens; no page was made for them" });
+        run.unread.push({ page: plan.place(rel), why: "a person it names has a slug that is not lowercase words joined by hyphens; no page was made for them" });
         continue;
       }
       if (pageOf(plan, slug) !== null) continue;
@@ -281,7 +320,7 @@ function grow(plan, run) {
       // A line about a seat stays on the conversation: a seat's page is every seat's, staged and
       // sent up by desk_sync, and the overnight never writes it.
       if (target.startsWith(`${SEATS}/`)) {
-        run.unread.push({ page: rel, why: "a line heard on it is about a seat, and the overnight never writes a seat's page: the line stays on the conversation and grew no page" });
+        run.unread.push({ page: plan.place(rel), why: "a line heard on it is about a seat, and the overnight never writes a seat's page: the line stays on the conversation and grew no page" });
         continue;
       }
       apply(plan, run, target, p, conv);
@@ -312,8 +351,9 @@ function handOvers(plan, run) {
   const text = plan.read(DESK_LOG);
   if (text === null) return [];
   const rows = P.readTable(text).filter((r) => r.action === "handed-over" && r.date && T.readDate(r.date) !== null && T.readDate(r.date) < run.at.date);
+  const firm = rows.length ? run.firm() : [];
   for (const row of rows) {
-    if (handedTo(row.outcome, run.seats) === null) {
+    if (handedTo(row.outcome, firm) === null) {
       const target = T.pyStrip(T.clean(row.outcome).replace(/^to /u, ""));
       logOnce(plan, run, `skipped the hand-over of [[${T.unlink(row.lead)}]] dated ${row.date}: no seat page for "${target}"`);
     }
@@ -321,7 +361,7 @@ function handOvers(plan, run) {
   // Each family's latest valid hand-over, latest by the row's date, a later row breaking a tie.
   const latest = new Map();
   rows.forEach((row, i) => {
-    const to = handedTo(row.outcome, run.seats);
+    const to = handedTo(row.outcome, firm);
     if (to === null) return;
     const family = T.unlink(row.lead);
     const key = [T.readDate(row.date), i];
@@ -339,6 +379,9 @@ function handOvers(plan, run) {
     P.close(plan, page);
     logLine(plan, run, `[[${family}]] now owned by ${to}`);
     moved.push(family);
+    // On a seat's graph, a family handed to another seat stays in this graph with its new owner;
+    // the wave 3 job carries it to that seat's graph (the base's ruling K12).
+    if (run.own !== null && to !== run.own) run.away += 1;
   }
   return moved;
 }
@@ -531,7 +574,36 @@ function threadsOf(value) {
   });
 }
 
-function overnightReconcile(ctx, args) {
+// 5. On a seat's graph, each new person the run made a page for gets a row in the firm's name list,
+// common/names.md, as the converter writes it (convert.js namesText), unless the list holds the
+// name already; each with its line in the graph's own log.md, naming the list. The step is the
+// only one in the common space, written through the firm folder (write/pages.js writeSteps).
+function namesStep(plan, run) {
+  const ctx = plan.ctx;
+  if (!ctx.desk.graph || !run.named.length) return null;
+  const firm = path.dirname(namesFor(ctx.root, ctx.desk, NOTHING));
+  const rel = `${L.COMMON}/${L.NAMES}`;
+  const owned = readOwned(firm, rel, ctx.desk.id);
+  if (owned === null) refuse(`${rel} is not in the firm's common space, so a new person's name has nowhere to go. ${NOTHING}`);
+  if (owned.refused) refuse(owned.refused);
+  const listed = new Set(P.readTable(owned.text).map((row) => row.name));
+  const added = run.named.filter((slug) => !listed.has(slug));
+  if (!added.length) return null;
+  const rows = added.map((slug) => ({ name: slug, kind: "person", lead_id: null, company_id: null, firm_id: null }));
+  const text = P.withRegisterRows(rel, owned.text, rows, ctx.generatedBy);
+  for (const slug of added) logLine(plan, run, `added [[${slug}]] to the name list, ${rel}`);
+  return { kind: "rewrite", rel, raw: owned.raw, text, root: firm };
+}
+
+// The host's job setting (slice E6b-2c, T15; the base's rulings B1 and K13 (A), c/6212179305).
+// The serving host's job entry (E7a-2) sets it to "1" in the engine's environment when it runs the
+// overnight over a seat's graph on our server, and never on the served path; no call can set it.
+// Under it an unattended run is the server's run: it needs no attended run in log.md and no routine
+// on the register, which name a laptop's routines (the person may never open the laptop), and its
+// line says it ran on the server. Without it, the same call is refused as before.
+const DESK_JOB = "CELORUS_DESK_JOB";
+
+function overnightReconcile(ctx, args, env = process.env) {
   const seats = seatsOf(ctx.celorus, ctx.desk);
   if (typeof args.seat !== "string" || !seats.handles.includes(args.seat)) {
     refuse(`seat must be a seat handle, one of: ${seatsNamed(seats)}; got ${JSON.stringify(unpathed(String(args.seat)))}. ${NOTHING}`);
@@ -539,10 +611,17 @@ function overnightReconcile(ctx, args) {
   if (typeof args.attended !== "boolean") {
     refuse(`attended is true when a person is watching this run, and false when a routine runs it. ${NOTHING}`);
   }
+  const server = env[DESK_JOB] === "1";
+  if (server && !ctx.desk.graph) {
+    refuse(`A server run is a seat's graph's, and this desk is not one (its desk.md does not say layout_version: ${L.LAYOUT}). ${NOTHING}`);
+  }
+  if (server && args.attended) {
+    refuse(`A server run has no person watching it, so attended is false when the host's job runs the overnight. ${NOTHING}`);
+  }
   const records = recordsOf(args.crm_records);
   const threads = threadsOf(args.mail_threads);
-  const plan = new P.Plan(ctx);
-  if (!args.attended) {
+  const plan = new P.Plan(ctx, ctx.desk.graph ? graphPlace(ctx) : undefined);
+  if (!args.attended && !server) {
     if (!R.attendedRun(plan.read(LOG))) {
       refuse(
         "The overnight runs unattended only after one attended run, and log.md holds no attended run of it: " +
@@ -559,12 +638,18 @@ function overnightReconcile(ctx, args) {
       );
     }
   }
-  const run = { at: ctx.at, seat: args.seat, seats: seats.handles, seatList: seats, lines: [], unread: [] };
+  // A hand-over goes to a seat of the desk, or on a seat's graph to any seat of the firm (K12), read
+  // only when the desk log holds a hand-over to check, so a firm list that does not read stops only
+  // the run that needs it (E6b-2c fix round reader).
+  const firm = () => (ctx.desk.graph ? firmSeats(ctx.celorus, ctx.desk) : seats.handles);
+  const own = ctx.desk.graph ? ctx.desk.seat : null;
+  const run = { at: ctx.at, seat: args.seat, seats: seats.handles, seatList: seats, firm, own, away: 0, named: [], lines: [], unread: [] };
   const grown = grow(plan, run);
   const handedOver = handOvers(plan, run);
   const linked = linkCrm(plan, run, records);
   const replies = logReplies(plan, run, threads);
-  const how = args.attended ? R.RUN_LINE.attended : R.RUN_LINE.routine;
+  const names = namesStep(plan, run);
+  const how = server ? R.RUN_LINE.server : args.attended ? R.RUN_LINE.attended : R.RUN_LINE.routine;
   logLine(
     plan,
     run,
@@ -572,10 +657,13 @@ function overnightReconcile(ctx, args) {
   );
   // log.md last: the history line goes down after every page it names (house rule 5).
   const steps = plan.steps();
-  const ordered = [...steps.filter((s) => s.rel !== LOG), ...steps.filter((s) => s.rel === LOG)];
+  const ordered = [...steps.filter((s) => s.rel !== LOG), ...(names === null ? [] : [names]), ...steps.filter((s) => s.rel === LOG)];
+  // from-my-team is the graph job's (wave 3): the overnight never writes a page there.
+  const team = ordered.find((s) => !s.root && (L.partOf(s.rel) || {}).part === L.TEAM);
+  if (team) refuse(`${team.rel} is in from-my-team, which only the graph job writes, so the overnight does not change it. ${NOTHING}`);
   refuseLinkedFolders(
     ctx.celorus,
-    ordered.map((s) => s.rel),
+    ordered.filter((s) => !s.root).map((s) => s.rel),
   );
   const done = writeSteps(ctx.celorus, ordered);
   const answer = {
@@ -583,8 +671,10 @@ function overnightReconcile(ctx, args) {
     plugin_version: ctx.version,
     desk: ctx.desk.name,
     attended: args.attended,
+    ...(server ? { run: "server" } : {}),
     grown,
     handed_over: handedOver,
+    ...(own === null ? {} : { handed_to_other_seats: run.away }),
     linked,
     replies,
     unread: run.unread,
@@ -595,4 +685,4 @@ function overnightReconcile(ctx, args) {
   return { ...answer, written: done.written, history: { page: LOG, lines: run.lines }, reason: null, previous_text: null };
 }
 
-module.exports = { overnightReconcile, MERGE_RECORD, MERGE_COLUMNS };
+module.exports = { overnightReconcile, MERGE_RECORD, MERGE_COLUMNS, DESK_JOB };

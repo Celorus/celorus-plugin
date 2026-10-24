@@ -6,7 +6,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { readPage, NO_HEADER, NOT_UTF8, PAGE_UNREAD, STAMP_NOT_ONE_VALUE } = require("../lib/desk.js");
+const { readPage, readCommon, NO_HEADER, NOT_UTF8, PAGE_UNREAD, STAMP_NOT_ONE_VALUE } = require("../lib/desk.js");
 const values = require("./values.js");
 const text = require("./text.js");
 const model = require("./model.js");
@@ -17,6 +17,7 @@ const { own, hasOwn, truthy, isEmpty, show, same, items, holds, strip, splitLine
   values;
 const { Page, linksIn, hasLink, proofMatch, headingOf, isHeading, sectionSpan, sectionOf } = text;
 const { persona } = require("../lib/persona.js");
+const { partOf, commonOfGraph } = require("../layout/layout.js");
 
 const RULES = {
   C01: "unknown kind",
@@ -79,6 +80,19 @@ const REQUIRED = [
   "model/model.md",
   "model/connections.md",
   "model/own-words.md",
+];
+// The pages a seat's graph must hold on layout 3 (engine/layout): the desk-wide pages are the
+// common space's, and the two queues each seat keeps sit in their parts.
+const REQUIRED_V3 = [
+  "desk.md",
+  "log.md",
+  "desk-log.md",
+  "marks.md",
+  "shared/queues/follow-ups.md",
+  "personal/queues/book.md",
+  "rules/rulebook.md",
+  "model/model.md",
+  "model/connections.md",
 ];
 // The folders the check does not read as pages: the model (read as the model), the generated
 // views and the merge records.
@@ -192,7 +206,9 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     return scope === null ? all : narrowFindings(all, scope, read.linked);
   }
 
-  for (const rel of REQUIRED) {
+  // A seat's graph (layout 3) holds its pages in parts and reads the common space beside it.
+  const graph = isFile(path.join(root, "desk.md")) && same(own(values.asPython(readPage(root, "desk.md").head) || {}, "layout_version"), 3);
+  for (const rel of graph ? REQUIRED_V3 : REQUIRED) {
     if (!isFile(path.join(root, ...rel.split("/")))) add("C12", rel, "missing");
   }
   if (!["desk.md", "model/model.md", "model/connections.md"].every((rel) => isFile(path.join(root, ...rel.split("/"))))) {
@@ -268,21 +284,21 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     add("C12", "model/model.md", `${word} is both a system type and a kind of page`);
   }
   const deskHead = values.asPython(readPage(root, "desk.md").head) || {};
-  if (!same(own(deskHead, "layout_version"), 2)) add("C12", "desk.md", "layout_version is not 2");
-  for (const entry of m.ownUnread) add("C04", "model/own-words.md", `${entry}: cannot be read as a list word`);
+  if (!same(own(deskHead, "layout_version"), 2) && !graph) add("C12", "desk.md", "layout_version is not 2");
+  for (const entry of m.ownUnread) add("C04", m.ownWordsPage, `${entry}: cannot be read as a list word`);
   for (const [listName, words] of m.ownPack) {
     const standard = m.lists.get(listName) || [];
     for (const [word, target] of words) {
       if (holds(standard, word)) {
         add(
           "C04",
-          "model/own-words.md",
+          m.ownWordsPage,
           `${listName}: ${word} is now also a standard word; the desk's meaning is kept, decide which`,
           true,
         );
       }
       if (!holds(standard, target)) {
-        add("C04", "model/own-words.md", `${listName}: ${word} -> ${target}: ${target} is not a ${listName} word`, true);
+        add("C04", m.ownWordsPage, `${listName}: ${word} -> ${target}: ${target} is not a ${listName} word`, true);
       }
     }
   }
@@ -295,6 +311,11 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     if (!byStem.has(page.stem)) byStem.set(page.stem, []);
     byStem.get(page.stem).push(page);
   }
+  // A link on a graph opens a page of the graph or of the common space beside it.
+  const commonAt = graph ? commonOfGraph(desk) : null;
+  const common = commonAt === null ? null : readCommon(commonAt);
+  const commonStems = new Set(common ? common.pages.filter((p) => p.rel.endsWith(".md")).map((p) => p.rel.slice(p.rel.lastIndexOf("/") + 1, -3)) : []);
+  const opens = (stem) => byStem.has(stem) || commonStems.has(stem);
   const kindOf = new Map();
   for (const page of pages) if (model.isKind(m, page.type)) kindOf.set(page.stem, page.type);
   const namedFor = model.namedFor(m);
@@ -358,7 +379,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
         add("C15", page.rel, `[[${page.stem}]] is this page itself, so the line draws no line: ${line}`);
       }
       for (const end of far) {
-        if (!byStem.has(end)) {
+        if (!opens(end)) {
           add("C15", page.rel, `[[${end}]] is no page on this desk, so the line draws nothing to it: ${line}`);
         } else if (!reached.has(end)) {
           const why = furniture.has(end)
@@ -410,7 +431,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     const headerLinks = linksIn(Object.values(page.head));
     const bodyLinks = page.fenceOpen ? [] : linksIn(page.outside);
     for (const target of new Set([...headerLinks, ...bodyLinks])) {
-      if (!byStem.has(target)) add("C05", page.rel, `[[${target}]] points at nothing`);
+      if (!opens(target)) add("C05", page.rel, `[[${target}]] points at nothing`);
     }
     for (const key of m.everyPageMust) {
       if (isEmpty(own(page.head, key))) add("C02", page.rel, `no ${show(key)}`);
@@ -442,7 +463,12 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     if (packs.length && m.pack && !holds(packs, m.pack)) {
       add("C01", page.rel, `${t} belongs to the ${packs.map(show).join(" or ")} pack; this desk runs ${m.pack}`);
     }
-    if (!same(page.folder, kind.folder)) add("C12", page.rel, `a ${t} page belongs in ${show(kind.folder)}/`);
+    if (graph) {
+      // On a graph a page sits in a part, under its kind's folder there.
+      const at = partOf(page.rel);
+      const inner = at === null ? null : at.inner.includes("/") ? at.inner.slice(0, at.inner.lastIndexOf("/")) : ".";
+      if (!same(inner, kind.folder)) add("C12", page.rel, `a ${t} page belongs in shared/${show(kind.folder)}/ or personal/${show(kind.folder)}/`);
+    } else if (!same(page.folder, kind.folder)) add("C12", page.rel, `a ${t} page belongs in ${show(kind.folder)}/`);
     if (drawn.has(t)) {
       for (const key of Object.keys(page.head)) {
         if (drawsSet.has(key) || namedFor.get(t).has(key)) continue;
@@ -649,6 +675,7 @@ module.exports = {
   UNCLOSED_FENCE,
   UNBACKED,
   REQUIRED,
+  REQUIRED_V3,
   checkDesk,
   checkPages,
   narrowFindings,

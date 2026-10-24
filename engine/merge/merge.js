@@ -61,7 +61,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot, refuseLinkedFolders } = require("../lib/linkedroot.js");
-const { readDesk, splitPage, NO_HEADER, NOT_UTF8, HEADER_UNREAD, PAGE_UNREAD, STAMP_NOT_ONE_VALUE } =
+const { hiddenName, readDesk, splitPage, NO_HEADER, NOT_UTF8, HEADER_UNREAD, PAGE_UNREAD, STAMP_NOT_ONE_VALUE } =
   require("../lib/desk.js");
 const { parseHeader } = require("../lib/header.js");
 const { pluginVersion } = require("../lib/version.js");
@@ -70,6 +70,7 @@ const { loadDeskModel, ModelUnreadable } = require("../check/model.js");
 const { linkSpans, linkName, linksIn, readOutsideFences, headingOf, sectionSpan, holdsContactDetails, Page } =
   require("../check/text.js");
 const V = require("../check/values.js");
+const L = require("../layout/layout.js");
 const { dumpLines, oneLine, markMoments, sameValue, Moment, isCollection } = require("../update/yaml.js");
 const { writeWhole, writePage, lineEndOf, withLineEnd, readOwn, holdFolder, NotOwnFolder, NotClosed, rstrip, quoted, aMoment, clockNow, NOTHING, folderShown } =
   require("../update/history.js");
@@ -528,7 +529,8 @@ function at(root, rel) {
 }
 
 // The record folders under merges/ that hold a merge.md, in name order: anything at that path,
-// so a merge.md that is a link, a folder or unreadable is read, and refused by its name.
+// so a merge.md that is a link, a folder or unreadable is read, and refused by its name. A folder
+// under a hidden name holds no record (lib/desk.js hiddenName: no page is under one).
 function recordNotes(root) {
   let names;
   try {
@@ -538,7 +540,7 @@ function recordNotes(root) {
   }
   return names
     .sort(V.compareText)
-    .filter((name) => exists(path.join(root, "merges", name, "merge.md")))
+    .filter((name) => !hiddenName(name) && exists(path.join(root, "merges", name, "merge.md")))
     .map((name) => ({ name, rel: `merges/${name}/merge.md`, folder: path.join(root, "merges", name) }));
 }
 
@@ -1106,6 +1108,25 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   if (keep === merge) refuse(`${keep} cannot be merged into itself`);
   const a = pages.get(keep);
   const b = pages.get(merge);
+  // On a seat's graph from-my-team is the graph job's: a page there is never merged or kept, and is
+  // never re-pointed below (slice E6b-2b, T13). Its links to the merged page stay, and still_named
+  // says where.
+  const graph = read.layout === L.LAYOUT;
+  const inTeam = (rel) => graph && (L.partOf(rel) || {}).part === L.TEAM;
+  for (const p of [a, b]) {
+    if (inTeam(p.rel)) refuse(`${p.stem} is in from-my-team (${p.rel}), which only the graph job writes, so this merge cannot use it`);
+  }
+  // A merge folds the merged page's words into the kept page, so on a graph the two must sit in
+  // one part: a personal/ page folded into a shared/ one would put a seat's own words where every
+  // seat reads them.
+  const partIn = (p) => (graph ? (L.partOf(p.rel) || { part: null }).part : null);
+  if (partIn(a) !== partIn(b)) {
+    const said = (p) => (partIn(p) === null ? `in no part (${p.rel})` : `in ${partIn(p)}/ (${p.rel})`);
+    refuse(
+      `${keep} is ${said(a)} and ${merge} is ${said(b)}, and a merge never moves a page's words from one ` +
+        `part of a graph to another, so this merge cannot use them; switch one into the other's part first`,
+    );
+  }
   if (a.type !== b.type) refuse(require("../render/screen.js").pathsSaid(`${keep} is a ${V.show(a.type)} and ${merge} is a ${V.show(b.type)}`));
   if (notSameAs(a.head).includes(merge) || notSameAs(b.head).includes(keep)) {
     refuse(`${keep} and ${merge} are remembered as not the same`);
@@ -1136,9 +1157,13 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
   const [headText, differs] = joinedHead(a, aText, b, bText);
   const keptText = headText + joinedBody(a.body, b.body, V.show(V.own(b.head, "title") ?? null), differs);
 
+  // A page kept in personal/ is never named by a link the merge re-points in a shared/ page's own
+  // words, so they never come to name a seat's own page; those links stay, and still_named says
+  // where. A shared page's sent list is the views' (ruling K6), rebuilt below as it always is.
+  const leftAsIs = (rel) => inTeam(rel) || (partIn(a) === L.PERSONAL && (L.partOf(rel) || {}).part === L.SHARED);
   const toChange = new Map([[a.rel, repointed(keptText, merge, keep)]]);
   for (const page of every) {
-    if (page.rel === a.rel || page.rel === b.rel) continue;
+    if (page.rel === a.rel || page.rel === b.rel || leftAsIs(page.rel)) continue;
     const text = textOn.get(page.rel);
     if (text === null) continue;
     const next = repointed(text, merge, keep);
@@ -1154,6 +1179,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
     const rebuilt = sentBlocksAfter(read, Object.fromEntries(toChange), b.rel);
     const without = sentBlocksAfter(read, {}, null);
     for (const rel of Object.keys(rebuilt).sort(V.compareText)) {
+      if (inTeam(rel)) continue;
       if (toChange.has(rel) || rebuilt[rel] !== without[rel]) toChange.set(rel, rebuilt[rel]);
     }
   }
@@ -1291,6 +1317,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
     stillNamed: extra.still_named,
     pointsAtItself: extra.points_at_itself,
     namedOnlyHoldsDetails: extra.named_only_holds_details,
+    keptPart: partIn(a),
   };
 }
 
@@ -1455,7 +1482,8 @@ function undoMerge(desk, which, now, { after = null, rest = null, atStop = null 
   if (typeof record !== "string") refuse("record is the name of a record folder under celorus/merges/, as text");
   const merges = path.resolve(root, "merges");
   const folder = path.join(root, "merges", record);
-  if (path.dirname(path.resolve(folder)) !== merges || !record || record === "." || record === "..") {
+  // a folder under a hidden name holds no record (recordNotes), named or chosen
+  if (path.dirname(path.resolve(folder)) !== merges || !record || record === "." || record === ".." || hiddenName(record)) {
     refuse(`${record} is not a record folder under celorus/merges/`);
   }
   // Anything at merge.md's path is read, so a merge.md that is a link, a folder or unreadable is

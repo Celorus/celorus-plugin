@@ -8,8 +8,8 @@ description: >-
   "who can introduce me to <name>?" with the ranked paths over the desk's own pages, and merges
   two pages that are one, with an undo. Use when someone says "check my desk", "what needs
   attention", "rebuild the views", "who can introduce me to", "merge these two", or after any
-  skill writes a page. It lists and never blocks, and never sends anything. Runs with no
-  Celorus account.
+  skill writes a page. It lists and never blocks, and never sends a mail or a message. Free;
+  each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
 # Check the desk
@@ -154,8 +154,8 @@ heading, because a person can see that they are.
 
 ## What you write
 
-The views are written by the desk tools' `render_views`, never by hand. Call it with the seat's
-`handle` and `now`, the moment in ISO 8601 with a `T` between the date and the time and the
+The views are written by the desk tools' `render_views`, made through `make`, never by hand.
+Call it with the seat's `handle` and `now`, the moment in ISO 8601 with a `T` between the date and the time and the
 local offset (leave `now` out for this machine's clock). It rebuilds, each page whole:
 
 - `celorus/views/needs-attention.md`, `# Needs attention`: one row per finding of a whole-desk
@@ -168,7 +168,7 @@ local offset (leave `now` out for this machine's clock). It rebuilds, each page 
   `<!-- generated:sent -->` and `<!-- /generated:sent -->` under `## Sent`: one line per sent
   item, newest first. Nothing else on the page changes.
 
-Each view carries `generated_by: celorus-plugin <version> render_views` in its header and says
+Each view `make` writes carries `generated_by: celorus-plugin <version> render_views` in its header and says
 "Generated; edit the pages, never this view." A name with no page on the desk is written plain,
 never as a link, since a link to a page that is not there offers to make an empty one. Its rows
 fall in the same order every time, so a rebuild over an unchanged desk changes only the moment.
@@ -266,9 +266,12 @@ never claims a path it cannot show a proof line for.
 ## Merge two pages
 
 On "merge <page> into <page>", "merge these two", "these are the same", or "same person" from
-`call-review`, call the desk tools' `merge_pages` with `keep`, the file name of the page that
-stays, `merge`, the file name of the other, and the seat's `handle` (and `now`, as for the
-views). The merge is the tool's, never done by hand.
+`call-review`, call the desk tools' `merge_pages` through `make`, with `keep`, the file name of
+the page that stays, `merge`, the file name of the other, and the seat's `handle` (and `now`,
+as for the views). The merge is the tool's, never done by hand. On a seat's graph
+(`celorus/desk.md` says `layout_version: 3`), the desk server does not keep a merge, nor its
+undo, for now: `make` answers that the call changes pages only the overnight keeps, and that
+nothing was written. Say that as it came, and stop.
 
 It refuses, and changes nothing, when the two are one page, when they are of different kinds,
 when either names the other in `not_same_as`, when two pages share a file name it was given,
@@ -310,8 +313,8 @@ its own page may want deleting or rewriting, and a `standing` is a claim about a
 that only the person can make. Name a rule only if you have run the check and seen it. When the
 answer's `views_not_rebuilt` is a sentence, say it.
 
-On "undo the merge of <other> into <kept>", or "undo that merge", call `undo_merge` with the
-seat's `handle` and one of: `kept` and `merged`, the pair's file names, for that pair's newest
+On "undo the merge of <other> into <kept>", or "undo that merge", call `undo_merge` through
+`make`, with the seat's `handle` and one of: `kept` and `merged`, the pair's file names, for that pair's newest
 standing record; `record`, the record's folder name under `celorus/merges/`; or neither, for the
 newest standing record of all. It checks every path the record names before it puts one back,
 and when a page changed since the merge, or a path is not one it may write, it names it and
@@ -354,10 +357,50 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-This skill runs in full with no Celorus account and never calls the Celorus tools.
-Connecting adds nothing to the check.
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 

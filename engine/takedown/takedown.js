@@ -28,11 +28,27 @@ const path = require("node:path");
 const { readPage, NO_HEADER } = require("../lib/desk.js");
 const { readOwn } = require("../update/history.js");
 const S = require("../scaffold/systems.js");
+const { LAYOUT } = require("../layout/layout.js");
 
 const HISTORY =
   "The desk's own history stays: it is the firm's. Where the desk is kept in a repository, that " +
   "repository is the firm's, and taking the desk down never deletes it; keep it, or a copy of " +
   "the desk folder, before the folder is deleted.";
+
+// What stays on a seat's graph (layout 3, engine/layout): the firm's common space beside it, and
+// every other seat's graph. The list names paths in this graph's folder alone.
+const GRAPH_STAYS = Object.freeze([
+  {
+    what: "the common space",
+    say:
+      "The firm's common space, the folder common beside the seats' graphs in the firm folder, stays: " +
+      "the firm keeps it once for every seat, and taking one seat's graph down never removes it or anything in it.",
+  },
+  {
+    what: "the other seats' graphs",
+    say: "Every other seat's graph stays: this list names what is in this seat's graph folder alone.",
+  },
+]);
 
 const LATER =
   "Disconnect, in the harness's own settings, each connection made for the desk after the " +
@@ -40,15 +56,16 @@ const LATER =
   "were when the desk was set up.";
 
 // The desk's desk.md, read: its desk id, and both tables (null where it holds none), or why
-// it could not be read.
+// it could not be read; `graph` says it is a seat's graph's (layout_version 3).
 function readSetUp(desk, shape = S.shapes()) {
   const page = readPage(path.join(desk, "celorus"), "desk.md");
   if (page.problem && page.problem !== NO_HEADER) {
     return { problem: `celorus/desk.md: ${page.problem}${page.why ? ` (${page.why})` : ""}`, deskId: null, systems: null, record: null };
   }
   const id = page.head && typeof page.head.desk_id === "string" && /^[a-z0-9-]+$/u.test(page.head.desk_id) ? page.head.desk_id : null;
+  const graph = Boolean(page.head && typeof page.head === "object" && page.head.layout_version === LAYOUT);
   const tables = S.readTables(page.body || "", shape);
-  return { problem: page.problem ? "celorus/desk.md: no header" : null, deskId: id, ...tables };
+  return { problem: page.problem ? "celorus/desk.md: no header" : null, deskId: id, graph, ...tables };
 }
 
 // The one guard every step passes through before it names a path for removal or edit: what stands
@@ -380,6 +397,7 @@ function takeDown(desk) {
             : `The desk folder itself stays: the set-up made it, but ${ignoreAt.at === "other" ? "what stands at its .gitignore is not the file the set-up made" : held && held.unread ? "its .gitignore cannot be read as UTF-8 text" : "its .gitignore holds lines the desk did not add"}, named in what stays.`,
     });
   }
+  if (read.graph) stays.push(...GRAPH_STAYS.map((said) => ({ ...said })));
   stays.push({ what: "the desk's own history", say: HISTORY });
 
   const noTable = read.systems === null ? " This desk records no systems table, so its connections are found in the harness's own settings." : "";

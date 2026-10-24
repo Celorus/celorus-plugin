@@ -17,7 +17,8 @@
 
 const { Refusal } = require("../lib/refusal.js");
 const { pluginVersion } = require("../lib/version.js");
-const { readDesk, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
+const { DESK_ARGUMENT: DESK } = require("../lib/desk.js");
+const { readView } = require("../layout/graph.js");
 const { Desk } = require("../render/desk.js");
 const { systemsOf } = require("../render/systems.js");
 const { liveRows } = require("../live/live.js");
@@ -57,7 +58,7 @@ function context(tool, args, allowed) {
   onlyArguments(tool, args, allowed);
   const day = dayOf(args.date);
   systemsOf(args.systems, { held: true });
-  const read = readDesk(deskFor(args.desk));
+  const read = readView(deskFor(args.desk));
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so nothing is counted. Run check_desk to see why.`);
   }
@@ -151,6 +152,7 @@ function workdayCount(tool, desk, st, day, args) {
   }
   const timed = count === TIMED;
   if (!timed && (start !== undefined || page !== undefined)) throw new Refusal(TIMED_ONLY);
+  C.graphSeat(desk, seat);
   const { holes: own = [], ...data } = C.WORKDAY_COUNTS[count](desk, st, seat, day, timed ? { start, page } : undefined);
   const unread = holes(desk, st, C.WORKDAY_READS[count], false);
   // a count's own hole is a sentence about a follow-up, or a hole with its own role
@@ -171,11 +173,13 @@ function deskCount(args = {}) {
   }
   if (typeof seat !== "string") throw new Refusal("`seat` is a seat's handle, as text.");
   if (view === "team") {
+    C.teamOnGraph(desk, "The team view");
     needRole(desk, ["desk-head"], "team");
     return told(answer(tool, C.leadGenView(desk, st, day), st, C.viewUnread(desk, st, "desk-head")));
   }
   const roles = { brief: ["rep", "rm", "desk-head"], rep: ["rep"], rm: ["rm"] }[view];
   needRole(desk, roles, view);
+  C.graphSeat(desk, seat);
   const make = { brief: C.briefView, rep: C.repView, rm: C.rmView }[view];
   const data = make(desk, st, seat, day);
   // the seat's view's holes, as counts.js's viewUnread reads them by the seat's role: an RM's view
@@ -233,6 +237,7 @@ function bookQuery(args = {}) {
     .of("seats")
     .map((p) => p.slug)
     .sort();
+  if (typeof owner === "string") C.graphSeat(desk, owner);
   if (typeof owner !== "string" || (owner && !seats.includes(owner))) {
     throw new Refusal(`\`owner\` is ${JSON.stringify(owner)}, not a seat on this desk. The seats are: ${seats.join(", ")}; leave it out for every owner.`);
   }

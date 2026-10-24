@@ -139,6 +139,7 @@ module.exports = {
   rootFault,
   refuseLinkedRoot,
   refuseLinkedFolders,
+  linkOnWay,
   brokenRoot,
   linkedSaid,
   notFolderSaid,

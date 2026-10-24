@@ -108,8 +108,8 @@ Every claim traceable on request.
   tool returned.
 - **The tier is shown** for anything below `demonstrated`: `stated`, `reported`,
   `affiliated` on the line. Nothing rests on an `inferred_weak` fact alone. A modelled
-  band says so. A `record` line carries `record` or `registered`; those two tiers are
-  the record register's own and never appear on a `web` line.
+  band says so. A `record` line carries `record` or `registered`. `record`
+  is the record register's own and never appears on a `web` line; `registered` may, for what the company has declared, read on the web, and that line still reads `web · unverified`.
 - **Coordinates.** Social and web in full and linked; work and personal contact
   coordinates masked exactly as the tool renders them and never unmasked here; a reveal
   is an audited event through the connected tools. The desk's own contact rails stay in

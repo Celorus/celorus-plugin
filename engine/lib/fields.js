@@ -27,6 +27,8 @@ const ACT_ON = {
   "undo_merge views[].path": 3,
   "undo_merge path_pages[].path": 1,
   "render_view path": 1,
+  // E5b-1: the laptop's snapshot, drawn by render_view's renderer, answers its page the same way
+  "render_snapshot path": 1,
   "write_conversation path": 1,
   "log_action path": 1,
   "add_follow_up path": 1,

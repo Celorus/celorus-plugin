@@ -18,7 +18,8 @@ const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot } = require("../lib/linkedroot.js");
 const { parseHeader, HeaderError, writtenAsFloat } = require("../lib/header.js");
-const { comparePaths } = require("../lib/desk.js");
+const { comparePaths, hiddenName } = require("../lib/desk.js");
+const SENT = require("../lib/workingsets.json");
 const { loadDeskModel, drawnKinds } = require("../check/model.js");
 const { readOutsideFences, sectionSpan } = require("../check/text.js");
 const V = require("../check/values.js");
@@ -222,8 +223,10 @@ function walk(dir) {
   return out.sort(comparePaths);
 }
 
+// Every page under `dir`: a `.md` file under no hidden name, as the desk's reader takes them
+// (lib/desk.js hiddenName).
 function markdownFiles(dir) {
-  return walk(dir).filter((rel) => rel.endsWith(".md") && isFile(path.join(dir, ...rel.split("/"))));
+  return walk(dir).filter((rel) => rel.endsWith(".md") && !rel.split("/").some(hiddenName) && isFile(path.join(dir, ...rel.split("/"))));
 }
 
 function at(root, rel) {
@@ -477,23 +480,62 @@ function ownPath(desk, file) {
   }
 }
 
-// What the update reads, as one digest: .gitignore, and every folder and file under celorus/
-// but Obsidian's pane record. Folders count, since the update adds the ones the desk lacks.
-function inputsDigest(desk) {
-  const h = sha256();
-  const add = (rel, file) => {
-    // Opened only when stat reports a regular file, as the walk below picks them (R38).
-    if (!fs.statSync(file).isFile()) return;
-    const bytes = fs.readFileSync(file);
-    h.update(`${rel}\0${bytes.length}\0`).update(bytes);
-  };
-  if (isFile(path.join(desk, ".gitignore"))) add(".gitignore", path.join(desk, ".gitignore"));
+// The files update_desk is sent from a laptop through the link (lib/workingsets.json, its wide list):
+// .gitignore, and under celorus/ every path under no hidden name, and of the hidden ones exactly
+// these: each of its dot_files, a file named as in its dot_names with no hidden folder on its way,
+// a spare in one of its spares_in folders, and a file directly in the views folder when its views
+// word is all (it is none: the update reads no old view page). The views folder is matched by its
+// own name, case aside, never by a look-alike. A folder counts when no part of it is hidden. The update reads no other file
+// of the desk, and its plan holds the desk to these; the link's selection reads the same list
+// (link/lib/workingset.js dotRules), and a test holds the two to one set.
+const UPDATE_SENT = SENT.wide.update_desk;
+const VIEWS_FOLDER = SENT.views;
+const SPARE_NAME = new RegExp(SENT.spare, "u");
+function updateReads(rel, { folder = false } = {}) {
+  const parts = rel.split("/");
+  if (!parts.some(hiddenName)) return true;
+  // A hidden folder is never sent as a folder: the link sends files, and the files under it
+  // that the update reads count for it.
+  if (folder) return false;
+  const dotFiles = UPDATE_SENT.dot_files;
+  const sparesIn = UPDATE_SENT.spares_in;
+  if (dotFiles.includes(rel)) return true;
+  const name = parts[parts.length - 1];
+  const at = parts.slice(0, -1).join("/");
+  if (at.toLowerCase() === VIEWS_FOLDER) return hiddenName(name) ? SPARE_NAME.test(name) && sparesIn.includes(VIEWS_FOLDER) : UPDATE_SENT.views === "all";
+  if (SPARE_NAME.test(name) && sparesIn.includes(at)) return true;
+  return UPDATE_SENT.dot_names.includes(name) && parts[0] === "celorus" && !parts.slice(0, -1).some(hiddenName);
+}
+
+// What the update reads, by its path in the desk, each with its file (null for a folder):
+// .gitignore, and every folder and file under celorus/ the update reads (updateReads). Folders
+// count, since the update adds the ones the desk lacks.
+function updateInputs(desk) {
+  const out = [];
+  if (isFile(path.join(desk, ".gitignore"))) out.push([".gitignore", path.join(desk, ".gitignore")]);
   const root = path.join(desk, "celorus");
   for (const rel of walk(root)) {
     if (OBSIDIAN_CHURN.test(rel)) continue;
     const file = at(root, rel);
-    if (isDir(file)) h.update(`celorus/${rel}/\0`);
-    else if (isFile(file)) add(`celorus/${rel}`, file);
+    if (isDir(file)) {
+      if (updateReads(`celorus/${rel}`, { folder: true })) out.push([`celorus/${rel}/`, null]);
+    } else if (isFile(file) && updateReads(`celorus/${rel}`)) out.push([`celorus/${rel}`, file]);
+  }
+  return out;
+}
+
+// What the update reads (updateInputs), as one digest.
+function inputsDigest(desk) {
+  const h = sha256();
+  const add = (rel, file) => {
+    // Opened only when stat reports a regular file, as the walk picks them (R38).
+    if (!fs.statSync(file).isFile()) return;
+    const bytes = fs.readFileSync(file);
+    h.update(`${rel}\0${bytes.length}\0`).update(bytes);
+  };
+  for (const [rel, file] of updateInputs(desk)) {
+    if (file === null) h.update(`${rel}\0`);
+    else add(rel, file);
   }
   return h.hex();
 }
@@ -508,7 +550,9 @@ function planDigest(inputs, result, pagesBefore, pagesAfter) {
     target: pyStr(result.target),
     changed: result.changed,
     left: result.left,
-    folders: result.folders,
+    // A hidden folder the update makes holds only files it adds, each named in `changed`; whether
+    // it was there before is no part of the plan, as the link sends files and no folder.
+    folders: result.folders.filter((rel) => !rel.split("/").some(hiddenName)),
     notes: result.notes,
     flags: result.flags,
     pagesBefore,
@@ -1294,7 +1338,8 @@ function flattenHeaders(run, drawn) {
   const titles = {};
   const families = path.join(run.root, "families");
   if (isDir(families)) {
-    for (const name of fs.readdirSync(families).filter((n) => n.endsWith(".md")).sort(V.compareText)) {
+    // a family page is a page: none is under a hidden name (lib/desk.js hiddenName)
+    for (const name of fs.readdirSync(families).filter((n) => n.endsWith(".md") && !hiddenName(n)).sort(V.compareText)) {
       const head = readHead(path.join(families, name)).head || {};
       const title = V.own(head, "title");
       titles[name.slice(0, -3)] = pyStr(V.truthy(title) ? title : name.slice(0, -3));
@@ -1958,6 +2003,7 @@ module.exports = {
   flatten,
   dumpPage,
   applyUpdate,
+  updateInputs,
   previewUpdate,
 };
 

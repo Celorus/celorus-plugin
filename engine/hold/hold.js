@@ -28,8 +28,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
 const { pluginVersion } = require("../lib/version.js");
-const { readDesk, DESK_ARGUMENT } = require("../lib/desk.js");
+const { DESK_ARGUMENT } = require("../lib/desk.js");
+const { readView } = require("../layout/graph.js");
 const { Desk } = require("../render/desk.js");
+const { deskMd, seatsOf } = require("../write/facts.js");
 
 const TOOL = "propose_hold";
 const ARGUMENTS = ["desk", "seat", "about", "start", "end", "day", "events", "listing_empty"];
@@ -174,8 +176,17 @@ function eventsOf(events, day, from, to, listingEmpty) {
   });
 }
 
+// The seats a hold may go on: every seat page on the desk; on a seat's graph its own seat alone,
+// the one its desk.md names, with its seat page in the shared part (write/facts.js seatsOf), since
+// the graph is that seat's.
+function seatsOn(desk) {
+  if (!desk.read.graph) return desk.of("seats").map((page) => page.slug).sort();
+  const celorus = path.join(desk.root, "celorus");
+  return seatsOf(celorus, deskMd(celorus, NOTHING)).handles;
+}
+
 function seatsSaid(desk) {
-  const seats = desk.of("seats").map((page) => page.slug).sort();
+  const seats = seatsOn(desk);
   return seats.length ? seats.join(", ") : "none";
 }
 
@@ -185,8 +196,8 @@ function seatOf(desk, seat) {
     throw new Refusal(`The seat must be known before a hold is proposed: pass \`seat\`, a seat's handle, one of: ${seatsSaid(desk)}. ${NOTHING}`);
   }
   const page = typeof seat === "string" ? desk.pages.get(seat) : undefined;
-  if (!page || page.kind !== "seats") {
-    throw new Refusal(`${JSON.stringify(seat)} is not a seat on this desk: the seats are ${seatsSaid(desk)}. ${NOTHING}`);
+  if (!page || page.kind !== "seats" || !seatsOn(desk).includes(seat)) {
+    throw new Refusal(`${JSON.stringify(seat)} is not a seat on this desk: ${desk.read.graph ? require("../render/counts.js").seatsSaid(desk) : `the seats are ${seatsSaid(desk)}`}. ${NOTHING}`);
   }
   return seat;
 }
@@ -241,7 +252,7 @@ function proposeHold(args = {}, { now = Date.now() } = {}) {
   const { deskFor, onlyArguments } = require("../lib/tools.js");
   onlyArguments(TOOL, args, ARGUMENTS);
   const root = deskFor(args.desk);
-  const read = readDesk(root);
+  const read = readView(root);
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so no hold is proposed. Run check_desk to see why.`);
   }

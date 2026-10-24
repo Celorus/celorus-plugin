@@ -6,10 +6,11 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { readPage } = require("../lib/desk.js");
-const { isSoulPage } = require("../lib/persona.js");
-const { own, truthy, items, holds, show, strip, splitLines, splitWords, isSpace, compareText, sortedText, asPython } =
+const { hiddenName, readPage } = require("../lib/desk.js");
+const { isSoulPage, SOUL_PAGE } = require("../lib/persona.js");
+const { own, truthy, items, holds, show, strip, splitLines, splitWords, isSpace, compareText, sortedText, asPython, same } =
   require("./values.js");
+const { LAYOUT, COMMON, PERSONAL, OWN_WORDS, commonOfGraph } = require("../layout/layout.js");
 
 const NO_HEADER = "no header";
 
@@ -30,11 +31,16 @@ const MODEL_KEYS = [
 // walked, never drawn. They are known by path and type both (lib/persona.js isSoulPage), never by
 // type alone, so a page saying type soul or manner anywhere else is read as any other page. A desk
 // set up before the soul shipped has a model that names neither, and the engine is the one that
-// knows them, so a clean desk stays clean. It lists nothing.
+// knows them, so a clean desk stays clean. It lists nothing. On a seat's graph a seat's manner page
+// is in the graph's personal part, personal/manner/<seat>-manner.md (lib/persona.js soulFolders),
+// and the soul's page is the common space's.
 
 // Whether `page` is the desk's own furniture: a page of a system type, or one of the soul's pages.
 function furniture(model, page) {
-  return holds(model.systemTypes, page.type === undefined ? null : page.type) || isSoulPage(page);
+  if (holds(model.systemTypes, page.type === undefined ? null : page.type) || isSoulPage(page)) return true;
+  if (!model.graph || typeof page.rel !== "string" || !page.rel.startsWith(`${PERSONAL}/`)) return false;
+  const inner = page.rel.slice(PERSONAL.length + 1);
+  return inner !== SOUL_PAGE && isSoulPage({ rel: inner, type: page.type });
 }
 
 // The same, for a kind page and a list page.
@@ -108,7 +114,8 @@ function pairs(value, sep, whose) {
   return out;
 }
 
-// The model pages, by file name, in name order: files directly under model/ ending ".md".
+// The model pages, by file name, in name order: files directly under model/ ending ".md", none
+// under a hidden name (lib/desk.js hiddenName: no page is, such as a copy a Mac leaves as ._x.md).
 function modelFiles(root) {
   const dir = path.join(root, "model");
   let entries;
@@ -118,7 +125,7 @@ function modelFiles(root) {
     return [];
   }
   return entries
-    .filter((entry) => entry.name.endsWith(".md") && !entry.isDirectory())
+    .filter((entry) => entry.name.endsWith(".md") && !hiddenName(entry.name) && !entry.isDirectory())
     .map((entry) => entry.name)
     .sort(compareText);
 }
@@ -127,13 +134,27 @@ function textSet(values) {
   return new Set(values.filter((v) => typeof v === "string"));
 }
 
+// Where the desk whose celorus folder is `root` keeps its own words, as { dir, rel, page }: `page`
+// is the page's path as a finding names it. Its model/own-words.md on layouts 1 and 2. On a seat's
+// graph, the firm's page in the common space beside the graph, and that alone (the base's ruling
+// K7, c/6212179305): a graph's copy of the page is not read, and a graph with no common
+// space beside it (layout.js commonOfGraph) has no own words (`dir` null).
+function ownWordsAt(root, desk) {
+  if (!same(own(desk, "layout_version"), LAYOUT)) return { dir: root, rel: OWN_WORDS, page: OWN_WORDS };
+  return { dir: commonOfGraph(path.dirname(root)), rel: OWN_WORDS, page: `${COMMON}/${OWN_WORDS}` };
+}
+
 // Reads the desk's model from `root`, the desk's celorus folder. Throws ModelUnreadable naming
 // the page when the model cannot be read from it.
 function loadDeskModel(root) {
   const heads = new Map();
   const bodies = new Map();
   const unreadable = new Map();
-  const files = modelFiles(root);
+  const deskPage = readPage(root, "desk.md");
+  const desk = asPython(deskPage.head) || {};
+  const ownAt = ownWordsAt(root, desk);
+  // A graph's own copy of the own words is not read at all, not even for whether it reads (K7).
+  const files = modelFiles(root).filter((name) => ownAt.dir === root || `model/${name}` !== OWN_WORDS);
   for (const name of files) {
     const page = readPage(root, `model/${name}`);
     if (page.head === null) unreadable.set(`model/${name}`, page.problem || NO_HEADER);
@@ -170,9 +191,15 @@ function loadDeskModel(root) {
       );
     }
   }
-  const ownWords = heads.get("own-words.md") || {};
-  const deskPage = readPage(root, "desk.md");
-  const desk = asPython(deskPage.head) || {};
+  let ownWords = heads.get("own-words.md") || {};
+  if (ownAt.dir !== root) {
+    ownWords = {};
+    if (ownAt.dir !== null && fs.existsSync(path.join(ownAt.dir, ...ownAt.rel.split("/")))) {
+      const page = readPage(ownAt.dir, ownAt.rel);
+      if (page.head === null) unreadable.set(ownAt.page, page.problem || NO_HEADER);
+      ownWords = asPython(page.head) || {};
+    }
+  }
   const ownPack = new Map();
   const ownDesk = new Map();
   const ownUnread = [];
@@ -229,10 +256,14 @@ function loadDeskModel(root) {
     ownPack,
     ownDesk,
     ownUnread,
+    // The page the own words above were read from, as a finding names it (ownWordsAt).
+    ownWordsPage: ownAt.page,
     unreadable,
     // The model's pages, by file name: every one was read as the model.
     files,
     pack: show(truthy(own(desk, "pack")) ? own(desk, "pack") : ""),
+    // Whether the desk is a seat's graph (layout 3).
+    graph: same(own(desk, "layout_version"), LAYOUT),
     switchOn: own(desk, "named_only_contact_details") === true,
   };
 }

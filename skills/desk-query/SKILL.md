@@ -74,6 +74,11 @@ or the answer from these instructions instead:
 If a desk tool call cannot be made after this skill has written, here or through a connector,
 say what was written and where, and stop; that sentence is never said then.
 
+## Signing in
+
+This skill is free and runs on this machine without signing in, and it never calls the
+record. The desk tools it uses run on this machine.
+
 ## Never
 
 - Never send anything.

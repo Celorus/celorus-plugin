@@ -550,8 +550,24 @@ function comparePaths(a, b) {
   return left.length - right.length;
 }
 
-// Every `.md` path under `dir`, relative and with forward slashes, in path order; each folder
-// below `dir` that could not be listed, as a page the reader could not read (its path with a
+// Whether a file or folder name is hidden: it starts with a dot once the characters that show
+// nothing are dropped and its look-alike forms folded (NFKC), so a full-width dot is a dot. No page
+// is ever under a hidden name: Obsidian keeps its settings and its bin there, the engine writes no
+// page there, and the link sends nothing hidden but the few files a tool names exactly
+// (lib/workingsets.json). One rule, here, for the reader and the link.
+function hiddenName(name) {
+  return foldName(name).startsWith(".");
+}
+
+// A name as the link compares names: the characters that show nothing dropped, look-alike forms
+// folded (NFKC), lower case, so `.Views` and `.views` are one folder on any disk.
+function foldName(name) {
+  return String(name).replace(/\p{Default_Ignorable_Code_Point}/gu, "").normalize("NFKC").toLowerCase();
+}
+
+// Every `.md` path under `dir`, relative and with forward slashes, in path order, none under a
+// hidden name (hiddenName: a hidden file or folder, and all under it, is passed over unread and
+// unlisted, link or not); each folder below `dir` that could not be listed, as a page the reader could not read (its path with a
 // slash after it, see unread); and each folder link it met (`links`). A link named like a page is
 // read by readPage, whose stat follows it, as ever. Any other link is looked at with stat (the
 // base's ruling R64, applying R33's "readers follow a link"): one that leads to a folder is walked
@@ -594,6 +610,7 @@ function markdownUnder(dir) {
       seen.set(id, prefix);
     }
     for (const entry of entries) {
+      if (hiddenName(entry.name)) continue;
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) walk(path.join(folder, entry.name), rel);
       else if (entry.name.endsWith(".md")) out.push(rel);
@@ -744,6 +761,24 @@ function readDesk(folder, { disk = diskAt } = {}) {
   return { root, layout, stamps, stampsUnread: null, deskPage: deskPage ? deskPage.rel : null, pages, links };
 }
 
+// The common space beside a seat's graph on layout 3, at `dir` (engine/layout/layout.js
+// commonOfGraph names it for a graph): its folder and its pages, read as a desk's are, by their
+// path under it; null when no folder is there. The common space is never a desk of its own:
+// findDesk never finds it, and only a graph reads it. The caller names the folder, so this file
+// loads no layout rule: the link loads this file, and the engine files it may reach are pinned.
+function readCommon(dir) {
+  let st;
+  try {
+    st = fs.statSync(dir);
+  } catch {
+    return null;
+  }
+  if (!st.isDirectory()) return null;
+  const listed = markdownUnder(dir);
+  const pages = [...listed.rels.map((rel) => readPage(dir, rel)), ...listed.folders].sort((a, b) => comparePaths(a.rel, b.rel));
+  return { dir, pages, links: listed.links };
+}
+
 // The CELORUS_DESK findDesk reads the desk from, as it is set, or undefined (0.19.0 K1k, the base's
 // ruling R101 (C)): set, and written as a full path where the working folder is not known (`start`
 // null). The one rule, so a door that names the desk as it was given (lib/tools.js deskNamed)
@@ -754,6 +789,8 @@ function envDesk(env, start) {
 }
 
 module.exports = {
+  foldName,
+  hiddenName,
   NO_HEADER,
   NOT_UTF8,
   HEADER_UNREAD,
@@ -773,6 +810,7 @@ module.exports = {
   splitPage,
   readPage,
   readDesk,
+  readCommon,
   diskAt,
   stampsPageOf,
   comparePaths,

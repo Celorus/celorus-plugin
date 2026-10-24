@@ -6,7 +6,7 @@ description: >-
   Use when someone says "log the call", "review the call", "review this call", "I just
   spoke to", pastes a voice note or drops in a transcript. Writes the conversation page,
   proposes pages and connections for who and what was named, and writes the register, the
-  marks and the desk log. Runs with no Celorus account.
+  marks and the desk log. Free; each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
 # Review the call
@@ -33,8 +33,8 @@ they forbid, they win.
 
 - `family_facts`, before the review, when the call was about a family: the people already on
   the desk, their pages and their CRM ids, so the review names them as the desk does.
-- `log_action` writes the call's row in `celorus/desk-log.md`, and its own line in
-  `celorus/log.md`: the row the desk's consoles count.
+- `log_action`, through `make`, writes the call's row in `celorus/desk-log.md`, and its own
+  line in `celorus/log.md`: the row the desk's consoles count.
 - `check_desk`, over the pages written, at the end.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
@@ -86,6 +86,8 @@ has already passed is written with its own date all the same; `follow-up` queues
 the date has passed.
 
 ## What you write
+
+On a seat's graph, write no page by hand. Show the proposal under "Who and what was named" below and take the person's yes on it, the "same person?" check included, before anything is made. Then make the conversation through `make` with the desk tools' `write_conversation`: `seat`, the seat's handle; `family`, the file name of the page the call was about; `channel`, `call` or `meeting`; `title`, and `summary`, short; `attended`, the pages of the people on the call besides the seat; `recorded`, `false` unless the call was recorded; `named`, only when that page is a family's, each person of that family named on the call who has no page and whom the person confirmed, with its `slug` and `name`, and on a recorded call its `note`; and, on a recorded call only, `heard`, each fact the person confirmed that was said on the call about a page the desk has or a person in `named`, with its `subject`, `connection`, `target`, `words` and `said_by`, the words exactly as the transcript has them and `connection` `note` for words that draw no connection. The overnight makes a page for each named person, as a member of that family, and puts each heard line on its page in quotation marks, so an unrecorded call sends no `heard` and no `note`. Anyone else named, a near match to a page the desk holds, and every fact from an unrecorded call is said in the chat, never sent; a person's or a firm's page is never written from this skill on a graph. When the page the call was about is not on the desk, make no conversation: show the review in the chat. A firm named with no page gets no page on a graph: name it in the chat. Then the call row through `log_action`, as below. The register row, the mark, the queue's state and the lines in `log.md` are not written on a graph: say each in the chat, and that the desk keeps them when a desk tool does. On any other desk:
 
 `celorus/conversations/<date>-<about>-<what>.md`, where `<about>` is the file name of the page
 the call was about and `<what>` is one or two words (`intro`, `pricing`, `follow-up`):
@@ -203,7 +205,8 @@ one.
 - Ask the seat once for a mark on the lead, `pursue`, `ignore` or `wrong`, with why in a few
   words. When they give one, one row in `celorus/marks.md`:
   `| <date> | <handle> | <slug> | <mark> | <why, in words> |`. When they give none, no row.
-- The call row in `celorus/desk-log.md`, written by `log_action` with the seat's handle, `family`
+- The call row in `celorus/desk-log.md`, written by `log_action` through `make`, with the
+  seat's handle, `family`
   set to `<slug>` (the page the call was about, whichever folder it is in), and `at` the time of
   the call with its offset. The `action` and `outcome` are a pair the desk's consoles count: a
   contact or a meeting set on the `rep` view of the seat that logged it, and in the team's, and
@@ -230,7 +233,10 @@ one.
   `[[<slug>]]`, moves to state `contacted` (or `met`, when they met). With no such row, change
   nothing there.
 - When today's board `celorus/today/<date>.md` exists, a line under its "Done" block. With no
-  board, write none; `day-open` makes the board.
+  board, write none; `day-open` makes the board. On a seat's graph (`celorus/desk.md` says
+  `layout_version: 3`) the board is the overnight's, and this skill writes nothing on it: the
+  call row above is the day's Done there, and the board shows no Done line from this computer.
+  Say so when the call is logged.
 - One line in `celorus/log.md` for each page this skill wrote by hand, directly under today's
   heading `## <date>` (add the heading above the older days if missing) and above the day's
   earlier lines, newest first as the desk tools write them, with `<time>` as two-digit `HH:MM`:
@@ -282,10 +288,50 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-This skill runs in full with no Celorus account. It never calls the record; a call review
-is the desk's own material.
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 

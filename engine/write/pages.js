@@ -311,13 +311,17 @@ function undo(step) {
 }
 
 // Runs `steps` in order: { kind: "create", rel, text } or { kind: "rewrite", rel, raw, text }.
+// A step's `root`, when it names one, is the folder its `rel` is under and confined to, as
+// celorus/ is: the firm folder beside a seat's graph (slice E6b-2b), whose one page in common/ a
+// call changes goes down with its line in the graph's own log.md, and is taken back with it.
 // A created page whose name is taken by then is refused, never written over. Answers
 // { written: [rel] } or { written: null, reason, previous_text }.
 function writeSteps(celorus, steps) {
   const done = [];
   for (const step of steps) {
     const bytes = Buffer.from(step.text, "utf8");
-    let out = step.kind === "create" ? create(celorus, step.rel, bytes) : rewriteOwned(celorus, step.rel, step.raw, bytes);
+    const root = step.root || celorus;
+    let out = step.kind === "create" ? create(root, step.rel, bytes) : rewriteOwned(root, step.rel, step.raw, bytes);
     if (out.exists) out = { fault: `${step.rel} was made by something else while it was being written, so nothing was written.` };
     if (out.done) {
       done.push(out.done);

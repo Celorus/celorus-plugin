@@ -12,7 +12,7 @@
 const { Refusal } = require("../lib/refusal.js");
 const { linkSpans, linkName } = require("../check/text.js");
 const { unlink, readTable } = require("./desk.js");
-const { crmExport, nameKey, NO_EXPORT } = require("./export.js");
+const { crmExport, nameKey } = require("./export.js");
 const S = require("./systems.js");
 const { asDate, daysBetween, addDays, dateLabel, shortDate } = require("./words.js");
 
@@ -37,9 +37,9 @@ const FUNNEL_KEYS = [
 const ROLE_WORDS = { rep: ["an", "SDR"], rm: ["an", "RM"], "desk-head": ["a", "desk head"] };
 const HAND_OVER = /^to ([a-z0-9][a-z0-9-]*)$/;
 // assign_lead's line in log.md (write/writers.js assignLead): "assigned ", the family's link, then
-// what AFTER_ASSIGNED reads, the seat and the list (assignedLine)
+// what AFTER_ASSIGNED reads, the seat and the list (assignedLine), and on a graph the common file
 const ASSIGNED = "assigned ";
-const AFTER_ASSIGNED = /^ to ([a-z0-9][a-z0-9-]*) \((.*)\)$/;
+const AFTER_ASSIGNED = /^ to ([a-z0-9][a-z0-9-]*) \((.*)\)(?: in common\/queues\/supplied\.md)?$/;
 // the desk's own folder, which a follow-up's source may name in front of its path
 const DESK_FOLDER = "celorus";
 
@@ -285,6 +285,52 @@ function latestHandOvers(rows, seatSet) {
   return new Map([...latest].map(([family, { to }]) => [family, to]));
 }
 
+// On a seat's graph, another seat of the firm a caller asks for is refused: the graph holds every
+// seat's page (the name list), but only its own seat's work, so another seat's view, count or book
+// drawn from it would be a part told as the whole. Each tool calls it on the seat its caller named,
+// never inside a view that walks the desk's seats itself: a team view counts every seat it holds.
+// A name that is no seat page is left to the caller's own refusal.
+function graphSeat(desk, seat) {
+  if (!desk.read.graph || !seat || seat === desk.seat) return;
+  const page = desk.pages.get(seat);
+  if (!page || page.kind !== "seats") return;
+  const whose = desk.seat === null ? "a seat's graph whose desk.md names no seat" : `${desk.seat}'s graph`;
+  throw new Refusal(
+    `${JSON.stringify(seat)} is not this graph's seat: this desk is ${whose}, which holds that seat's own work alone, so ` +
+      `${seat}'s figures are read from ${seat}'s own graph.`,
+  );
+}
+
+// On a seat's graph a view that counts a whole team is refused (the base's ruling K9, c/6212179305):
+// the graph holds one seat's work, and every other seat's figures would be read as none. `what` is
+// the view, as "The lead-gen".
+function teamOnGraph(desk, what) {
+  if (!desk.read.graph) return;
+  throw new Refusal(
+    `${what} counts a whole team, and a graph holds one seat's work: the team's figures read from-my-team, which the ` +
+      "graph job fills from a later wave.",
+  );
+}
+
+// The words that end a refusal of a name that is no seat: the desk's seats, or on a seat's graph its
+// one seat, never the firm's seats it would then refuse (reader 1's low, c/6215653403).
+function seatsSaid(desk) {
+  if (desk.read.graph) {
+    if (desk.seat === null) return "this desk is a seat's graph whose desk.md names no seat";
+    // its one seat by its seat page in the shared part that says type: seat, as write/facts.js seatsOf
+    const page = desk.pages.get(desk.seat);
+    if (!(page && page.kind === "seats" && page.header && page.header.type === "seat")) {
+      return `this desk is ${desk.seat}'s graph, and ${desk.seat} has no seat page in its shared part that says type: seat`;
+    }
+    return `this desk is ${desk.seat}'s graph, and its one seat is ${desk.seat}`;
+  }
+  const valid = desk
+    .of("seats")
+    .map((p) => p.slug)
+    .sort();
+  return `the seats are ${valid.join(", ")}`;
+}
+
 // The seat a view is for, or a refusal naming the seats it could be.
 function seatPage(desk, seat, roles) {
   const page = desk.pages.get(seat || "");
@@ -296,6 +342,10 @@ function seatPage(desk, seat, roles) {
     .sort();
   const [article, word] = roles.length === 1 ? ROLE_WORDS[roles[0]] || ["a", roles[0]] : ["a", ""];
   const kind = word ? `${word} ` : "";
+  if (desk.read.graph) {
+    const there = Boolean(page && page.kind === "seats");
+    throw new Refusal(`${JSON.stringify(seat || "")} is not ${there ? `${article} ${kind}seat` : "a seat"} on this desk: ${seatsSaid(desk)}.`);
+  }
   throw new Refusal(
     `${JSON.stringify(seat || "")} is not ${article} ${kind}seat on this desk: the ${kind}seats are ${valid.join(", ")}.`,
   );
@@ -304,14 +354,16 @@ function seatPage(desk, seat, roles) {
 // The page a follow-up's source names (base ruling R42), in every form a desk holds: a link
 // ([[slug]] or [[folder/slug]]), a desk-relative path (folder/slug.md, with or without the desk's
 // own folder in front), a bare file name (slug.md) or a bare slug. A folder named must be the
-// page's own. Null when the source names no page on the desk.
+// page's own. On a seat's graph a path names the page where it is in its part
+// (shared/conversations/slug.md), as the converter re-pointed it. Null when the source names no
+// page on the desk.
 function sourcePage(desk, from) {
   let text = unlink(from).trim();
   if (text.startsWith(`${DESK_FOLDER}/`)) text = text.slice(DESK_FOLDER.length + 1);
   if (text.endsWith(".md")) text = text.slice(0, -".md".length);
   const at = text.lastIndexOf("/");
   const page = desk.pages.get(text.slice(at + 1));
-  if (!page || (at !== -1 && text.slice(0, at) !== page.kind)) return null;
+  if (!page || (at !== -1 && text.slice(0, at) !== page.kind && `${text}.md` !== page.path)) return null;
   return page;
 }
 
@@ -775,13 +827,7 @@ function leadGenView(desk, st, today) {
   // funnel, and no exception follows from the calls not in the CRM when their count is a hole
   const gates = pageGates(desk, st, "lead-gen", "desk-head");
   const [steps, stall] = funnel(totals, gates.not_counted);
-  const unassigned = [];
-  for (const f of desk.of("families")) {
-    const owner = effectiveOwner(desk, f.slug);
-    if (owner !== head.slug && owner !== null) continue;
-    const sig = fresh(desk, f.slug, today, FRESH_SIGNAL_DAYS);
-    if (sig) unassigned.push(row(desk, f.slug, signalWhy(sig), `New signal, ${shortDate(sig.header.as_of)}`, sig.slug, "unassigned"));
-  }
+  const unassigned = unassignedFor(desk, head.slug, today);
   const exceptions = exceptionLines(rows, unassigned.length, !gates.not_counted.includes("crm_gaps"));
   // the desk's pages name every follow-up of the desk counted as due nowhere
   return frame(desk, "lead-gen", head.slug, today, {
@@ -795,6 +841,23 @@ function leadGenView(desk, st, today) {
     ...gates,
   });
 }
+
+// The families with a fresh signal and no owner but the desk head `head`, as rows.
+function unassignedFor(desk, head, today) {
+  const unassigned = [];
+  for (const f of desk.of("families")) {
+    const owner = effectiveOwner(desk, f.slug);
+    if (owner !== head && owner !== null) continue;
+    const sig = fresh(desk, f.slug, today, FRESH_SIGNAL_DAYS);
+    if (sig) unassigned.push(row(desk, f.slug, signalWhy(sig), `New signal, ${shortDate(sig.header.as_of)}`, sig.slug, "unassigned"));
+  }
+  return unassigned;
+}
+
+// The desk head's brief on a seat's graph keeps these keys of its page; the team's are not counted.
+const GRAPH_HEAD_KEEPS = ["unassigned", "calendar"];
+const TEAM_NOT_COUNTED =
+  "The team's figures are not counted on a seat's graph: they read from-my-team, which the graph job fills from a later wave.";
 
 // The team's exceptions, each seat's under its name; `crm` false leaves out the calls not in the
 // CRM, which a brief drawn with the CRM in a hole cannot say.
@@ -822,6 +885,8 @@ const FAMILY_READS = ["crm"];
 function viewUnread(desk, st, role) {
   const out = notHandedOver(st, VIEW_READS[role] || EVERY_ROLE);
   if (!desk.of("families").length) out.push({ role: "families", why: role === "rm" ? NO_BOOK_MOMENTS : NO_FAMILIES });
+  // the desk head's view on a seat's graph counts no team (the base's ruling K9)
+  if (role === "desk-head" && desk.read.graph) out.push({ role: "team", why: TEAM_NOT_COUNTED });
   return out;
 }
 
@@ -868,13 +933,22 @@ function briefView(desk, st, seat, today) {
       chat: b.chat.length,
       to_calendar: c.to_calendar,
     };
+  } else if (desk.read.graph) {
+    // The desk head's brief on a seat's graph keeps its own figure, the families with a signal and
+    // no owner, from the graph's own pages; the team's figures are not counted, said as a hole (the
+    // base's ruling K9; viewUnread).
+    detail = { reps: [], unassigned: unassignedFor(desk, seat, today), holes: [] };
+    numbers = { unassigned: detail.unassigned.length };
   } else {
     detail = leadGenView(desk, st, today);
     numbers = { ...detail.totals, unassigned: detail.unassigned.length };
   }
   // what the brief cannot count (round 3, row A6): each hole desk_count answers, in its words, and
   // the figures and blocks that read one, which the page draws as the hole and never as 0
-  const { unread, not_counted: notCounted, page_keys: pageKeys } = pageGates(desk, st, "morning-brief", role);
+  const gates = pageGates(desk, st, "morning-brief", role);
+  const { unread, page_keys: pageKeys } = gates;
+  const teamless = role === "desk-head" && desk.read.graph;
+  const notCounted = teamless ? pageKeys.filter((key) => !GRAPH_HEAD_KEEPS.includes(key) || gates.not_counted.includes(key)) : gates.not_counted;
   const exceptions = role === "desk-head" ? exceptionLines(detail.reps, detail.unassigned.length, !notCounted.includes("crm_gaps")) : [];
   return frame(desk, "morning-brief", seat, today, {
     numbers,
@@ -1281,11 +1355,7 @@ function snapshotProblems(snap, lg, rmViews) {
 function anySeat(desk, seat) {
   const page = desk.pages.get(seat || "");
   if (page && page.kind === "seats") return page;
-  const valid = desk
-    .of("seats")
-    .map((p) => p.slug)
-    .sort();
-  throw new Refusal(`${JSON.stringify(seat || "")} is not a seat on this desk: the seats are ${valid.join(", ")}.`);
+  throw new Refusal(`${JSON.stringify(seat || "")} is not a seat on this desk: ${seatsSaid(desk)}.`);
 }
 
 // The states of a supplied row not yet worked: `new`, and `assigned`, the state assign_lead (the
@@ -1393,7 +1463,7 @@ function deskHolds(desk, names) {
 // that cannot be read, it is not available, with the reason, never zero.
 function suppliedAlreadyYours(desk, st, seat) {
   anySeat(desk, seat);
-  const found = crmExport(desk.root);
+  const found = crmExport(desk.root, desk.crm);
   if (!found.available) return { available: false, reason: found.reason };
   const held = deskHolds(desk, found.names);
   const asked = seatLeads(desk, seat).filter((lead) => ASKED_STATES.has(lead.state));
@@ -1639,7 +1709,7 @@ function callsForToday(desk, st, seat, day) {
   // input 2: a supplied lead by its latest row, the seat's as the counts read it (R42 (b)), or no
   // seat's. One the desk already holds (deskHolds, the book matched with or without a CRM export)
   // is no call: it is named in already_yours with what matched, and spends no cap.
-  const found = crmExport(desk.root);
+  const found = crmExport(desk.root, desk.crm);
   const held = deskHolds(desk, found.available ? found.names : null);
   const alreadyYours = [];
   for (const lead of suppliedLeads(desk).values()) {
@@ -1687,7 +1757,7 @@ function callsForToday(desk, st, seat, day) {
   // supplied name it holds is called as new in silence; a desk with no export is the book alone.
   const holes = [
     ...(noSeat.length ? [{ role: "seats", why: NO_SEAT }] : []),
-    ...(!found.available && found.reason !== NO_EXPORT ? [{ role: "crm export", why: found.reason }] : []),
+    ...(!found.available && !found.none ? [{ role: "crm export", why: found.reason }] : []),
     ...undatedFollowUps(desk, seat, true).map((why) => ({ role: "follow-ups", why })),
   ];
   return holes.length ? { ...out, holes } : out;
@@ -1716,6 +1786,9 @@ const WORKDAY_READS = {
 };
 
 module.exports = {
+  graphSeat,
+  teamOnGraph,
+  seatsSaid,
   WORKDAY_COUNTS,
   WORKDAY_READS,
   NOT_HANDED_OVER,

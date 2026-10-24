@@ -5,7 +5,7 @@ description: >-
   row with a date, and tomorrow's open reads it first. Use when someone says "what do I
   owe", "queue a follow-up", "remind me to", "mark that done", or right after a call is
   reviewed. Proposes a calendar hold where a connector exists, on the user's say-so, and
-  never sends anything. Runs with no Celorus account.
+  never sends a mail or an invite. Free; each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
 # Follow-ups
@@ -28,13 +28,13 @@ they forbid, they win.
 
 ## The tools this skill calls
 
-- `add_follow_up` writes each new row, and its own line in `celorus/log.md`. It is the only way
-  a new row goes into the queue: never write one by hand.
+- `add_follow_up`, through `make`, writes each new row, and its own line in `celorus/log.md`.
+  It is the only way a new row goes into the queue: never write one by hand.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
   list, and never write the change some other way.
-- This skill says no count. Each row it queues is the row `add_follow_up` answers, said back in
-  words; the queue's other rows are named in words, never counted.
+- This skill says no count. Each row it queues is the row `add_follow_up` answers through
+  `make`, said back in words; the queue's other rows are named in words, never counted.
 
 ## Find the desk
 
@@ -62,7 +62,7 @@ If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 ## What you write
 
 One row per promise in `celorus/queues/follow-ups.md`, `us` for what we owe and `them` for what
-is owed to us, each written by `add_follow_up` with:
+is owed to us, each written by `add_follow_up` through `make`, with:
 
 - `seat`: the seat's handle;
 - `owed_by`: `us` or `them`;
@@ -110,8 +110,9 @@ Then, when this run wrote at least one row:
   own calendar, with no guest, since a guest is an invitation sent. A clash or an unsaid time
   is refused: ask the person again, and never move the time yourself. Where no calendar
   connector exists, say so in one line.
-- Update `timestamp` in the queue's frontmatter.
-- The log line for each row is the one `add_follow_up` wrote; write none by hand.
+- Update `timestamp` in the queue's frontmatter; on a seat's graph, never, since a page changed
+  by hand stops the next pull.
+- The log line for each row is the one `add_follow_up` wrote through `make`; write none by hand.
 
 A queuing run that wrote no row changes no file.
 
@@ -119,6 +120,8 @@ Every row is the desk's own commitment and carries the register `yours` by const
 nothing in this file is a fact about a subject.
 
 ## Closing and dropping
+
+On a seat's graph, a close or a drop is not written, since a page changed by hand stops the next pull: say in the chat which promise is done or dropped and why, and that the desk keeps it when a desk tool flips a row's state. On any other desk:
 
 "Mark that done" flips the row to `done` and adds a row to `celorus/desk-log.md`:
 `| <date> | <handle> | <slug> | follow-up | · | <action> | done | · | follow-up |`.
@@ -150,9 +153,50 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-This skill runs in full with no Celorus account and never calls the record.
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 

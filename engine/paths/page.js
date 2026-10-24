@@ -19,6 +19,7 @@
 
 const { BLANK_CLASS, strip, compareText } = require("../check/values.js");
 const { linksIn, proofMatch } = require("../check/text.js");
+const { VIEW_VERSION } = require("../layout/layout.js");
 
 // The one place under engine/paths that writes a link (DESK-60). It builds text only: what it
 // returns is printed, or, in ownWords, compared whole with a field linksIn has already read. No
@@ -397,6 +398,7 @@ function renderPage({ target, title, onDesk, walk, kept, now, version }) {
   const head = [
     "---",
     "type: view",
+    `view_version: ${VIEW_VERSION}`,
     `title: ${quoted(`Who can introduce you to ${title}`)}`,
     `description: ${quoted(`Paths to ${target} over this desk's own pages`)}`,
     `timestamp: ${quoted(now)}`,

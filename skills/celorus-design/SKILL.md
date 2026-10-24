@@ -263,6 +263,11 @@ The skill's single source home is `design-system/.claude/skills/celorus-design/`
 `.skill` bundle and the `celorus` plugin copy are generated from it — never edit those
 directly. Full single-source sync law: `kit/README.md`.
 
+## Signing in
+
+This skill is free and runs on this machine without signing in, and it never calls the
+record. The design system it reads is on this machine, or bundled in this skill.
+
 ## Self-check before finishing
 
 - Zero hex literals outside the pasted token block and official SVG assets

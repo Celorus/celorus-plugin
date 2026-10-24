@@ -36,7 +36,7 @@ const path = require("node:path");
 const { readPage, NO_HEADER } = require("../lib/desk.js");
 const T = require("../write/text.js");
 const { screened } = require("../write/screen.js");
-const { seatsOf, seatsNamed } = require("../write/facts.js");
+const { seatsOf, seatHeld } = require("../write/facts.js");
 const { writeSteps } = require("../write/pages.js");
 const { refuseLinkedFolders } = require("../lib/linkedroot.js");
 const P = require("../overnight/plan.js");
@@ -58,10 +58,13 @@ const INTRO =
   "(`skill_file`), and deleting it in the app leaves that folder behind, so taking the desk out removes " +
   "both, by hand, starting from this page.";
 
-// The line the overnight writes at the end of each run, and the one that proves a run attended.
+// The line the overnight writes at the end of each run, and the one that proves a run attended. A
+// server run (overnight.js DESK_JOB, slice E6b-2c) is a third kind: never a routine of the register
+// (RUNS stays local and cloud) and never an attended run.
 const RUN_LINE = {
   attended: "ran the overnight, attended",
   routine: "ran the overnight as a routine",
+  server: "ran the overnight on the server",
 };
 
 // Whether log.md's text holds an attended run of the overnight.
@@ -220,13 +223,11 @@ function heldText(what, value) {
 }
 
 // Records one routine a person made in the app, as a row on the register, and its line in log.md.
+// On a seat's graph the register is the graph's own, at its root (K11), and only its seat registers.
 function registerRoutine(ctx, args) {
   const { seat, routine, runs, repeats, when, model } = args;
   const skillFile = args.skill_file;
-  const seats = seatsOf(ctx.celorus, ctx.desk);
-  if (typeof seat !== "string" || !seats.handles.includes(seat)) {
-    refuse(`seat must be a seat handle, one of: ${seatsNamed(seats)}; got ${JSON.stringify(seat)}. ${NOTHING}`);
-  }
+  seatHeld("seat", seat, seatsOf(ctx.celorus, ctx.desk), NOTHING);
   if (typeof routine !== "string" || !T.HANDLE.test(routine)) {
     refuse(`routine is the routine's name as its folder is named: lowercase words joined by hyphens. ${NOTHING}`);
   }

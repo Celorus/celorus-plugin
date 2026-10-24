@@ -2,10 +2,15 @@
 
 Read this when the person says "update my desk", or says yes to the line day-open shows when
 the plugin's model is newer than the desk's. The update is the desk tools' `update_desk`,
-never done by hand: it runs the steps below in this order, each one checks whether it is
-already done and skips if so, so a second run changes nothing. If the desk tools cannot run,
-say "The desk tools are not running on this machine, so I cannot do this. Nothing was
-changed." and stop.
+made on the desk server through `make` (`SKILL.md`'s "Signing in" says how), never done by
+hand: it runs the steps below in this order, each one checks whether it is already done and
+skips if so, so a second run changes nothing. If the desk tools cannot run, say "The desk
+tools are not running on this machine, so I cannot do this. Nothing was changed." and stop.
+
+On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk server does not keep
+an update for now, nor any change to the family, person and firm pages or the merge record:
+`make` answers that the call changes pages only the overnight keeps, and that nothing was
+written. Say that as it came, and stop.
 
 ## Before anything changes
 
@@ -15,7 +20,7 @@ changed." and stop.
    desk, not in it, so taking it changes nothing on the desk. If they say no, stop and say
    why: steps 3 and 4 write `index.md` and `log.md` afresh, and the copy is the only place
    their old text is kept.
-2. Call `update_desk` with the seat's `handle`, and `apply` left out. It works out every
+2. Through `make`, call `update_desk` with the seat's `handle`, and `apply` left out. It works out every
    change on a scratch copy and changes nothing on the desk. It checks every stop below before
    writing anything: a link (a file or folder that points somewhere else) as `.gitignore`, as
    `celorus/` or anywhere under it, since the update never writes through one; a page already
@@ -35,7 +40,7 @@ changed." and stop.
    "The desk has its CRM down as still to connect, with nothing named. Does the firm have a CRM, or is there none on this desk?"
    Keep only the roles the person says the firm has none of, and never guess one: a role
    they say the firm has, or leave unanswered, stays `still to connect`. If they keep any,
-   call `update_desk` again with the same `handle`, `apply` left out, and those roles as
+   call `update_desk` again through `make`, with the same `handle`, `apply` left out, and those roles as
    `none_on_this_desk`; that answer's preview is the one to show. Each run of the update
    asks about each such role once, and the desk keeps no record that it asked. When
    `ask_about` is empty, as it always is on a desk with no systems table, ask nothing.
@@ -45,7 +50,7 @@ changed." and stop.
    "No file changes: the desk is already up to date.", and then
    the update ends there: nothing else runs, not even `check-desk`, which would write views
    and a log line on a desk the person was just told nothing would change. Change nothing
-   until they say yes. On a yes, call `update_desk` again with the same `handle`,
+   until they say yes. On a yes, call `update_desk` again through `make`, with the same `handle`,
    `apply: true`, the preview's `plan` as it came, and the same `none_on_this_desk` that
    preview was given, or none when it was given none. The update then works the plan out
    again and runs only if it is the one the person saw; if the desk changed since, or the
@@ -129,7 +134,7 @@ changed." and stop.
     role recorded any other way, or a desk with no systems table, stops the update before
     anything is written. With no role passed, this step does nothing.
 12. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
-    `render_views` does.
+    a `render_views` made through `make` does.
 13. **Logging the update.** Only if something changed: one line under today's heading,
     `* <time> · <handle> · install-desk · updated the desk to model version <N> · yours`.
     When step 11 recorded a role, the line names it:
@@ -140,7 +145,8 @@ changed." and stop.
 The answer names each file it changed in `changed`, and `model_version` is the version the desk
 now stands at. Say its `summary`, and each of its `flags` in a sentence. If the desk is a git
 repository, commit with the message `update to model version <N>`. Run `check-desk` and read
-its list out. The update never deletes a page and never sends anything. If any step stops,
+its list out. The update never deletes a page, and sends nothing but what `make` sends the
+desk server. If any step stops,
 say which step and why in one sentence, and then what the stop says about the desk: when it
 ends "Nothing was changed.", say the desk is as it was; when it names files the desk "has
 already changed" (only an apply that stopped part-way on the desk itself does), name them as

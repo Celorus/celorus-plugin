@@ -6,7 +6,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { readDesk, PAGE_UNREAD, deskShown, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
+const { readDesk, readPage, PAGE_UNREAD, deskShown, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
 const V = require("../check/values.js");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot, refuseLinkedFolders } = require("../lib/linkedroot.js");
@@ -22,6 +22,8 @@ const H = require("../update/history.js");
 const { ROLES } = require("../scaffold/systems.js");
 const { pathPage } = require("../paths/index.js");
 const { writePathPage, owned } = require("../paths/write.js");
+const F = require("../write/facts.js");
+const L = require("../layout/layout.js");
 
 // The registry's helpers, read when a tool runs: lib/tools.js lists these tools, so it is still
 // loading when this file is.
@@ -58,8 +60,11 @@ function change(tool, args, allowed) {
   // is read for writing (lib/linkedroot.js).
   refuseLinkedRoot(desk);
   const read = readDesk(desk);
-  const seats = H.seatsOf(checkPages(read.pages), read.stamps || null);
-  const handle = H.heldSeat(args.handle, seats);
+  // On a seat's graph any seat but its own is refused naming the graph's seat (facts.js seatHeld),
+  // never listing the firm's seats it would then refuse.
+  const seats = seatsOfChange(read);
+  if (seats.own !== null) F.seatHeld("handle", args.handle ?? null, seats, H.NOTHING);
+  const handle = H.heldSeat(args.handle, seats.handles);
   // celorus/ resolved too, as the merge resolves it: every write checks that its folder is the
   // one it was given.
   let celorus = path.join(read.root, "celorus");
@@ -69,6 +74,39 @@ function change(tool, args, allowed) {
     // A desk with no celorus/ folder is refused by the tool that needs one.
   }
   return { read, root: read.root, celorus, moment, handle, shown };
+}
+
+// The seats that may make a change, and on a seat's graph its own seat (`own`, else null). A seat's
+// graph is changed by its own seat alone: the one its desk.md names in `seat:`, with its seat page
+// in the shared part (write/facts.js seatsOf). The desk is a graph by desk.md's header, as the
+// registry reads it (lib/tools.js convertedState), so a graph whose stamps the reader cannot take is
+// refused, never changed as a desk of no layout. A folder holding a graph's parts while its desk.md
+// does not say it is a graph is refused in the words every writer refuses it in (facts.js
+// notGraphSaid).
+function seatsOfChange(read) {
+  const celorus = path.join(read.root, "celorus");
+  const head = readPage(celorus, "desk.md").head;
+  const mapping = head && typeof head === "object" && !Array.isArray(head);
+  if (!(mapping && head.layout_version === L.LAYOUT)) {
+    const said = F.notGraphSaid(celorus, mapping ? head : null, entryThere(path.join(celorus, "desk.md")));
+    if (said !== null) throw new Refusal(`${said} ${H.NOTHING}`);
+    return { handles: H.seatsOf(checkPages(read.pages), read.stamps || null), own: null };
+  }
+  if (read.layout !== L.LAYOUT) {
+    throw new Refusal(`This desk is a seat's graph, and its desk.md's stamps cannot all be read, so nothing is written: check-desk names the stamp to correct. ${H.NOTHING}`);
+  }
+  const own = F.seatsOf(celorus, F.deskMd(celorus, H.NOTHING));
+  if (!own.handles.length) throw new Refusal(`The seat must be known before anything is written, and ${own.why}. ${H.NOTHING}`);
+  return { handles: own.handles, own: own.own };
+}
+
+// Whether anything is at `file`, looked at and never followed.
+function entryThere(file) {
+  try {
+    return Boolean(fs.lstatSync(file, { throwIfNoEntry: false }));
+  } catch {
+    return false;
+  }
 }
 
 function unreadableModel(err) {
@@ -466,6 +504,9 @@ function mergePagesTool(args = {}) {
     summary:
       `Merged ${require("../render/screen.js").pathsSaid(args.merge)} into ${require("../render/screen.js").pathsSaid(args.keep)}: ${plural(done.changed.length, "page changed", "pages changed")}, ` +
       `${done.removed} removed, the record at ${done.record}. ` +
+      // A seat's graph is one seat's: the merge changes its pages alone (slice E6b-2b, T13).
+      (c.read.layout === L.LAYOUT ? `Links to ${require("../render/screen.js").pathsSaid(args.merge)} in the firm's common space and in other seats' graphs are not re-pointed. ` : "") +
+      (done.keptPart === L.PERSONAL ? `Nor are the links to it that shared/ pages hold in their own words, as ${require("../render/screen.js").pathsSaid(args.keep)} is in personal/: still_named says where. ` : "") +
       (views.not_rebuilt || `The views are rebuilt. ${pathPagesSaid(views.paths)}`) +
       "Logged the change in log.md.",
   };

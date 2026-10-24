@@ -25,7 +25,8 @@ const { readDesk } = require("../lib/desk.js");
 const { pluginVersion } = require("../lib/version.js");
 const P = require("../lib/persona.js");
 const T = require("../write/text.js");
-const { deskMd, seatsOf, seatsNamed } = require("../write/facts.js");
+const { deskMd, seatsOf, seatsNamed, seatHeld, entryAt, placedAt, commonFor } = require("../write/facts.js");
+const { partOf, PERSONAL, TEAM, COMMON } = require("../layout/layout.js");
 const { generatedByOf, headerOf, readOwned, writeSteps } = require("../write/pages.js");
 const { shippedSoul } = require("./default.js");
 const S = require("./pages.js");
@@ -131,7 +132,7 @@ function context(args) {
   const root = deskFor(args.desk, { writes: true });
   refuseLinkedRoot(root);
   const celorus = path.join(root, "celorus");
-  const desk = deskMd(celorus, NOTHING);
+  const desk = deskMd(celorus, NOTHING, { parts: true });
   return {
     version,
     root,
@@ -143,12 +144,10 @@ function context(args) {
   };
 }
 
-// Refuses a seat that is not one of the desk's, naming them, never repeating what was sent.
+// Refuses a seat that is not one of the desk's, naming them, or on a seat's graph any seat but its
+// own, naming it (facts.js seatHeld), never repeating what was sent.
 function heldSeat(ctx, seat) {
-  const seats = seatsOf(ctx.celorus, ctx.desk);
-  if (typeof seat !== "string" || !seats.handles.includes(seat)) {
-    refuse(`seat must be a seat handle, one of: ${seatsNamed(seats)}. ${NOTHING}`);
-  }
+  seatHeld("seat", seat, seatsOf(ctx.celorus, ctx.desk), NOTHING, { echo: false });
 }
 
 // The four values a header holds as the reader takes them, and the four before the last change,
@@ -169,9 +168,19 @@ function nextValues(ask, held, who) {
   return { values: held.previous, previous: held.values };
 }
 
-// The step for a seat's own page: made new, or rewritten when the door made it for this seat.
+// The step for a seat's own page: made new, or rewritten when the door made it for this seat. On a
+// seat's graph the page is in the personal part, the one part a seat's manner is read from
+// (lib/persona.js), whatever another part holds; with none there, one of that name in another part
+// is refused, and from-my-team is the graph job's and is never written over.
 function seatStep(ctx, seat, ask) {
-  const rel = S.mannerRel(seat);
+  const own = `${PERSONAL}/${S.mannerRel(seat)}`;
+  const kept = ctx.desk.graph && entryAt(path.join(ctx.celorus, ...own.split("/")));
+  const rel = kept ? own : placedAt(ctx.celorus, ctx.desk, S.mannerRel(seat), "manner");
+  const where = partOf(rel);
+  if (where !== null && where.part === TEAM) refuse(`${rel} is in from-my-team, which only the graph job writes, so it is not written over. ${NOTHING}`);
+  if (where !== null && where.part !== PERSONAL) {
+    refuse(`${rel} is in ${where.part}/, and a seat's manner on its graph is read only from personal/, so a change written there would never be read; switch it into personal/ first. ${NOTHING}`);
+  }
   refuseLinkedFolders(ctx.celorus, [rel, LOG]);
   const owned = readOwned(ctx.celorus, rel, ctx.desk.id);
   if (owned && owned.refused) refuse(owned.refused);
@@ -194,17 +203,19 @@ function seatStep(ctx, seat, ask) {
   return { rel, step, held, next };
 }
 
-// The step for the desk's manner, in soul.md's header; the body is kept byte for byte.
-function deskStep(ctx, ask) {
-  const rel = P.SOUL_PAGE;
-  refuseLinkedFolders(ctx.celorus, [rel, LOG]);
-  const owned = readOwned(ctx.celorus, rel, ctx.desk.id);
+// The step for the desk's manner, in soul.md's header; the body is kept byte for byte. On a seat's
+// graph the desk's manner is the firm's, in its common space's soul.md, which the desk head alone
+// writes (the base's ruling K8; facts.js commonFor), through the firm folder as the step's root.
+function deskStep(ctx, ask, seat) {
+  const common = ctx.desk.graph ? commonFor(ctx.root, ctx.desk, seat, P.SOUL_PAGE, NOTHING) : null;
+  const root = common === null ? ctx.celorus : path.dirname(common);
+  const rel = common === null ? P.SOUL_PAGE : `${COMMON}/${P.SOUL_PAGE}`;
+  refuseLinkedFolders(ctx.celorus, common === null ? [rel, LOG] : [LOG]);
+  const owned = readOwned(root, rel, ctx.desk.id);
   if (owned && owned.refused) refuse(owned.refused);
   if (owned === null) {
-    refuse(
-      `This desk has no ${rel}: it was set up before the soul shipped, so a change for the whole desk has nowhere to go. ` +
-        `A change for your own seat works: leave whole_desk out. ${NOTHING}`,
-    );
+    const why = common === null ? `This desk has no ${rel}: it was set up before the soul shipped` : `The firm's common space has no ${rel}`;
+    refuse(`${why}, so a change for the whole desk has nowhere to go. A change for your own seat works: leave whole_desk out. ${NOTHING}`);
   }
   if (!SOUL_MADE_BY.test(generatedByOf(owned.text) || "")) {
     refuse(`${rel} does not say generated_by: celorus-plugin <version> scaffold_desk or ${FEEDBACK}, so it is not written over. ${NOTHING}`);
@@ -220,7 +231,8 @@ function deskStep(ctx, ask) {
   ];
   const page = S.withHeaderValues(rel, owned.text, entries);
   if (page.refused) refuse(page.refused);
-  return { rel, step: { kind: "rewrite", rel, raw: owned.raw, text: page.text }, held, next };
+  const step = { kind: "rewrite", rel, raw: owned.raw, text: page.text };
+  return { rel, step: common === null ? step : { ...step, root }, held, next, common: common !== null };
 }
 
 // The step that adds the door's line to log.md. `what` names keys and whose manner, never a value.
@@ -239,15 +251,18 @@ function soulFeedback(args = {}) {
   const ctx = context(args);
   heldSeat(ctx, args.seat);
   const seat = args.seat;
-  const done = ask.whole ? deskStep(ctx, ask) : seatStep(ctx, seat, ask);
+  const done = ask.whole ? deskStep(ctx, ask, seat) : seatStep(ctx, seat, ask);
   const changed = P.MANNER_KEYS.filter((key) => done.next.values[key] !== done.held.values[key]);
   const whose = ask.whole ? "the whole desk" : "this seat";
   // A change to the value already held changes nothing: nothing is written and no line is logged,
   // so the values kept for undo stay the ones before the last real change.
   const same = ask.change !== null && changed.length === 0;
+  // A change in the firm's common space is logged in the graph's own log.md, naming the page it
+  // changed: nothing else under common/ is written (the base's ruling, c/6233107975).
+  const where = done.common ? ` in ${done.rel}` : "";
   const what = ask.change
-    ? `changed the manner's ${ask.change.key} for ${whose}`
-    : `undid the last manner change for ${whose}${changed.length ? `: ${changed.join(", ")}` : ""}`;
+    ? `changed the manner's ${ask.change.key} for ${whose}${where}`
+    : `undid the last manner change for ${whose}${where}${changed.length ? `: ${changed.join(", ")}` : ""}`;
   const log = same ? null : logStep(ctx, seat, what);
   const result = same ? { written: null } : writeSteps(ctx.celorus, [done.step, log.step]);
   const base = {
@@ -256,6 +271,7 @@ function soulFeedback(args = {}) {
     desk: ctx.desk.name,
     seat,
     whole_desk: ask.whole,
+    ...(done.common ? { common_space: true } : {}),
     changed: result.written === null ? [] : changed,
   };
   if (result.written === null && !same) {

@@ -13,6 +13,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { readDesk, readPage, splitPage, NO_HEADER, NOT_UTF8, HEADER_UNREAD, PAGE_UNREAD } = require("../lib/desk.js");
+const L = require("../layout/layout.js");
+const { commonStems } = require("../layout/graph.js");
 const { parseHeader, HeaderError, HEADER_SUBSET } = require("../lib/header.js");
 const { pluginVersion } = require("../lib/version.js");
 const { RULES, checkDesk, checkPages } = require("../check/rules.js");
@@ -70,6 +72,7 @@ function plain(text, onDesk) {
 function viewPage(title, description, now, body) {
   const head = {
     type: "view",
+    view_version: L.VIEW_VERSION,
     title,
     description,
     timestamp: now,
@@ -254,13 +257,14 @@ function deskPages(read) {
 
 // The three views, by file name under views/, from one read of the desk and one run of the
 // check. Throws ModelUnreadable when the model cannot be read: a view read from words nobody
-// wrote is not written.
+// wrote is not written. On a seat's graph they are drawn from all three of its parts (Addendum 19
+// section 1), and a link opens a page of the graph or of the common space beside it.
 function renderViews(desk, now) {
   const read = readDesk(desk);
   const root = path.join(read.root, "celorus");
   const model = loadDeskModel(root);
   const pages = deskPages(read);
-  const onDesk = new Set(pages.map((p) => p.stem));
+  const onDesk = new Set([...pages.map((p) => p.stem), ...commonStems(read)]);
   const findings = checkDesk(read.root, read.pages);
   const cited = checkCitations(read.root, pages);
   return {
@@ -338,9 +342,14 @@ function pagesOnDisk(read) {
 }
 
 // Each person, firm and family page whose generated sent list changes, by path under celorus/,
-// with its new text: every sent item whose `about` links the page, newest first.
+// with its new text: every sent item whose `about` links the page, newest first. On a seat's graph
+// the list is drawn from every sent page the graph holds (the base's ruling K6), and a page in
+// from-my-team is never rewritten: that part is the graph job's alone.
 function renderSentBlocks(desk) {
-  return sentBlocks(pagesOnDisk(readDesk(desk)));
+  const read = readDesk(desk);
+  const out = sentBlocks(pagesOnDisk(read));
+  if (read.layout !== L.LAYOUT) return out;
+  return Object.fromEntries(Object.entries(out).filter(([rel]) => (L.partOf(rel) || {}).part !== L.TEAM));
 }
 
 // renderSentBlocks over the desk as a change will leave it, before the change is written:

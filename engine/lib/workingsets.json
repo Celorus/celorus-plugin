@@ -1,0 +1,71 @@
+{
+  "about": [
+    "The pages each desk tool made on the desk server needs: a closed list per tool, as data, so any caller that sends a desk to the server sends the same pages the laptop's link sends.",
+    "A path here is a path in the desk folder, forward slashes. A name argument is read as the value itself and each [[name]] in it, and only a page name (lower case letters, digits and dashes) is kept.",
+    "narrow: a writer sends base, every seat page in seat_pages, the page of each name it names in each of page_folders, and its own files. In a template, {key} is the argument's value, which must be a page name, and {key:day} is the day the argument's moment starts with; an entry whose template cannot be filled sends nothing.",
+    "wide: a desk-wide tool sends every plain file of the desk that is UTF-8 text, but nothing whose path has a part that starts with a dot, save the dot paths named for it exactly: its dot_files, a file named exactly as in dot_names inside celorus/ when no other part of its path starts with a dot, a spare file (spare) in one of its spares_in folders, and of the files directly in celorus/.views/ whose names do not start with a dot, those its views word gives (all, none, or dated: those dated within a day of the call's date, its taken_at or today). Nothing in a folder inside celorus/.views/ is sent.",
+    "layout_3: on a seat's graph (desk.md says layout_version 3) the call sends a firm folder: the seat's desk under seats/<its folder's name>/ and the firm's common space under common/. A narrow path under celorus/ is sent from the common space when it is one of common_pages or under one of common_folders; from the graph's own celorus/ when it names no folder; else from each of the graph's parts. Every narrow call also sends narrow_common. A desk-wide call sends the seat's desk, as a desk is sent, and the whole common space but its dot paths."
+  ],
+  "version": 1,
+  "base": ["celorus/index.md", "celorus/desk.md", "celorus/log.md"],
+  "seat_pages": "celorus/seats",
+  "page_folders": ["families", "people", "firms", "seats"],
+  "narrow": {
+    "log_action": {
+      "names": ["seat", "family"],
+      "files": ["celorus/desk-log.md"]
+    },
+    "add_follow_up": {
+      "names": ["seat", "who"],
+      "files": ["celorus/queues/follow-ups.md"],
+      "pages_named": [{ "argument": "conversation", "folder": "celorus/conversations" }]
+    },
+    "assign_lead": {
+      "names": ["by_seat", "to_seat", "family"],
+      "files": ["celorus/queues/supplied.md"]
+    },
+    "write_conversation": {
+      "names": ["seat", "family", "attended[]", "named[].slug", "heard[].subject", "heard[].target", "heard[].said_by"],
+      "series": [{ "folder": "celorus/conversations", "name": "{at:day}-{family}-{channel}", "numbered": true }]
+    },
+    "write_brief": {
+      "names": ["seat", "family"],
+      "templates": ["celorus/briefs/{at:day}-{family}-{kind}.md"]
+    },
+    "register_routine": {
+      "names": ["seat"],
+      "files": ["celorus/scheduled.md"]
+    }
+  },
+  "wide": {
+    "render_view": {
+      "views": "dated",
+      "dot_files": [".obsidian/app.json", ".obsidian/appearance.json", ".obsidian/graph.json", ".obsidian/snippets/hide-model.css"],
+      "dot_names": [],
+      "spares_in": [".obsidian", ".obsidian/snippets", "celorus/.views"]
+    },
+    "render_views": { "views": "none", "dot_files": [], "dot_names": [], "spares_in": [] },
+    "update_desk": {
+      "views": "none",
+      "dot_files": [".gitignore", "celorus/.obsidian/app.json", "celorus/.obsidian/graph.json", "celorus/.obsidian/core-plugins.json", "celorus/.obsidian/bookmarks.json"],
+      "dot_names": [".gitkeep"],
+      "spares_in": []
+    },
+    "merge_pages": { "views": "none", "dot_files": [], "dot_names": [], "spares_in": [] },
+    "undo_merge": { "views": "none", "dot_files": [], "dot_names": [], "spares_in": [] },
+    "soul_feedback": { "views": "none", "dot_files": [], "dot_names": [], "spares_in": [] }
+  },
+  "views": "celorus/.views",
+  "spare": "^\\.celorus-spare-[0-9a-f]{16}\\.tmp$",
+  "layout_3": {
+    "layout_version": 3,
+    "contract_version": 2,
+    "seats": "seats",
+    "common": "common",
+    "parts": ["shared", "personal", "team"],
+    "common_pages": ["soul.md", "register.md", "motion-spec.md", "queues/supplied.md", "model/own-words.md"],
+    "common_folders": ["context/", "learnings/", "rules/"],
+    "common_own_pages": ["common.md", "log.md", "names.md", "defaults.md"],
+    "narrow_common": ["common/common.md"]
+  }
+}

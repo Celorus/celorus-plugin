@@ -4,9 +4,10 @@ description: >-
   Research a lead: a person, a family or a company, from the desk's queue or by name.
   Use when someone says "research this lead", "who is this", "what do we know about",
   "look up this company", "look up this person", or from triage. Runs the web register on
-  the harness's own search, asks the record whether it holds a company, reads the record
-  when an account is connected, and writes one profile page in the desk workspace with
-  every line labelled by which class of truth it is. Runs with no Celorus account.
+  the harness's own search, asks the record whether it holds a company, reads the record when
+  this session is signed in to it, and writes one profile page in the desk workspace (on a
+  hosted desk, shows it in the chat) with every line labelled by which class of truth it is. Free: the web register runs on this machine
+  without signing in, and writing the page asks for a free Celorus sign-in before it is made.
 ---
 
 # Research a lead
@@ -27,6 +28,21 @@ the end, plainly, because that list is the honest close and it is what the recor
 
 These hold over every section of this skill. Where a section below seems to ask for something
 they forbid, they win.
+
+A `celorus-check` error in place of an answer (a read it could not make, a query it will
+not take, or the ask refused as too many requests), and a session with no `celorus-check`
+connection, are never a tool that cannot run: the record step's check decides them, signed
+in or not. Until a `celorus-data` call has come back with data in this session, a
+`celorus-data` answer that is not data (a sign-in ask, a refusal, an error, an empty or
+unreadable reply), and a session with no `celorus-data` tool to call, are not a tool that
+cannot run either: the record step's not-signed-in branch and *When this session is not signed in to the record*
+below decide them, and the web register still runs. After data has come back, the rule on a
+tool that cannot run holds for every `celorus-data` call, as it does for every tool these do
+not govern.
+
+The web register only reads, so it runs signed in or not. The page this skill writes waits: it
+is written only after `celorus-link`'s `sign_in` answers that this computer is signed in to
+Celorus, as *Signing in* below says.
 
 ## The tools this skill calls
 
@@ -190,7 +206,7 @@ answers `not_found` for every person, whether or not the record holds them, so t
 says nothing about the person, and a family is its principals, each a person. Write nothing
 to the cache for either.
 
-**3b, with an account connected** (the `celorus-data` tools are present and answer): fetch
+**3b, signed in to the record** (the `celorus-data` tools are present and answer): fetch
 the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind
 `honesty_rules`) and follow them verbatim; then `resolve_subject` with the name (on
 `clarify`, ask the user which candidate, never pick); for a company,
@@ -205,11 +221,21 @@ tier word beside it, and as the label alone when the tool returned no address (R
 Bands only; masked coordinates exactly as rendered; the tier shown on anything the record
 did not file.
 
-**3c, with no account:** pick the case the check found and say its value sentence in this
+**3c, not signed in to the record:** pick the case the check found and say its value sentence in this
 lane's wording (below), and nothing else from the record. Never a count, never a year,
 never the list itself.
 
 ## Step 4: write the page
+
+This step changes the desk: write the page only after `sign_in` answers that you are signed in,
+as *Signing in* below says. Until it does, write nothing.
+
+On a seat's graph, a hosted desk, this step writes no page: a page written new by hand never
+reaches the firm, and no desk tool keeps a profile yet. Show the whole profile in the chat
+instead, in the shape `profile-shape.md` gives, every line labelled as it says, a web line in
+full with its URL and the word `unverified`, and say plainly to the person: on a hosted desk the
+profile shows here in the chat and is not kept on the desk yet, so it will not be there to open
+later. On any other desk:
 
 `profile-shape.md` is the contract; follow it section by section, every section present
 even when it reads "Not established" (the Connections section excepted: with nothing to
@@ -251,6 +277,8 @@ a contradiction on two lines with the record winning, bump `timestamp`, and add 
 
 Then:
 
+On a seat's graph, none of the following is written: not the research row, not the queue's state and not the lines in `log.md`, since a page changed by hand stops the next pull. Say in the chat that the lead was researched. On any other desk:
+
 - Append the research row to `celorus/desk-log.md`:
   `| <date> | <handle> | <slug> | <source> | · | research | not-yet | · | research-lead |`.
   `<source>` is one of `supplied-<list>`, `supplied-ask-<date>`, `book`, `follow-up` or
@@ -266,7 +294,7 @@ Then:
 - Call `check_desk` with `scope` naming the pages you wrote, and say its `summary` in one line,
   as it came: never a count of your own.
 
-## When no account is connected
+## When this session is not signed in to the record
 
 Say what the record can answer for this company, never what it says. No count, no
 figure, no URL, on any lane. Pick the case the check found, then close with the
@@ -307,7 +335,8 @@ on the record get the "Only the identity and the board are on record" case's sen
 ## While you work
 
 One plain progress line per step ("Reading what the desk already holds", "Searching the
-web for the company", "Asking whether the record holds anything", "Writing the page").
+web for the company", "Asking whether the record holds anything", "Writing the page", or on a hosted desk
+"Showing the profile here").
 Never name a tool, a stream or a path to the user.
 
 ## When the desk tools cannot run
@@ -322,11 +351,50 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-The web register runs in full, and the check runs for a company; the page is written with
-`web` and `yours` lines and a full "Not established" section. Connecting adds the `record` register: the
-figures, the documents, the people behind a company, each verbatim and cited.
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 
@@ -339,4 +407,4 @@ figures, the documents, the people behind a company, each verbatim and cited.
 - Never fill from memory or general knowledge; "Not established" is the honest line.
 - Never send anything.
 
-**Next:** `room-brief` when a meeting with this lead is on the clock and `draft-opener` when the desk asks for an opener (until those skills are installed, say the brief or the opener is written by hand from this page); otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log.
+**Next:** `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and nothing was kept.

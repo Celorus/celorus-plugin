@@ -6,7 +6,7 @@ require("./lib/guard.js").install();
 // The server door: the local MCP server `celorus-desk`, over stdio. The harness starts it
 // from the plugin's server declaration and speaks one JSON-RPC message per line on stdin;
 // every reply is one line on stdout, and stdout carries nothing else. Diagnostics go to
-// stderr. It reads and writes only the desk folder it is given; it needs no account.
+// stderr. It reads and writes only the desk folder it is given, and holds no sign-in.
 
 const { createHandler, PARSE_ERROR, failure } = require("./lib/mcp.js");
 const { TOOLS } = require("./lib/tools.js");

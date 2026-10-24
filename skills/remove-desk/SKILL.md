@@ -5,7 +5,8 @@ description: >-
   what stays because it is the firm's. Use when someone says "take the desk down", "remove
   my desk", "uninstall Celorus from this desk" or "what would removing Celorus leave
   behind?". It reads the desk's systems table and set-up record through the desk tools and
-  removes nothing itself. Runs with no Celorus account and never sends anything.
+  removes nothing itself. Free, runs on this machine without signing in, and never sends
+  anything.
 ---
 
 # Remove the desk
@@ -75,6 +76,11 @@ From the answer, never from a count or a list of your own:
 4. Each row in `unread`, with its `why`, and that the step it would have named is found by
    hand instead.
 
+Then say this once, as it is: "If this desk was signed in to Celorus through the link, sign
+out with the link's `sign_out`, and disconnect the desk's storage on your Celorus account
+page; where the desk is kept on Drive, the account page of that Drive lists Celorus's access
+too. The folder in your Drive and its pages stay yours."
+
 Remove nothing yourself: delete no file, disconnect nothing, uninstall nothing. Each step is
 done by a person, where the step says.
 
@@ -84,6 +90,11 @@ The desk tools are the `celorus-desk` server this plugin starts on this machine.
 `take_down` cannot be called, because the tool is missing or it does not run, say exactly
 this sentence and stop, and never make the list from these instructions instead:
 "The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
+
+## Signing in
+
+This skill is free and runs on this machine without signing in, and it never calls the
+record. The desk tools it uses run on this machine.
 
 ## Never
 

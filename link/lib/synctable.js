@@ -1,0 +1,71 @@
+"use strict";
+// The desk's sync table as the link holds it: each row a glob of a path from the seat's folder and
+// its class (`shared`, `seat` or `overnight`), the first row that matches a path its class, as the
+// engine's own table (engine/sync/sync.js TABLE, in its order). The link's seed sends from the
+// seat's folder only a page a row keeps as `shared` or `overnight`: a page only this computer keeps
+// (`seat`), and one no row names, never leave the laptop.
+//
+// The link's own copy, as data: what leaves the laptop is decided on the laptop, by the plugin
+// version installed, never by a server's answer; and the link never loads the engine's sync
+// module. tests/desk_engine/link_seed.test.js holds it equal to
+// the engine's table, row for row, and its matcher equal to the engine's rowOf.
+module.exports = Object.freeze([
+  ["celorus/.views/**", "seat"],
+  [".obsidian/**", "seat"],
+  ["celorus/.obsidian/workspace*.json", "seat"],
+  ["celorus/.obsidian/graph.json", "seat"],
+  ["celorus/.obsidian/bookmarks.json", "seat"],
+  ["celorus/.obsidian/app.json", "seat"],
+  ["celorus/.obsidian/appearance.json", "seat"],
+  ["celorus/.obsidian/snippets/**", "seat"],
+  [".celorus/**", "seat"],
+  ["**/.DS_Store", "seat"],
+  ["celorus/families/*", "overnight"],
+  ["celorus/people/*", "overnight"],
+  ["celorus/firms/*", "overnight"],
+  ["celorus/merge-record.md", "overnight"],
+  [".gitignore", "shared"],
+  ["celorus/desk.md", "shared"],
+  ["celorus/log.md", "shared"],
+  ["celorus/desk-log.md", "shared"],
+  ["celorus/scheduled.md", "shared"],
+  ["celorus/index.md", "shared"],
+  ["celorus/motion-spec.md", "shared"],
+  ["celorus/register.md", "shared"],
+  ["celorus/marks.md", "shared"],
+  ["celorus/queues/*.md", "shared"],
+  ["celorus/conversations/*.md", "shared"],
+  ["celorus/briefs/*.md", "shared"],
+  ["celorus/soul.md", "shared"],
+  ["celorus/manner/*.md", "shared"],
+  ["celorus/views/*.md", "shared"],
+  ["celorus/merges/*/merge.md", "shared"],
+  ["celorus/merges/*/before/*/*.md", "shared"],
+  ["celorus/merges/*/after/*/*.md", "shared"],
+  ["celorus/model/*.md", "shared"],
+  ["celorus/context/*.md", "shared"],
+  ["celorus/rules/*.md", "shared"],
+  ["celorus/seats/*.md", "shared"],
+  ["celorus/today/*.md", "shared"],
+  ["celorus/research/*.md", "shared"],
+  ["celorus/sent/*.md", "shared"],
+  ["celorus/drafts/*.md", "shared"],
+  ["celorus/reviews/*.md", "shared"],
+  ["celorus/learnings/*.md", "shared"],
+  ["celorus/learnings/themes/*.md", "shared"],
+  ["celorus/crm/README.md", "shared"],
+  ["celorus/.obsidian/core-plugins.json", "shared"],
+  ["celorus/today/.gitkeep", "shared"],
+  ["celorus/conversations/.gitkeep", "shared"],
+  ["celorus/briefs/.gitkeep", "shared"],
+  ["celorus/research/.gitkeep", "shared"],
+  ["celorus/sent/.gitkeep", "shared"],
+  ["celorus/learnings/.gitkeep", "shared"],
+  ["celorus/learnings/themes/.gitkeep", "shared"],
+  ["celorus/drafts/.gitkeep", "shared"],
+  ["celorus/reviews/.gitkeep", "shared"],
+  ["celorus/context/brand/.gitkeep", "shared"],
+  ["celorus/signals/inbox/.gitkeep", "shared"],
+  ["celorus/merges/.gitkeep", "shared"],
+  ["celorus/views/.gitkeep", "shared"],
+].map((row) => Object.freeze(row)));

@@ -1,6 +1,8 @@
 "use strict";
 // The desk tools: one list, served by both doors. The server lists and calls these; the
-// command line runs the same `run` functions. A tool is { name, description, inputSchema,
+// command line runs the same `run` functions. On the laptop the list is the published plugin's
+// (TOOLS below); on our server the host's doors widen it to the whole table (widen, host/tools.js).
+// A tool is { name, description, inputSchema,
 // run(args) }: `run` returns a plain object (numbers and rows the model repeats, never
 // counts itself) or throws a Refusal naming the valid values.
 //
@@ -31,14 +33,15 @@ const { pluginVersion } = require("./version.js");
 const { RULES, checkDesk: runRules, narrowFindings } = require("../check/rules.js");
 const { stampCheckedWith } = require("./stamp.js");
 const paths = require("../paths/index.js");
-const { TOOLS: VIEW_TOOLS } = require("../views/tools.js");
-const { RENDER_TOOLS } = require("../render/index.js");
-const { TOOLS: WRITE_TOOLS } = require("../write/tools.js");
+const { SNAPSHOT_TOOL } = require("../render/index.js");
+const { RECONCILE_TOOL } = require("../render/reconcile.js");
 const { TOOLS: READ_TOOLS } = require("../read/tools.js");
+const { TOOLS: SYNC_TOOLS } = require("../sync/tool.js");
 const { TOOLS: SETUP_TOOLS } = require("../scaffold/tools.js");
-const { TOOLS: OVERNIGHT_TOOLS } = require("../overnight/tools.js");
+const { TOOLS: ROUTINE_TOOLS } = require("../routines/tool.js");
 const { TOOLS: HOLD_TOOLS } = require("../hold/hold.js");
-const { TOOLS: SOUL_TOOLS } = require("../soul/tools.js");
+const { TOOLS: SOUL_TOOLS } = require("../soul/read.js");
+const { TOOLS: CONVERT_TOOLS } = require("../convert/tool.js");
 
 // Refuses an argument the tool does not take, naming the ones it does.
 function onlyArguments(tool, args, allowed) {
@@ -522,20 +525,207 @@ const TOOLS = [
     run: checkDesk,
   },
   ...paths.TOOLS,
-  ...VIEW_TOOLS,
-  ...RENDER_TOOLS,
+  // row E6: the snapshot held to the views it was drawn from
+  RECONCILE_TOOL,
+  SNAPSHOT_TOOL,
   ...READ_TOOLS,
-  ...WRITE_TOOLS,
+  ...SYNC_TOOLS,
   ...SETUP_TOOLS,
-  ...OVERNIGHT_TOOLS,
+  ...ROUTINE_TOOLS,
   ...HOLD_TOOLS,
   ...SOUL_TOOLS,
+  ...CONVERT_TOOLS,
 ];
 
-// The tool with this name, or a refusal naming every tool there is.
+// E5b-1 (the base's verdict c/6284330827 V1): TOOLS above is the laptop's table, the
+// one the published plugin serves. The making tools are made on our server, one engine and one
+// version: host/tools.js, which the plugin never publishes, holds them, and the
+// host's doors (host/server.js, host/cli.js) call widen with the whole table before they load a
+// door. TOOLS is widened in place, so findTool, the doors and the guard read the one table. The
+// whole table holds this one first, in its order, and adds; nothing published calls widen, and
+// it is taken once.
+let widened = false;
+function widen(table) {
+  if (widened) throw new Error("The desk tools' table is widened once, by the host's door.");
+  const kept = TOOLS.every((tool, at) => table[at] === tool);
+  const names = new Set(table.map((tool) => tool.name));
+  if (!kept || names.size !== table.length) {
+    throw new Error("The whole table holds the laptop's tools first, in their order, and names each tool once.");
+  }
+  widened = true;
+  TOOLS.push(...table.slice(TOOLS.length));
+}
+
+// Every tool the doors find runs behind heldBack (below): a converted desk or a graph is refused
+// before the tool reads a page. findTool hands out one guarded copy of each tool, made the first
+// time the tool is found and kept, so a test that stands in for a found tool's run stands in for
+// the one the doors call; TOOLS keeps each tool's own run, as the source rules read it. The copy
+// is made when a door asks, never as this file loads: the tool is found by its name as TOOLS
+// holds it at the call, as before the guard.
+const GUARDED = new WeakMap();
+function guarded(tool) {
+  if (!GUARDED.has(tool)) {
+    GUARDED.set(tool, {
+      ...tool,
+      run: (args, ...rest) => {
+        heldBack(tool.name, args);
+        return tool.run(args, ...rest);
+      },
+    });
+  }
+  return GUARDED.get(tool);
+}
+
+// Slice E6b: what each tool may do on a desk the converter has touched. A desk whose
+// desk.md says `converted:` is history (gtm design, Addendum 19 section 6): every tool that
+// writes in the desk refuses it, check_desk only reads it, and desk_sync still sends it, the
+// switch line with it. A seat's graph, on layout 3, is read by the tools in GRAPH_TAUGHT (below);
+// every other tool refuses it, before it reads a page. convert_desk is the converter's own door
+// and refuses a desk on layout 3 itself. Every tool of the whole table (host/tools.js), the
+// laptop's and the server's, is in exactly one of the two lists, pinned by test
+// (desk_engine/convert.test.js).
+const WRITERS = new Set([
+  "render_views",
+  "merge_pages",
+  "undo_merge",
+  "update_desk",
+  "render_view",
+  "render_snapshot",
+  "who_can_introduce",
+  "write_conversation",
+  "log_action",
+  "add_follow_up",
+  "assign_lead",
+  "write_brief",
+  "scaffold_desk",
+  "overnight_reconcile",
+  "write_board",
+  "register_routine",
+  "propose_hold",
+  "soul_feedback",
+]);
+const READERS = new Set([
+  "check_desk",
+  "check_reconcile",
+  "introductions_from",
+  "desk_count",
+  "team_rollup",
+  "book_query",
+  "family_facts",
+  "desk_sync",
+  "take_down",
+  "list_routines",
+  "read_soul",
+  "convert_desk",
+]);
+
+// Slice E6b-2a: the tools that read a seat's graph, each through its parts and the
+// common space beside it (engine/layout/graph.js), and the four writers among them that write only
+// the graph's own generated files and scratch (views/, .views/, .celorus/) and the sent lists in its
+// shared and personal parts. Slice E6b-2b: the writers that write a page into its kind's part, never
+// from-my-team, for the graph's own seat alone, and the firm's common space for the desk head alone
+// (write/facts.js placedAt, seatHeld, commonFor). Slice E6b-2c: overnight_reconcile on the graph's
+// own pages and the firm's name list, and write_board, the day's board in the personal part
+// (overnight/overnight.js, board/board.js). The rest stay refused with their own words (GRAPH_KEPT,
+// the base's ruling K9, c/6212179305). Pinned by test (desk_engine/graph_reader.test.js,
+// graph_writers.test.js, graph_overnight.test.js, graph_board.test.js).
+const GRAPH_TAUGHT = new Set([
+  "check_desk",
+  "introductions_from",
+  "desk_count",
+  "book_query",
+  "family_facts",
+  "take_down",
+  "list_routines",
+  "read_soul",
+  "render_views",
+  "render_view",
+  "render_snapshot",
+  "who_can_introduce",
+  "propose_hold",
+  "write_conversation",
+  "log_action",
+  "add_follow_up",
+  "assign_lead",
+  "write_brief",
+  "merge_pages",
+  "undo_merge",
+  "soul_feedback",
+  "register_routine",
+  "overnight_reconcile",
+  "write_board",
+]);
+const GRAPH_KEPT = Object.freeze({
+  check_reconcile:
+    "check_reconcile counts a whole team, and a graph holds one seat's work: the team's figures read " +
+    "from-my-team, which the graph job fills from a later wave.",
+  scaffold_desk:
+    "scaffold_desk makes a new desk, and this folder is a seat's graph already; a person's first graph " +
+    "is made by its own slice.",
+  team_rollup:
+    "team_rollup rolls up a whole team, and a graph holds one seat's work: the team's roll-up reads " +
+    "from-my-team, which the graph job fills from a later wave.",
+  desk_sync:
+    "A graph is kept in Celorus's storage and written by its server, never sent by this machine's git, " +
+    "so desk_sync sends nothing from it.",
+  update_desk:
+    "update_desk makes a desk current on layout 2 and would write a layout 2 desk; a graph is made " +
+    "current by the converter until a layout 3 update exists.",
+});
+
+// The desk a call names, as its tool would find it, and what its desk.md says of the converter:
+// `converted` (the switch line's date) and `graph` (layout 3). Null when no desk is found or its
+// desk.md cannot be read: the tool itself then refuses or reads as it does.
+function convertedState(name, args) {
+  // Input that is not an object names no desk, and the tool refuses it on its own: nothing is
+  // looked for here. Input left out is none given, and the tool finds its desk as it finds one
+  // from {} (the working folder, or CELORUS_DESK), so this looks there too. It looks as a reader
+  // does, for every tool: a writer's look only adds refusals, never another folder, and a writer
+  // that finds its desk as a reader would (propose_hold) must not pass because this look refused.
+  if (args === null || (args !== undefined && (typeof args !== "object" || Array.isArray(args)))) return null;
+  let root;
+  try {
+    root = deskFor(args === undefined ? undefined : args.desk, { writes: false });
+  } catch {
+    return null;
+  }
+  const { readPage } = require("./desk.js");
+  const page = readPage(path.join(root, "celorus"), "desk.md");
+  const head = page && page.head && typeof page.head === "object" && !Array.isArray(page.head) ? page.head : null;
+  if (head === null) return null;
+  // A seat's graph says layout 3, as the reader and the checker read it, whether or not its firm
+  // folder's common space is beside it: a graph a stopped conversion left before the common space,
+  // or one opened away from its firm folder, is held back all the same.
+  const graph = head.layout_version === 3;
+  return { converted: Object.hasOwn(head, "converted") ? String(head.converted) : null, graph };
+}
+
+function heldBack(name, args) {
+  if (name === "convert_desk") return;
+  const state = convertedState(name, args);
+  if (state === null) return;
+  const recording = name === "check_desk" && args && args.record === true;
+  // check_desk reads a graph, recorded or not: the stamp it would write goes only on a desk at
+  // layout 2 (lib/stamp.js whyNot), so a recorded check of a graph writes nothing and says why.
+  if (state.graph && !GRAPH_TAUGHT.has(name)) {
+    const why = Object.hasOwn(GRAPH_KEPT, name)
+      ? GRAPH_KEPT[name]
+      : `${name} is not taught a seat's graph, so it refuses one.`;
+    throw new Refusal(`This desk is a seat's graph, on layout 3. ${why} Nothing was changed.`);
+  }
+  if (state.converted !== null && (WRITERS.has(name) || recording)) {
+    throw new Refusal(
+      `This desk was converted to layout 3 on ${state.converted} and is kept as history, so ` +
+        `nothing is written in it: ${name} writes. Work in your seat's graph. Nothing was changed.`,
+    );
+  }
+}
+
+// The tool with this name, or a refusal naming every tool there is. Both doors find a tool here
+// (cli.js, lib/mcp.js), and the one found is its guarded copy, which runs behind heldBack.
 function findTool(name) {
   const tool = TOOLS.find((candidate) => candidate.name === name);
-  if (tool) return tool;
+  if (tool) return guarded(tool);
   throw new Refusal(
     `There is no desk tool named ${JSON.stringify(name)}. The desk tools are: ` +
       `${TOOLS.map((candidate) => candidate.name).join(", ")}.`,
@@ -553,4 +743,4 @@ function deskNamed(named, { cwd = process.cwd(), env = process.env } = {}) {
   return envDesk(env, workingFolder(cwd));
 }
 
-module.exports = { TOOLS, findTool, deskFor, deskNamed, onlyArguments, linksUnknown };
+module.exports = { TOOLS, WRITERS, READERS, GRAPH_TAUGHT, GRAPH_KEPT, widen, findTool, deskFor, deskNamed, onlyArguments, linksUnknown };

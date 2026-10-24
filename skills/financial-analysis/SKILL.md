@@ -34,11 +34,10 @@ binding `body`. Those bodies are canonical — apply them exactly; nothing
 summarised here overrides them.
 
 **That first call is also the sign-in test.** It is the first thing this skill asks
-of the server, so its answer is what tells you whether this session has an account
-at all. Data coming back is what settles it, and nothing else does. If the answer is
+of the server, so its answer is what tells you whether this session is signed in to the record at all. Data coming back is what settles it, and nothing else does. If the answer is
 not data — it asks you to sign in or to re-authorize, it refuses for want of
 authorization, it errors, it comes back empty, or you cannot read it as data — stop
-there and follow *When no account is connected* below, which decides it under its
+there and follow *When this session is not signed in to the record* below, which decides it under its
 four outcomes: the tools being listed does not mean the account behind them is
 authorized, and every tool here sits behind the same sign-in, so calling a second
 one only spends a second refusal.
@@ -76,8 +75,8 @@ The floor is for a call that came back with data and no definitions in it. It is
 not for an answer that was not data. If the call did not come back with data — it
 asked you to sign in or to re-authorize, it refused for want of authorization, it
 errored, it came back empty, or you cannot read it as data — the floor does not
-apply: this session has no account until a `celorus-data` call comes back with
-data, *When no account is connected* below governs it and decides it under its
+apply: this session is not signed in to the record until a `celorus-data` call comes back with
+data, *When this session is not signed in to the record* below governs it and decides it under its
 four outcomes, and you stop there rather than carry on under the summaries.
 
 ## While you work — speak to the user, not your plumbing
@@ -553,32 +552,30 @@ the honest reason in parentheses, e.g. "not available (XBRL document carries no
 narrative prose)" or "not available (no cash-flow figures in the store)". Never
 leave a number-shaped blank that a reader could mistake for zero.
 
-## When no account is connected
+## When this session is not signed in to the record
 
-**A listed tool is not a connected account.** The `celorus-data` tools can all be
+**A listed tool is not a sign-in.** The `celorus-data` tools can all be
 listed, and the panel can report the server connected, while the account behind
 them is not authorized: a sign-in that has aged out leaves every tool in place and
 every call refused. Tool-list membership is therefore silent on exactly the case
-this section exists to catch, and neither it nor the word "connected" is the test.
+this section exists to catch, and neither it nor the word "connected" is the test. Signing in to the desk with `celorus-link`'s `sign_in` is not the test either: it does not sign this session in to the record.
 
-The test is a call. This session has an account when a `celorus-data` call comes
-back with data, and not before, so the first call this skill makes is what settles
+The test is a call. This session is signed in to the record when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
 it. Its answer is binding:
 
-- **Data comes back.** The account is connected. Carry on.
+- **Data comes back.** The record is signed in. Carry on.
 - **The call asks you to sign in or to re-authorize, or refuses for want of
-  authorization.** The account is not connected, whatever the tool list or the
+  authorization.** The record is not signed in, whatever the tool list or the
   panel says. Stop on that first answer: do not call again, do not try a different
   tool to see whether that one works, and do not attempt the report or the answer.
   Every tool here sits behind the same sign-in, so a second call only spends a
   second refusal to learn what the first one already said.
-- **No `celorus-data` tool is there to call.** The account is not connected either,
+- **No `celorus-data` tool is there to call.** The record is not signed in either,
   and there is nothing here to attempt.
 - **Anything else: an error, an empty answer, or a reply you cannot read as one of
-  the three above.** It settles nothing, and it is not an account; do not read it as
-  one. Make one more `celorus-data` call and let its answer decide, under these
+  the three above.** It settles nothing, and it is not a sign-in; do not read it as one. Make one more `celorus-data` call and let its answer decide, under these
   same four outcomes. That is the last call: if the second answer is also
-  unreadable, treat this session as having no account, stop there, and do not
+  unreadable, treat this session as not signed in to the record, stop there, and do not
   attempt the report or the answer.
 
 Never fill what you could not read from memory or the web; a web answer is

@@ -5,7 +5,7 @@ description: >-
   moments. Use when someone says "who do I call first", "order my calls", "what's my
   list", "today's calls", or right after the day is opened. Every row carries its reason
   in words and its clock; handle-with-care rows are listed last and never get a pitch.
-  Runs with no Celorus account.
+  Free; each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
 # Today's calls
@@ -80,7 +80,9 @@ If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
 - `celorus/queues/supplied.md`: rows in state `new`, `researched` or `contacted`.
 - `celorus/queues/follow-ups.md`: rows in state `due` (by today or earlier) or `replied`.
 - `celorus/queues/book.md`: rows dated within the last week.
-- `celorus/today/<date>.md`: the first three blocks, as written by `day-open`.
+- `celorus/today/<date>.md`: the first three blocks, as written by `day-open`; on a seat's
+  graph (`celorus/desk.md` says `layout_version: 3`), `celorus/personal/today/<date>.md`, as
+  the overnight wrote it.
 - Each lead's page under `people/`, `families/` or `firms/` where one exists: its
   `clock`, `last_touch` and the freshest dated line under "What just happened". A
   `readiness` score on an older page is a number no tool gave: never say it.
@@ -95,7 +97,8 @@ A supplied name that also appears in the book (a row in `queues/book.md`, or a n
 the CRM export) is already the desk's. The desk tool leaves it off the list and names it
 under `already_yours` of `calls_for_today`, with what matched. Mark the row of each name
 there `already-yours` in `queues/supplied.md`, and name it on the board, in words and with no
-number: "Already yours, so left off today's list: <each name>." This is the desk's own
+number: "Already yours, so left off today's list: <each name>." On a seat's graph, mark
+nothing, and name them in the chat in those words. This is the desk's own
 feature: it never calls a client as if they were new.
 
 ## The order
@@ -141,8 +144,14 @@ research first" and stays on the list: research is the first call's preparation.
 
 ## What you write
 
+On a seat's graph (`celorus/desk.md` says `layout_version: 3`), this skill writes nothing: its
+board and queues are written on the desk server, never by hand. Show today's calls in the chat,
+each with its reason and its clock, and the names already yours below them, and say that on
+this desk the order stays in this chat and is not kept on the board. On any other desk:
+
 - The "Today's calls" block of `celorus/today/<date>.md`, replacing "Ordered by triage."
   and, below the list, the names already yours.
+  Write each header on the board as a line of its own, never in a row's shape: no bold field at its start and no `Source:` field.
 - State changes in `celorus/queues/supplied.md`: `already-yours` from the dedupe;
   `researched` once a page exists.
 - One line in `celorus/log.md`, directly under today's heading `## <date>` (add the heading
@@ -152,6 +161,9 @@ research first" and stays on the list: research is the first call's preparation.
 
 No row in `desk-log.md`: the research row and the call row come from the skills that do
 those things.
+
+The register label on every line it writes is `yours`: the order is the desk's own reading
+of its own queues.
 
 ## While you work
 
@@ -170,10 +182,50 @@ instructions instead:
 If a desk tool call cannot be made after this skill has written, say which pages were
 written and stop; that sentence is never said then.
 
-## With no account
+## Where the desk's pages are
 
-This skill runs in full with no Celorus account. The register label on every line it
-writes is `yours`: the order is the desk's own reading of its own queues.
+The paths in this skill are a desk's on layouts 1 and 2. On a seat's graph (`celorus/desk.md` says `layout_version: 3`), the desk folder is the seat's own folder, and each page is read from its place on the graph:
+
+- `desk.md`, `index.md`, `log.md`, `desk-log.md`, `marks.md`, `model/` and `views/` stay under `celorus/`.
+- `queues/supplied.md`, `register.md`, `motion-spec.md`, `soul.md`, `model/own-words.md` and the folders `context/`, `learnings/` and `rules/` are the firm's common space: `../../common/`, beside the seats' folders, with no `celorus/` in the path.
+- `queues/follow-ups.md` is `celorus/shared/queues/follow-ups.md`, and `queues/book.md` is `celorus/personal/queues/book.md`.
+- The board, `today/<date>.md`, is `celorus/personal/today/<date>.md`; `crm/` and `signals/inbox/` are under `celorus/personal/`.
+- A page of `people/`, `families/`, `firms/`, `seats/`, `conversations/`, `briefs/`, `research/` or `reviews/` is read from `celorus/shared/`, then `celorus/personal/`, then `celorus/team/`, under its folder; `sent/` and `drafts/` from `celorus/personal/`, then `celorus/shared/`.
+
+On a graph a page changes only through `make`, or not at all: a page changed by hand stops the next pull, and a page written new by hand never reaches the firm. Where a step in this skill writes a page by hand, it says what it does on a graph instead.
+
+## Signing in
+
+This skill is free: it reads the desk on this machine without signing in, and each change
+it makes to the desk asks for a free Celorus sign-in before it is made.
+
+Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
+`sign_in`, and change nothing until it answers "You are signed in to Celorus on this
+computer.". When it answers a page to open instead, show that page for the person to open in
+their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+other answer: say it as it came, and change nothing. That answer is the link's own reading of
+the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
+every change made through `make`.
+
+A step that names a desk tool and `make` changes the desk on the desk server: call
+`celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
+arguments as the step gives them, `desk` included. The desk server makes the change and the
+link writes its pages into the desk; never write those pages by hand, and never make the
+change another way. Say each answer in its own words, and follow these as they say:
+
+- "You are not signed in to Celorus through the link, or the sign-in has ended.": call
+  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  they have signed in, make the change again.
+- "The desk server could not be reached, so the change was queued on this desk": it is
+  made at the next change made through the link, while online; go on with the steps that
+  only read.
+- "This change needs payment before the desk server makes it.", with the balance and what is
+  still needed where it gives them, then "Recharge on your account page." and "Nothing was
+  written. It was not queued; make the change again once the account is recharged.": say it
+  as it came, with no plan name and no price of your own, and stop that change.
+- "This seat's desk holds no read of its storage that the link can trust" (a seat's graph): call `celorus-link`'s `pull`, then make the change again. A pull refused for pages changed on this computer names them: say them, and change nothing by hand.
+- "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
+- Any other answer: say it as it came; where it says nothing was written, stop that change.
 
 ## Never
 

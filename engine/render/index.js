@@ -14,7 +14,8 @@
 const path = require("path");
 const { Refusal } = require("../lib/refusal.js");
 const { pluginVersion } = require("../lib/version.js");
-const { readDesk, deskShown, DESK_ARGUMENT } = require("../lib/desk.js");
+const { deskShown, DESK_ARGUMENT } = require("../lib/desk.js");
+const { readView } = require("../layout/graph.js");
 const { Desk } = require("./desk.js");
 const { systemsOf } = require("./systems.js");
 const C = require("./counts.js");
@@ -29,7 +30,6 @@ const { liveRows, handedOver } = require("../live/live.js");
 const { PAGES } = require("../templates/pages.js");
 const { assemble } = require("../templates/base.js");
 const { persona, notUsed } = require("../lib/persona.js");
-const { RECONCILE_TOOL } = require("./reconcile.js");
 const { forSnapshot, MINTED } = require("./key.js");
 
 const TOOL = "render_view";
@@ -78,11 +78,7 @@ function refuseFamily(desk, family) {
 }
 
 function refuseSeat(desk, seat) {
-  const valid = desk
-    .of("seats")
-    .map((p) => p.slug)
-    .sort();
-  throw new Refusal(`${JSON.stringify(seat)} is not a seat on this desk: the seats are ${valid.join(", ")}.`);
+  throw new Refusal(`${JSON.stringify(seat)} is not a seat on this desk: ${C.seatsSaid(desk)}.`);
 }
 
 function familyView(desk, st, seat, family, day) {
@@ -208,7 +204,7 @@ function renderView(args = {}) {
   systemsOf(systems, { held: true });
   const fresh = prose !== undefined && prose !== null;
   const found = deskFor(args.desk, { writes: true });
-  const read = readDesk(found);
+  const read = readView(found);
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so no page is drawn. Run check_desk to see why.`);
   }
@@ -230,6 +226,9 @@ function renderView(args = {}) {
   const live = handedOver(contract);
   let data;
   let key;
+  // A team view on a seat's graph is refused (the base's ruling K9), before anything is written.
+  if (TEAM_VIEWS.includes(view)) C.teamOnGraph(desk, `The ${view}`);
+  C.graphSeat(desk, seat);
   if (FAMILY_VIEWS.includes(view)) {
     if (seat && !(desk.pages.has(seat) && desk.pages.get(seat).kind === "seats")) refuseSeat(desk, seat);
     data = familyView(desk, st, seat, family, day);
@@ -380,67 +379,98 @@ function renderView(args = {}) {
   return answer;
 }
 
-const RENDER_TOOLS = [
-  {
-    name: TOOL,
-    description:
-      "Draw one desk page as a self-contained HTML file under celorus/.views/ and answer its path: " +
-      "the reach-out card, the room brief or the summary card for a family; a seat's morning brief, " +
-      "or its console (rep-console for a rep, rm-console for an RM); or the desk's team view " +
-      "(lead-gen) or its snapshot. Every number " +
-      "and row on it is counted by the engine from the desk and the systems rows handed over; the " +
-      "sentences are yours, in prose, and are saved beside the page for the next render. A page drawn " +
-      "with systems rows keeps no sentences: send them with each render. A systems row that names no " +
-      "one on the desk is refused, and its whole role is then counted as not handed over; the answer " +
-      "names the role and the rule. A sentence that carries a name, a handle or a number of a refused " +
-      "row is left off the page, and sentences_set_aside says how many were." +
-      " What the seat says about themselves is never written to the desk: leave it out of every field.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        desk: DESK_ARGUMENT,
-        view: { type: "string", enum: VIEWS, description: "The page to draw." },
-        family: {
-          type: "string",
-          description: "The family page's name, for the reach-out card, the room brief and the summary card.",
-        },
-        seat: {
-          type: "string",
-          description:
-            "The seat the page is for: required for the morning brief and the consoles, optional on a " +
-            "family page, refused on the team view and the snapshot.",
-        },
-        date: { type: "string", description: "The day, as 2026-09-21. Leave it out for today in IST." },
-        prose: {
-          description:
-            "The sentences for the page, by slot: who_and_why, opener and avoid on the reach-out card " +
-            "(each text or a list of text), sections on the room brief (each text, or heading and " +
-            "paragraphs), gists on the morning brief (one text per mail thread, keyed by its id in " +
-            "systems), upsell on the RM console (one text per family, keyed by its page name). Anything " +
-            "else is refused. Leave it out to reuse the saved ones; send it empty to clear them.",
-        },
-        taken_at: {
-          type: "string",
-          description:
-            "The moment the snapshot is taken, in IST, like 2026-09-21T08:31:00+05:30, on the page's " +
-            "day. Leave it out for now. Refused on every other page.",
-        },
-        systems: {
-          type: "object",
-          description:
-            "The rows read from the desk's connectors, in the stand-in systems' shape: crm (records, " +
-            "activities), calendar (events, proposals), mail (threads) and chat (messages). Leave a " +
-            "role out when its connector is not there. Every time is an ISO string in IST, like " +
-            "2026-09-21T10:00:00+05:30; a time in another zone is refused, never converted.",
-        },
-      },
-      required: ["view"],
-      additionalProperties: false,
-    },
-    run: renderView,
-  },
-  // row E6: the snapshot held to the views it was drawn from
-  RECONCILE_TOOL,
-];
+const DATE_ARGUMENT = { type: "string", description: "The day, as 2026-09-21. Leave it out for today in IST." };
+const TAKEN_AT_ARGUMENT = {
+  type: "string",
+  description:
+    "The moment the snapshot is taken, in IST, like 2026-09-21T08:31:00+05:30, on the page's " +
+    "day. Leave it out for now. Refused on every other page.",
+};
+const SYSTEMS_ARGUMENT = {
+  type: "object",
+  description:
+    "The rows read from the desk's connectors, in the stand-in systems' shape: crm (records, " +
+    "activities), calendar (events, proposals), mail (threads) and chat (messages). Leave a " +
+    "role out when its connector is not there. Every time is an ISO string in IST, like " +
+    "2026-09-21T10:00:00+05:30; a time in another zone is refused, never converted.",
+};
 
-module.exports = { RENDER_TOOLS, renderView, familyView, todayInIst, VIEWS, dayOf, drawnHere, drawnBy };
+// render_view, made on our server (host/tools.js, E5b-1), which draws every view but the
+// snapshot, which the server holds back for the laptop's render_snapshot.
+const VIEW_TOOL = {
+  name: TOOL,
+  description:
+    "Draw one desk page as a self-contained HTML file under celorus/.views/ and answer its path: " +
+    "the reach-out card, the room brief or the summary card for a family; a seat's morning brief, " +
+    "or its console (rep-console for a rep, rm-console for an RM); or the desk's team view " +
+    "(lead-gen) or its snapshot. Every number " +
+    "and row on it is counted by the engine from the desk and the systems rows handed over; the " +
+    "sentences are yours, in prose, and are saved beside the page for the next render. A page drawn " +
+    "with systems rows keeps no sentences: send them with each render. A systems row that names no " +
+    "one on the desk is refused, and its whole role is then counted as not handed over; the answer " +
+    "names the role and the rule. A sentence that carries a name, a handle or a number of a refused " +
+    "row is left off the page, and sentences_set_aside says how many were." +
+    " What the seat says about themselves is never written to the desk: leave it out of every field.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      desk: DESK_ARGUMENT,
+      view: { type: "string", enum: VIEWS, description: "The page to draw." },
+      family: {
+        type: "string",
+        description: "The family page's name, for the reach-out card, the room brief and the summary card.",
+      },
+      seat: {
+        type: "string",
+        description:
+          "The seat the page is for: required for the morning brief and the consoles, optional on a " +
+          "family page, refused on the team view and the snapshot.",
+      },
+      date: DATE_ARGUMENT,
+      prose: {
+        description:
+          "The sentences for the page, by slot: who_and_why, opener and avoid on the reach-out card " +
+          "(each text or a list of text), sections on the room brief (each text, or heading and " +
+          "paragraphs), gists on the morning brief (one text per mail thread, keyed by its id in " +
+          "systems), upsell on the RM console (one text per family, keyed by its page name). Anything " +
+          "else is refused. Leave it out to reuse the saved ones; send it empty to clear them.",
+      },
+      taken_at: TAKEN_AT_ARGUMENT,
+      systems: SYSTEMS_ARGUMENT,
+    },
+    required: ["view"],
+    additionalProperties: false,
+  },
+  run: renderView,
+};
+
+// The snapshot, on the laptop's table (lib/tools.js; E5b-1, the base's ruling on checkpoint 1, CALL
+// A): its record is sealed with the seat's own snapshot key, which never leaves this machine
+// (key.js), so our server never draws it. render_snapshot draws that one view and no other: the
+// same renderer as render_view's snapshot, so the same page, stamp and answer, and it takes no view.
+// The snapshot is checked against the views it was drawn from by check_reconcile (reconcile.js).
+const SNAPSHOT = "render_snapshot";
+const SNAPSHOT_ARGUMENTS = ["desk", "date", "taken_at", "systems"];
+const SNAPSHOT_TOOL = {
+  name: SNAPSHOT,
+  description:
+    "Draw the desk's snapshot as a self-contained HTML file under celorus/.views/ and answer its path: the " +
+    "team view stamped with the moment it is taken, its record sealed with this seat's own snapshot key, " +
+    "which never leaves this machine. It draws the snapshot and no other page, and takes no sentences. " +
+    "Every number and row on it is counted by the engine from the desk and the systems rows handed over; " +
+    "a systems row that names no one on the desk is refused, and its whole role is then counted as not " +
+    "handed over; the answer names the role and the rule." +
+    " What the seat says about themselves is never written to the desk: leave it out of every field.",
+  inputSchema: {
+    type: "object",
+    properties: { desk: DESK_ARGUMENT, date: DATE_ARGUMENT, taken_at: TAKEN_AT_ARGUMENT, systems: SYSTEMS_ARGUMENT },
+    additionalProperties: false,
+  },
+  run(args = {}) {
+    const { onlyArguments } = require("../lib/tools.js");
+    onlyArguments(SNAPSHOT, args, SNAPSHOT_ARGUMENTS);
+    return renderView({ ...args, view: "snapshot" });
+  },
+};
+
+module.exports = { VIEW_TOOL, SNAPSHOT_TOOL, renderView, familyView, todayInIst, VIEWS, dayOf, drawnHere, drawnBy };

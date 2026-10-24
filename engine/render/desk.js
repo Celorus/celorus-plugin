@@ -2,10 +2,13 @@
 // A desk as the pages count it: every page of the kinds a page draws, by its slug, with the
 // desk's registers read as tables. It reads through the engine's one reader (lib/desk.js) and
 // its one link reader (check/text.js linkSpans, DESK-60): no second parser of either lives here.
+// A seat's graph (layout 3) is read through its view (layout/graph.js), so each page and register
+// is at the path it has on layout 2, and each page keeps the path it has in its part.
 //
 // Ported from the demo kit's desk.py and layout2.py (row E5).
 
-const { readDesk } = require("../lib/desk.js");
+const { readView } = require("../layout/graph.js");
+const { PERSONAL } = require("../layout/layout.js");
 const { linkSpans, sectionOf } = require("../check/text.js");
 
 // The page folders a page counts from; a desk's system pages are none of these.
@@ -94,7 +97,7 @@ class Desk {
         const page = byRel.get(rel);
         const slug = rel.slice(kind.length + 1, -".md".length);
         const header = page.head && typeof page.head === "object" && !Array.isArray(page.head) ? page.head : {};
-        this.pages.set(slug, { slug, kind, header, body: page.body.replace(/^\n+/, "") });
+        this.pages.set(slug, { slug, kind, header, body: page.body.replace(/^\n+/, ""), path: page.path || rel });
       }
     }
     const text = (rel) => (byRel.has(rel) ? byRel.get(rel).body : "");
@@ -103,6 +106,11 @@ class Desk {
     this.supplied = readTable(text("queues/supplied.md"));
     this.products = readTable(text("context/products.md"));
     this.log = readLog(text("log.md"));
+    // The folder under celorus/ the CRM export is read from: a seat's own on a graph (layout.js
+    // PERSONAL_FOLDERS).
+    this.crm = read.graph ? `${PERSONAL}/crm` : "crm";
+    // The one seat a graph is, as its desk.md names it in `seat:`; null on any other desk.
+    this.seat = read.graph ? read.graph.seat : null;
   }
 
   of(kind) {
@@ -188,7 +196,7 @@ class Desk {
 }
 
 function loadDesk(folder) {
-  return new Desk(readDesk(folder));
+  return new Desk(readView(folder));
 }
 
 module.exports = { Desk, loadDesk, unlink, linkedSlug, readTable, readLog, FOLDERS, FIXTURE_FOOT };
