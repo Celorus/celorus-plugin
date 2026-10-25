@@ -197,9 +197,12 @@ tiles/callouts/rows; the `@page` footer keeps page number + provenance.
 
 ## Data honesty contract (any artifact carrying figures)
 
-Figures cite their source (for record data: `SRN · section · page`). Derived values are visibly
+Figures cite their source (for record data: `SRN · section · page`; a line from the web: its link,
+the date read and the word web). Derived values are visibly
 marked "computed". Missing data renders as a designed "— not available" state — never a guess
-and never 0 (a real 0 is the number). Filed values render exactly as filed with a scale note
+and never 0 (a real 0 is the number). Every line keeps its mark in every copy of the artifact
+(download, print, PDF, export); a web line never goes where its mark cannot travel, such as a
+chart value or a tile with no source line. Filed values render exactly as filed with a scale note
 ("figures as filed, INR Lakh"). Indian conventions (full table in `references/LOCALIZATION.md`):
 lakh/crore grouping `₹##,##,##0` (`L`/`Cr` in tight tiles), non-INR figures use standard
 thousands grouping, dates `DD Mon YYYY`, timestamps 24h IST, fiscal years in the product-live
@@ -281,6 +284,10 @@ record. The design system it reads is on this machine, or bundled in this skill.
   is where the damage is.
 - Charts (if any) read tokens at runtime — no hand-picked colors.
 - Provenance footer present; figures cited; "not available" designed, not guessed.
+- Every web line shows the word web, its link and the date read as text (`.cite-web`), and they
+  print, the address too (`collateral.css` writes it; on a page without it, write it out): never
+  only behind a link, the cite icon or the citation card. A web line goes only down a path that
+  carries its mark (`references/PRINT_AND_EXPORT.md`, "A web line on each path").
 - No em dashes in artifact copy; sweeps did not touch URLs or identifiers.
 - Surface declared and the composition lint passes: live system
   `node design-system/tools/composition-lint.mjs <file>`; bundled fallback

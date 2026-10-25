@@ -43,6 +43,7 @@
      12. Event-timeline row       .event-row  (date + form chip + description + cite)
      13. Feedback affordances     .fb-* (confirm/flag, tray, focus-visible) — synthesis-answer
      14. Shared collateral chrome .coll-topbar · .eyebrow · .scope-chip · .coverage-strip
+     15. Web citation line        .cite-web  (web · link · date read, as text; the address prints)
 
    Every pattern is documented with a comment header at its block.
    ══════════════════════════════════════════════════════════════════════ */
@@ -674,6 +675,20 @@ details.annexure .ann-inner{padding:6px 15px 14px}
 .src-line b{color:var(--muted);font-weight:600}
 
 
+/* ── 15. WEB CITATION LINE ────────────────────────────────────────────
+   A line from the web is never a record line (K9). Its citation is text
+   in the line: the word web, the link, the date read.
+     <span class="cite-web"><b>web</b> · <a href="https://…">page or site
+     name</a> · read 25 Oct 2026</span>
+   Never only a .cite-ic, a .cite-chip or the .cite-modal: print hides the
+   icon and the card. In print the link's address is written after its
+   text (see PRINT), so the href is the page's full https address and the
+   link text names the page, not the address. */
+.cite-web{font-size:var(--primitive-fontSize-2xs);color:var(--muted);font-family:var(--mono)}
+.cite-web b{color:var(--ink-2);font-weight:600}
+.cite-web a{color:var(--brand-700)}
+
+
 /* ── RESPONSIVE ───────────────────────────────────────────────────────
    Token breakpoints (md 820 / a 760 dive break / 720 tile reflow). */
 @media(max-width:820px){
@@ -696,10 +711,12 @@ details.annexure .ann-inner{padding:6px 15px 14px}
    Screen-only affordances (cite modal, cite icons, feedback UI, tray)
    are stripped. Break-inside avoids on every card/tile/table/dive so the
    audit deliverable paginates cleanly. Annexures forced open so they
-   print. Provenance stays visible (it is the point). */
+   print. Provenance stays visible (it is the point). A web citation
+   (.cite-web) keeps its text and prints its link's address (K9). */
 @media print{
   .cite-modal{display:none !important}
   .cite-ic{display:none}
+  .cite-web a[href]::after{content:" " attr(href);word-break:break-all}
   .fb-actions,.fb-tray,.fb-note,.refine-form{display:none !important}
   .coll-topbar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .kfi-grid,.kfi-tile,.metricbox,.verdict-band,.claim-block,.bottomline .bl,

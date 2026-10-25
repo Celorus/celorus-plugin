@@ -9,7 +9,7 @@ How Celorus artifacts leave the screen: browser print, PDF export, and press. Ap
 3. **Chrome is hidden:** topbar, nav, progress bar, presenter notes, interactive controls (`display:none`).
 4. **Page setup:** A4 default, 18–20mm margins, `@page` footer with page number + provenance line. US Letter tolerated (content column is narrower than both).
 5. **No mid-component breaks:** `break-inside: avoid` on tiles, callouts, table rows, stat groups. Headings carry `break-after: avoid`.
-6. **Links** print their visible text only (no URL expansion — citations already carry references in mono).
+6. **Links** print their visible text only (no URL expansion — citations already carry references in mono). **A web line is the one exception** (K9, the data honesty contract): on paper and in every PDF it prints its link, its date read and the word web as text. Its citation is a `.cite-web` line: the word web and the date read are text in the line, and the link's `href` is the page's full `https` address. On a page that loads `collateral.css`, print writes that address after the link's text. On a page that does not load it, the address is written out as text in the line. A link, the cite icon (`.cite-ic`) or the citation card (`.cite-modal`) is never the only place a web line's mark appears: print hides the icon and the card, and a printed link is only its text.
 
 ## PDF export — two sanctioned paths
 
@@ -19,6 +19,19 @@ How Celorus artifacts leave the screen: browser print, PDF export, and press. Ap
 | **`templates/office/make_pdf.py`** (reportlab) | Programmatic/pipeline generation at volume | Token colors exact; fonts fall back unless Plex/Source Serif TTFs are registered (see `FONTS` constant + TEMPLATES.md) |
 
 Do not mix paths within one document family — pick per pipeline, not per document.
+
+## A web line on each path
+
+A web line carries its link, its date read and the word web as text in every copy, or it does not go down that path (K9).
+
+| Path | How a web line's mark travels |
+|---|---|
+| **Browser print**, to paper or to PDF | The `.cite-web` line prints as text: the word web, the link's text, the date read, and the address (written by `collateral.css`, or written out in the line where the page does not load it). |
+| **Headless PDF** (`playwright pdf`) | The same, since `page.pdf()` renders the print stylesheet by default. Never switch a page that carries a web line to screen media before the PDF. |
+| **`make_pdf.py`** | It draws a fixed report with no citation field, so a web line does not go there. |
+| **Office files** (`make_xlsx.py`, `make_docx.py`, `make_pptx.py`) | Their citation column, footnotes and slide notes carry record citations (`SRN · section · pages`) and have no web field, so a web line does not go there through the generators. One added by hand carries its address written out, its date read and the word web as text in the same cell, paragraph or slide body, never only in a hyperlink, a comment or the speaker notes. |
+| **Paged documents** (`templates/documents/`, headless Chromium) | `doc.css` has no `.cite-web` rule and prints no link's address, so a web line's source line (`.doc-src`) writes its address out as text, with its date read and the word web. Sales collateral carries no source lines (`templates/documents/DOCUMENTS.md` section 11, ruled 22 Oct 2026, item 6), so a web line does not go there. |
+| **Press / offset** | It prints from the PDF, so it carries what the PDF carries. |
 
 ## Office fidelity
 
