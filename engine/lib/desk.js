@@ -540,6 +540,20 @@ function readPage(dir, rel) {
   return { rel, head, body: split.body, problem: NO_HEADER, headerNotMapping: true };
 }
 
+// The header of a page whose text is already in hand, read as readPage reads it: a mapping, or
+// null when the page has none or its header does not parse. The link reads the pages it holds
+// through this, so it opens no page twice.
+function headOf(text) {
+  const split = splitPage(normalise(text));
+  if (!split) return null;
+  try {
+    return parseHeader(split.header);
+  } catch (err) {
+    if (err instanceof HeaderError) return null;
+    throw err;
+  }
+}
+
 // Orders paths part by part, as Python sorts paths: `a/y.md` before `a-b/x.md`.
 function comparePaths(a, b) {
   const left = a.split("/");
@@ -809,6 +823,7 @@ module.exports = {
   DESK_ARGUMENT,
   splitPage,
   readPage,
+  headOf,
   readDesk,
   readCommon,
   diskAt,

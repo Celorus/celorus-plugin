@@ -258,4 +258,4 @@ function badPath(rel) {
   return new LinkError("path", `${JSON.stringify(rel)} is not a path the desk server takes. Nothing was sent.`);
 }
 
-module.exports = { CAPS, NEVER_SENT, SPARE, TOO_BIG, WRITE_FILES, backIn, commonWritable, engineLines, fold, graphWritable, ignoreLines, ignoresSeat, neverSent, writable, badPath, linkInside, looksLikeText, lstatOrNull, pathOk, readBytes, standing, textOf, tooBig };
+module.exports = { CAPS, NEVER_SENT, ODD_NAME, SPARE, TOO_BIG, WRITE_FILES, backIn, commonWritable, engineLines, fold, graphWritable, ignoreLines, ignoresSeat, neverSent, writable, badPath, linkInside, looksLikeText, lstatOrNull, pathOk, readBytes, standing, textOf, tooBig };

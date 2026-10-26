@@ -12,10 +12,13 @@
 //     assign_lead: queues/supplied.md. write_conversation: the day's conversations of that
 //     family on that channel. write_brief: the day's brief of that kind for that family.
 //     register_routine: scheduled.md.
-// Six desk-wide tools send the whole desk: every plain file that is UTF-8 text, but nothing whose
+// Six desk-wide tools send the desk's celorus/ folder, never the folder that holds it, which may
+// be a whole working repository: every plain file in celorus/ that is UTF-8 text, but nothing whose
 // path has a part that starts with a dot (.celorus/, .git/, a tool's settings, an editor's or
 // another plugin's folder, a page in a dot-folder inside celorus/), save the engine's own dot
-// paths the tool reads, each named exactly in the list:
+// paths the tool reads, each named exactly in the list; and beside celorus/, the files the desk's
+// sent items name in their `file:` lines, where the engine's check looks for them (check/rules.js
+// C05). Those and the dot paths are the only files sent from outside celorus/:
 //   - update_desk: the desk's .gitignore, the four vault settings in celorus/.obsidian/, and a
 //     .gitkeep inside celorus/, each of which it writes only when it is missing (update/update.js),
 //     and every page of celorus/.views/, as its plan is a digest of every file under celorus/;
@@ -29,6 +32,10 @@
 // A file that is not text (a picture, a system file) is passed over and counted, as the desk
 // server takes text only; but a page that is not UTF-8 refuses the call, as the engine names such
 // a page in its views and the server would never see it.
+// A sent item's `file:` is read from the page the walk holds, joined as the check joins it, and
+// the file sent only when it is in the desk folder (on a graph, the seat's folder), outside
+// celorus/, with no part that starts with a dot (`..` among them), and a plain file: written in
+// full, or anywhere else, it is not sent, and the server's check says it is not there.
 //
 // On a seat's graph (layout 3: desk.md says layout_version 3) the call sends a firm folder, as the
 // desk server takes one: the seat's desk under seats/<its folder's name>/ and the firm's common
@@ -40,12 +47,16 @@
 // sends the seat's desk as a desk is sent, and the whole common space but its dot paths. No other
 // seat's graph is ever sent.
 //
-// A link anywhere in what would be sent refuses the call: the link never reads through a link,
-// so nothing outside the desk is ever sent. Each cap is refused, never cut.
+// A link anywhere in what would be sent refuses the call, a sent item's file and the folders on its
+// way among it: the link never reads through a link, so nothing outside the desk is ever sent.
+// Nothing outside celorus/ is opened but those dot paths and named files, so a link, a large file
+// or a crowd of files beside the desk that no sent item names stops nothing; a named file behind a
+// link, or a named text file over the cap, refuses as any sent file does. Each cap is refused,
+// never cut.
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { hiddenName, readPage } = require("../../engine/lib/desk.js");
+const { headOf, hiddenName, readPage } = require("../../engine/lib/desk.js");
 const LIST = require("../../engine/lib/workingsets.json");
 const { LinkError } = require("./errors.js");
 const P = require("./paths.js");
@@ -58,6 +69,8 @@ const WIDE_TOOLS = Object.freeze(Object.keys(LIST.wide));
 const SERVED = Object.freeze([...NARROW_TOOLS, ...WIDE_TOOLS]);
 const GRAPH = LIST.layout_3;
 const VIEWS = LIST.views;
+// The one folder of the desk folder a desk-wide call walks, as the engine writes only there.
+const DESK = "celorus";
 const SPARE = new RegExp(LIST.spare, "u");
 
 // A page name, as the engine takes one.
@@ -251,17 +264,79 @@ function dotRules(tool, args, today) {
   };
 }
 
+// A sent item's `file:` as a path in the desk folder, joined as the engine's check joins it
+// (check/rules.js atDesk): an empty or `.` part dropped, nothing else tidied. null when it is
+// written in full, has a part that starts with a dot (`..` among them, so it never leaves the
+// folder), has a part a disk may read as another name (a Windows short name such as GIT~1, a
+// trailing dot or space, a colon; the link writes no such name either, lib/paths.js ODD_NAME), or
+// is in celorus/, whose files the walk has had.
+function attachedAt(file) {
+  if (file.startsWith("/")) return null;
+  const parts = file.split("/").filter((part) => part !== "" && part !== ".");
+  const odd = (part) => P.ODD_NAME.test(part) || P.ODD_NAME.test(P.fold(part));
+  if (parts.length === 0 || parts.some(isDot) || parts.some(odd) || P.fold(parts[0]) === DESK) return null;
+  return parts.join("/");
+}
+
+// The files the desk's own sent items name in their `file:` lines, by their paths in the desk
+// folder, once each, in the order the pages are held: the pages in hand under the place's celorus/
+// (on a graph, the seat's) that the engine's check reads as pages, named `.md` exactly with no part
+// that starts with a dot (lib/desk.js markdownUnder), never the common space's. Only the pages in
+// hand are read for them.
+function attachments(files, place) {
+  const found = new Set();
+  const under = `${place.prefix}${DESK}/`;
+  for (const [sent, text] of Object.entries(files)) {
+    if (!sent.startsWith(under) || !sent.endsWith(".md") || sent.slice(under.length).split("/").some(isDot)) continue;
+    const head = headOf(text);
+    if (head === null || !Object.hasOwn(head, "type") || head.type !== "sent") continue;
+    const file = Object.hasOwn(head, "file") ? head.file : null;
+    const rel = typeof file === "string" ? attachedAt(file) : null;
+    if (rel !== null) found.add(rel);
+  }
+  return [...found];
+}
+
 function wide(places, tool, args, today) {
   const files = {};
   let skipped = 0;
   const desk = dotRules(tool, args, today);
   const none = { opens: () => false, sends: () => false };
+  // The plain file at `rel` in a place, into `files` as text; one that is not text is passed over
+  // and counted, but a page under celorus/ (or the common space) that is not UTF-8 refuses.
+  const send = (place, rel) => {
+    const sent = place.prefix + rel;
+    const data = P.readBytes(place.root, rel);
+    if (data === null) return;
+    if (data === P.TOO_BIG) {
+      if (P.looksLikeText(place.root, rel)) throw P.tooBig(sent);
+      skipped += 1;
+      return;
+    }
+    const text = P.textOf(data);
+    if (text === null) {
+      const page = P.fold(rel).endsWith(".md") && (place.kind === "common" || P.fold(rel).startsWith("celorus/"));
+      if (page) {
+        throw new LinkError("not_text", `${sent} is not UTF-8 text, so the desk server cannot read it, and its views would leave it out. Nothing was sent: save it as UTF-8, then make the change again.`);
+      }
+      skipped += 1;
+      return;
+    }
+    if (!P.pathOk(sent)) throw P.badPath(sent);
+    files[sent] = text;
+    if (Object.keys(files).length > P.CAPS.files) {
+      throw new LinkError("too_many", `The desk holds more than ${P.CAPS.files} files, more than the desk server takes in one call. Nothing was sent.`);
+    }
+  };
   const visit = (place, folder, rules, dotted) => {
     const at = folder === "" ? place.root : path.join(place.root, folder);
     for (const name of fs.readdirSync(at).sort()) {
       const rel = folder === "" ? name : `${folder}/${name}`;
       if (folder === "" && P.neverSent(name)) continue;
       if (P.fold(name) === ".git") continue;
+      // at the desk folder only celorus/ is walked, and the dot paths below: never the rest of the
+      // folder that holds the desk, which may be a whole working repository
+      if (folder === "" && place.kind !== "common" && name !== DESK && !isDot(name)) continue;
       // a path with a dot part is looked at only when the list names it, or a path under it
       const dot = dotted || isDot(name);
       if (dot && !rules.opens(rel) && !rules.sends(folder, name)) continue;
@@ -278,31 +353,31 @@ function wide(places, tool, args, today) {
         skipped += 1;
         continue;
       }
-      const sent = place.prefix + rel;
-      const data = P.readBytes(place.root, rel);
-      if (data === null) continue;
-      if (data === P.TOO_BIG) {
-        if (P.looksLikeText(place.root, rel)) throw P.tooBig(sent);
-        skipped += 1;
-        continue;
-      }
-      const text = P.textOf(data);
-      if (text === null) {
-        const page = P.fold(rel).endsWith(".md") && (place.kind === "common" || P.fold(rel).startsWith("celorus/"));
-        if (page) {
-          throw new LinkError("not_text", `${sent} is not UTF-8 text, so the desk server cannot read it, and its views would leave it out. Nothing was sent: save it as UTF-8, then make the change again.`);
-        }
-        skipped += 1;
-        continue;
-      }
-      if (!P.pathOk(sent)) throw P.badPath(sent);
-      files[sent] = text;
-      if (Object.keys(files).length > P.CAPS.files) {
-        throw new LinkError("too_many", `The desk holds more than ${P.CAPS.files} files, more than the desk server takes in one call. Nothing was sent.`);
-      }
+      send(place, rel);
     }
   };
   for (const place of places) visit(place, "", place.kind === "common" ? none : desk, false);
+  // the files the sent items name, beside celorus/ in the desk folder (on a graph, the seat's
+  // folder), where the engine's check looks for them: one not there, not a plain file, or whose
+  // path the desk server does not take is not sent, and the server's check says so
+  const [own] = places;
+  for (const rel of attachments(files, own)) {
+    const sent = own.prefix + rel;
+    if (!P.pathOk(sent)) continue;
+    let st;
+    try {
+      st = P.standing(own.root, rel);
+    } catch (err) {
+      if (err instanceof LinkError && err.code === "not_folder") continue;
+      throw err;
+    }
+    if (st === "absent" || st.isDirectory()) continue;
+    if (!st.isFile()) {
+      skipped += 1;
+      continue;
+    }
+    send(own, rel);
+  }
   return { files, skipped };
 }
 
