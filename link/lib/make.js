@@ -202,8 +202,10 @@ function unsent(err) {
   throw err;
 }
 
+// The words ride in both halves of the answer, as the structured part's `message`: a client that
+// reads only the structured part of an answer that is not an error still has them.
 function answer(text, structured, isError) {
-  return { content: [{ type: "text", text }], structuredContent: structured, isError };
+  return { content: [{ type: "text", text }], structuredContent: { ...structured, message: text }, isError };
 }
 
 const say = (value, cap = 600) => (typeof value === "string" ? value.slice(0, cap) : "");
@@ -251,12 +253,13 @@ function notMade(made) {
   }
   if (made.state === "payment_required") {
     // the structured part passes on the figures cut short, the account page by name and no other
-    // pointer, and the server's own reason and message capped (the words show neither)
+    // pointer, and the server's own reason and message capped (the words show neither); its
+    // `message` is the link's words, as on every answer, so the server's is `server_message`
     const structured = { state: "payment_required" };
     for (const key of ["balance", "needed"]) if (figure(made[key]) !== undefined) structured[key] = figure(made[key]);
     if (rechargeWords(made.recharge)) structured.recharge = { page: "account" };
     if (typeof made.reason === "string") structured.reason = say(made.reason, 60);
-    if (typeof made.message === "string") structured.message = say(made.message);
+    if (typeof made.message === "string") structured.server_message = say(made.message);
     const parts = [
       "This change needs payment before the desk server makes it.",
       structured.balance !== undefined ? `Balance: ${say(String(structured.balance), 40)}.` : "",
@@ -274,7 +277,9 @@ function notMade(made) {
 }
 
 // The pages made, written where the call's places are; the engine's own answer back, with one line
-// on what was written.
+// on what was written. The line rides in the structured part too, as `link_message` beside the
+// engine's own keys, when that part is an object: a client that reads only the structured part
+// still learns what was and was not written.
 function written(places, sent, made, skipped = 0) {
   const engine = made.answer;
   if (!engine || typeof engine !== "object" || !Array.isArray(engine.content)) {
@@ -291,7 +296,12 @@ function written(places, sent, made, skipped = 0) {
   const line = `Written on this desk through the link: ${done.written} page(s), ${done.removed} removed.${left}${passed}`;
   const content = [...engine.content, { type: "text", text: line }];
   const result = { content, isError: false };
-  if (engine.structuredContent !== undefined) result.structuredContent = engine.structuredContent;
+  const structured = engine.structuredContent;
+  if (structured !== null && typeof structured === "object" && !Array.isArray(structured)) {
+    result.structuredContent = { ...structured, link_message: line };
+  } else if (structured !== undefined) {
+    result.structuredContent = structured;
+  }
   return { result, done };
 }
 
@@ -518,6 +528,20 @@ function setAsideWords(n) {
   return `${n} change(s) once queued on this desk are set aside in ${queue.queueRel()}/${queue.REFUSED}/ and are never sent again. To clear one, read its file (its set_aside line says why), pull the desk (the link's pull), make the change again through the link if it is still wanted, then delete the file.`;
 }
 
+// Words added to an answer already made: a text block, and the same words on the link's own key
+// in the structured part (`link_message` beside the engine's keys, else `message` on an answer
+// the link made), so both halves still say them. The engine's own keys are never changed; its
+// refusals carry no structured part (engine/lib/mcp.js).
+function adding(result, words) {
+  const out = { ...result, content: [...result.content, { type: "text", text: words }] };
+  const s = result.structuredContent;
+  if (s !== null && typeof s === "object" && !Array.isArray(s)) {
+    const key = typeof s.link_message === "string" ? "link_message" : typeof s.message === "string" ? "message" : null;
+    if (key !== null) out.structuredContent = { ...s, [key]: `${s[key]}\n${words}` };
+  }
+  return out;
+}
+
 function namingSetAside(root, result) {
   let n = 0;
   try {
@@ -526,7 +550,7 @@ function namingSetAside(root, result) {
     return result;
   }
   if (!n) return result;
-  return { ...result, content: [...result.content, { type: "text", text: setAsideWords(n) }] };
+  return adding(result, setAsideWords(n));
 }
 
 // The link's `make` tool: { tool, arguments } in, an MCP tool result out.
@@ -579,8 +603,7 @@ async function makeIn(input, deps, at) {
       return queued(root, tool, checked.args, d, before.made, { stale: true });
     }
     d.log(`make ${tool}: ${one.made.state}${one.applied ? " written" : ""}${before.made ? `, ${before.made} queued made first` : ""}`);
-    if (before.made) one.result.content.push({ type: "text", text: madeFirst(before.made).trim() });
-    return one.result;
+    return before.made ? adding(one.result, madeFirst(before.made).trim()) : one.result;
   } catch (err) {
     if (err instanceof LinkError || (err && err.name === "Refusal")) {
       d.log(`make ${tool}: refused (${err.code || err.name})`);

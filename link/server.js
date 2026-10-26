@@ -116,9 +116,11 @@ function defaults() {
   };
 }
 
+// The words ride in both halves of the answer, as the structured part's `message`: a client that
+// reads only the structured part of an answer that is not an error still has them.
 function text(words, structured, isError = false) {
   const out = { content: [{ type: "text", text: words }], isError };
-  if (structured !== undefined) out.structuredContent = structured;
+  if (structured !== undefined) out.structuredContent = { ...structured, message: words };
   return out;
 }
 
@@ -155,7 +157,7 @@ async function signIn(d) {
     return text(err.message, { state: "failed" }, true);
   }
   if (pending !== null) {
-    return text(`A sign-in is already waiting. Open this page in your browser and sign in: ${pending.url}`, { state: "waiting" });
+    return text(`A sign-in is already waiting. Open this page in your browser and sign in: ${pending.url}`, { state: "waiting", url: pending.url });
   }
   const { verifier, challenge, state } = signin.pkce();
   const url = signin.authorizeUrl({ challenge, state });
@@ -182,7 +184,7 @@ async function signIn(d) {
   return text(
     `To sign in to Celorus, open this page in your browser and sign in: ${url}\n` +
       "The link waits five minutes for the sign-in to finish on this computer, then stops. Then make the change again.",
-    { state: "waiting" },
+    { state: "waiting", url },
   );
 }
 
