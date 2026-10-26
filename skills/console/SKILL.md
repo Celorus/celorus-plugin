@@ -225,6 +225,10 @@ back: only the overnight commits the family, people and firm pages. When nothing
 say there was nothing to commit, and never say a change was saved when none was. Pass
 `push=true` only when the person has just asked, in words, for the desk to go up.
 
+On a seat's graph (`celorus/desk.md` says `layout_version: 3`), skip `desk_sync`: a change is
+kept in the seat's storage by `make`, and git sends nothing from a graph, so `desk_sync`
+refuses one.
+
 ## When the desk tools cannot run
 
 The desk tools are the `celorus-desk` server this plugin starts on this machine. When a desk

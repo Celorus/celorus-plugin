@@ -190,10 +190,15 @@ async function served(name, args, d) {
   throw new LinkError("signed_out", token.SIGNED_OUT);
 }
 
-// A network failure at the sign-in service: the call itself was never sent (a first answer that
-// asked for a fresh token kept nothing).
+// A failure at the sign-in service: the call itself was never sent (a first answer that asked for
+// a fresh token kept nothing). Any other answer the renewal met that the link does not read (a
+// redirect, a body over the cap: transport.js) is the sign-in service's, so it is said as one
+// (`token_failed`, a sign-in code), never as the desk server's answer (the lane H panel on E10-G-1).
 function unsent(err) {
   if (err instanceof LinkError && err.network) err.sent = "never";
+  else if (err instanceof LinkError && !SIGN_IN_CODES.includes(err.code)) {
+    throw new LinkError("token_failed", "The sign-in service's answer was not one the link reads. Nothing was written.");
+  }
   throw err;
 }
 
@@ -586,4 +591,4 @@ async function makeIn(input, deps, at) {
   }
 }
 
-module.exports = { NOTHING, SERVED, answer, deskFor, make, namingSetAside, refuseHomeDesk, refused, say, served, setAsideReadAgain, shown, withDefaults };
+module.exports = { NOTHING, SERVED, SIGN_IN_CODES, answer, deskFor, make, namingSetAside, refuseHomeDesk, refused, say, served, setAsideReadAgain, shown, withDefaults };

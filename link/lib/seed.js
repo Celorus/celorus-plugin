@@ -15,7 +15,8 @@
 //     and a seed never adds to one: the desk is pulled instead;
 //   - a storage that holds none of this seat's pages is seeded fresh, batch 1 over the pull's
 //     base, held marked as a seed's before batch 1 is sent, so a batch 1 whose answer is lost
-//     still leaves a seed to go on from (a batch 1 refused for certain puts back what was held);
+//     still leaves a seed to go on from (a batch 1 refused for certain, its sign-in's refusal
+//     among them, puts back what was held);
 //     one that holds this seat's pages is seeded on only over the base this desk holds from its
 //     own seed (held marked as a seed's), sending only the pages the storage lacks; a storage that
 //     moved since stops the seed, and one whose base this desk holds from anything else (a pull,
@@ -162,8 +163,22 @@ function batchesOf(pages) {
 
 const malformed = () => new LinkError("answer", `The desk server's answer to the seed does not read as one. ${NOTHING}`);
 
-function stopped(why, kept, notYet, structured) {
-  return M.answer(`The seed stopped: ${why} ${kept} page(s) are kept in this seat's storage, and ${notYet} not yet sent. ${WAY}`, { state: "not_seeded", kept, not_yet_sent: notYet, ...structured }, true);
+// A sign-in failure's own words, as a seed's stop says them: without "then make the change
+// again" and "Nothing was written", which hold for one call, not for the batches a seed kept
+// before it; the seed's way on (WAY) follows them.
+function signInSaid(err, d) {
+  const said = M.shown(err, d)
+    .replace(/;? then make the change again\./u, ".")
+    .replace(/ ?Nothing was written(?:; try again)?\.$/u, "")
+    .trim();
+  return said ? `${said[0].toLowerCase()}${said.slice(1)}` : "the link's sign-in could not be used.";
+}
+
+// `kept` is every page of this seed the storage holds, an earlier run's among them; `maybe`, a batch
+// whose answer was lost or not read, may or may not be among them, and is not counted as unsent
+function stopped(why, kept, notYet, structured, maybe = 0) {
+  const doubt = maybe ? `, ${maybe} more may or may not be,` : ",";
+  return M.answer(`The seed stopped: ${why} ${kept} page(s) are kept in this seat's storage${doubt} and ${notYet} not yet sent. ${WAY}`, { state: "not_seeded", kept, ...(maybe ? { maybe_kept: maybe } : {}), not_yet_sent: notYet, ...structured }, true);
 }
 
 async function seedAt(root, d) {
@@ -249,17 +264,36 @@ async function seedAt(root, d) {
   }
   const putBack = () => (held === null ? base.clear(root) : base.hold(root, held.base, held.pages, { seeding: held.seeding }));
   let kept = 0;
+  // a resumed seed's storage holds the batches an earlier run kept (seatHeld) besides this run's
+  // (the lane H panel on E10-G-1)
+  const stop = (why, structured, maybe = 0) => stopped(why, seatHeld.length + kept, send.length - kept - maybe, structured, maybe);
   for (const [n, batch] of batches.entries()) {
     const files = Object.fromEntries(batch.map((page) => [page.named, P.textOf(page.data)]));
     let out;
     try {
       out = await M.served("desk_seed", { files, read_base: at, first: first && n === 0 }, d);
     } catch (err) {
-      if (err instanceof LinkError && err.network) {
+      if (!(err instanceof LinkError)) throw err;
+      if (err.network) {
         d.log(`seed: stopped (offline), ${n} batch(es) kept`);
-        return stopped(`the desk server could not be reached while batch ${n + 1} of ${batches.length} was sent, so that batch may or may not be kept.`, kept, send.length - kept, { reason: "offline" });
+        return stop(`the desk server could not be reached while batch ${n + 1} of ${batches.length} was sent, so that batch may or may not be kept.`, { reason: "offline" }, batch.length);
       }
-      throw err;
+      const code = M.say(err.code, 60);
+      // a call refused for its sign-in never reached the desk server (make.js SIGN_IN_CODES), so
+      // the batch is not kept and a batch 1 puts back what was held; the sign-in's words are kept,
+      // less the one call's "Nothing was written", as the batches before stay kept
+      if (M.SIGN_IN_CODES.includes(err.code)) {
+        if (first && n === 0) putBack();
+        d.log(`seed: stopped (${code}), ${n} batch(es) kept`);
+        return stop(
+          `${signInSaid(err, d)} Batch ${n + 1} of ${batches.length} was refused before the storage was asked, so it is not kept.`,
+          { state: err.code === "signed_out" ? "signed_out" : "not_seeded", reason: code },
+        );
+      }
+      // any other answer the link does not read came from the desk server, which may have kept
+      // the batch: the seed's mark stays, as for a lost answer, so a pull and a seed again finish it
+      d.log(`seed: stopped (${code}), ${n} batch(es) kept`);
+      return stop(`the desk server's answer to batch ${n + 1} of ${batches.length} was not one the link reads, so that batch may or may not be kept.`, { reason: code }, batch.length);
     }
     if (out.state === "partly_kept") {
       // the storage took part of the batch: the pages it names as written, each one this batch
@@ -272,7 +306,7 @@ async function seedAt(root, d) {
       const part = named === null ? "and did not say which of its pages it kept" : `keeping ${named.length} of its ${batch.length} page(s)`;
       const heldNow = named !== null && named.length > 0 ? base.hold(root, at, pages, { seeding: true }) : true;
       const heldWords = heldNow ? "" : ` What it kept could not be held at ${base.baseRel()}.`;
-      return stopped(`the storage stopped part way through batch ${n + 1} of ${batches.length}, ${part}.${heldWords}`, kept, send.length - kept, { reason: "partly_kept" });
+      return stop(`the storage stopped part way through batch ${n + 1} of ${batches.length}, ${part}.${heldWords}`, { reason: "partly_kept" }, named === null ? batch.length : 0);
     }
     if (out.state !== "seeded") {
       const reason = M.say(out.reason, 60);
@@ -287,7 +321,7 @@ async function seedAt(root, d) {
           : reason === "not_a_graph"
             ? `the storage refused the seat's celorus/desk.md, which the last batch carries, as not saying layout_version 3, so that batch was not kept. The pages of the batches before stay kept, with no desk.md, and a seed of the desk at layout 3 goes on over them.`
             : `${M.say(out.message) || "the storage did not keep a batch."}`;
-      return stopped(why, kept, send.length - kept, { reason: reason === "stale_base" ? "moved" : reason });
+      return stop(why, { reason: reason === "stale_base" ? "moved" : reason });
     }
     const keptBase = out.kept && out.kept.base;
     const written = out.kept_paths && Array.isArray(out.kept_paths.written) ? out.kept_paths.written : null;
@@ -298,7 +332,7 @@ async function seedAt(root, d) {
     kept += batch.length;
     // the last batch carries the desk.md, the seal: what is held after it is a desk's, no seed's
     if (!base.hold(root, keptBase, pages, { seeding: n < batches.length - 1 })) {
-      return stopped(`what the storage kept could not be held at ${base.baseRel()}.`, kept, send.length - kept, { reason: "not_held" });
+      return stop(`what the storage kept could not be held at ${base.baseRel()}.`, { reason: "not_held" });
     }
     at = keptBase;
   }
