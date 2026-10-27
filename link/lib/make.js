@@ -227,7 +227,8 @@ function rechargeWords(recharge) {
 // been kept) is never made again over a desk that has moved: it is set aside, as made again it
 // could be made twice.
 const STALE = "stale_base";
-// The storage held by another write to the seat: nothing was kept, and the call passes.
+// Another call to the seat's storage under way, its one write at a time or its Drive calls in
+// flight: nothing was kept, and the call passes.
 const DESK_BUSY = "desk_busy";
 const isStale = (made) => made.state === "not_kept" && made.reason === STALE;
 
@@ -439,8 +440,9 @@ async function drain(root, d) {
       return wait(words, { state: one.made.reason === "account_busy" ? "busy" : "waiting" });
     }
     if (one.made.state === "not_kept" && one.made.reason === DESK_BUSY) {
-      // another write held the seat's storage: nothing was kept, and it passes
-      return wait(say(one.made.message) || "Another write held the desk's storage, and nothing was kept.", { state: "busy" });
+      // another call to the seat's storage was under way (a write, or its Drive calls in
+      // flight): nothing was kept, and it passes
+      return wait(say(one.made.message) || "Another call to this desk was under way, and nothing was kept.", { state: "busy" });
     }
     if (isStale(one.made) && entry.sent === "maybe") {
       return setAside(
