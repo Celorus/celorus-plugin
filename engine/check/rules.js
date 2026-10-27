@@ -502,7 +502,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     }
     if (t === "sent" && truthy(own(page.head, "file"))) {
       const file = show(page.head.file);
-      const found = whatIsAt(atDesk(desk, file));
+      const found = lookedFor(file) ? whatIsAt(atDesk(desk, file)) : null;
       if (found === null) add("C05", page.rel, `file ${file} is not there`);
       else if (found !== "a file") add("C05", page.rel, `file ${file} is ${found}, not a file`);
     }
@@ -652,6 +652,22 @@ function atDesk(desk, file) {
     .split(path.sep === "/" ? "/" : /[\\/]/)
     .filter((part) => part !== "" && part !== ".");
   return root ? `${root}${parts.join(path.sep)}` : [desk, ...parts].join(path.sep);
+}
+
+// The setting the desk server gives every engine it starts.
+const SERVED = "CELORUS_DESK_SERVED";
+
+// Whether a sent item's `file:` is looked up. On the desk server, one written in full, or one with
+// any part that is exactly `..` (split as `atDesk` splits), reads as not there and is never looked
+// up, so a page cannot ask whether a path exists on the server; a sent item's attachment has no
+// use for either. Every other `file:` is looked up under the desk folder. On a laptop every
+// `file:` is looked up as it is written. Such a path can leave the desk folder only through a
+// link, and the server writes none into it: a change that lets a link into the server's desk
+// folder must revisit this rule.
+function lookedFor(file, env = process.env) {
+  if (env[SERVED] !== "1") return true;
+  if (path.isAbsolute(file)) return false;
+  return !file.split(path.sep === "/" ? "/" : /[\\/]/).includes("..");
 }
 
 // What is at `file`, following links, as the sent item's `file:` is read: "a file", "a folder",
