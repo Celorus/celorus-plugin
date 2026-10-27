@@ -393,6 +393,7 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     }
   }
 
+  const listed = namedList();
   for (const page of pages) {
     const name = page.name;
     if (page.problem !== NOT_UTF8) {
@@ -502,7 +503,15 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     }
     if (t === "sent" && truthy(own(page.head, "file"))) {
       const file = show(page.head.file);
-      const found = lookedFor(file) ? whatIsAt(atDesk(desk, file)) : null;
+      // On the desk server, a file the link did not send (not text, or a folder) is read from the
+      // list the link sends with the call (`namedList`). A known difference from
+      // the laptop, accepted as it stands: a `file:` with a part that starts
+      // with a dot (`.attach/x.pdf`) is never sent or listed, as nothing with a dot part leaves
+      // the laptop, so on the server it reads as not there while the laptop looks it up. A second,
+      // accepted the same way: a `file:` the header reads as anything but text (`1.0`,
+      // `yes`) is never sent or listed, as the link takes text only, so on the server it reads as
+      // not there while the laptop looks up what the check prints (`1.0`, `True`).
+      const found = lookedFor(file) ? (whatIsAt(atDesk(desk, file)) ?? listedAs(listed, page.head.file)) : null;
       if (found === null) add("C05", page.rel, `file ${file} is not there`);
       else if (found !== "a file") add("C05", page.rel, `file ${file} is ${found}, not a file`);
     }
@@ -670,6 +679,73 @@ function lookedFor(file, env = process.env) {
   return !file.split(path.sep === "/" ? "/" : /[\\/]/).includes("..");
 }
 
+// The setting naming the file the desk server writes beside the desk folder, never in it: the
+// files the call's sent items name that the link did not send, each by its path in the desk
+// folder with what it is on the laptop (the list). The server writes it only when the call
+// carries such a list, after its own checks (the render service's `_named`).
+const NAMED = "CELORUS_DESK_NAMED";
+const LISTED_AS = Object.freeze({ file: "a file", folder: "a folder", other: "something other than a file or a folder" });
+
+// The list as path to what is there, or null: on a laptop always null, as only the server sets
+// these; on the server null with no list, or one that cannot be read as an object of path to kind.
+// lstat asks for a plain file before the read (e4c_read_scan's B4), so a link or anything else at
+// the setting's path reads as no list.
+function namedList(env = process.env) {
+  if (env[SERVED] !== "1" || !env[NAMED]) return null;
+  let list;
+  try {
+    if (!fs.lstatSync(env[NAMED]).isFile()) return null;
+    list = JSON.parse(fs.readFileSync(env[NAMED], "utf8"));
+  } catch {
+    return null;
+  }
+  if (list === null || typeof list !== "object" || Array.isArray(list)) return null;
+  const out = new Map();
+  for (const [rel, kind] of Object.entries(list)) if (Object.hasOwn(LISTED_AS, kind)) out.set(rel, LISTED_AS[kind]);
+  return out;
+}
+
+// A `file:` as the list names it: its parts as `atDesk` splits them, an empty or `.` part dropped.
+function listKey(file) {
+  return file
+    .split(path.sep === "/" ? "/" : /[\\/]/)
+    .filter((part) => part !== "" && part !== ".")
+    .join("/");
+}
+
+// What the list says is at a sent item's `file:` (its header value) the disk does not hold, or
+// null. Only a `file:` the header reads as text is ever listed, as the link lists no other
+// (lib/workingset.js `attachments`); one read as a number, or as yes or no, reads from the disk
+// alone.
+function listedAs(listed, value) {
+  return listed === null || typeof value !== "string" ? null : (listed.get(listKey(value)) ?? null);
+}
+
+// On the desk server, whether the call's list names a path no sent item on the desk names: the
+// server then refuses the call (a second check, after the render service's own checks on the list). A sent
+// item names a path only when C05 would read it from the list: its `file:` reads as text and `lookedFor`
+// takes it (not written in full, no `..` part), by its text as `listedAs` keys it, from every page the
+// reader holds (`pagesOf()`, the desk's pages before the check sets any folder aside). So a list the link
+// builds (lib/workingset.js, text only, never in full or with a dot part, by the same reader's header) is
+// never refused, and a list naming any other `file:` always is. False on a laptop, with no list, and when
+// `pagesOf()` is null (a desk that cannot be read, which the tool meets too); the desk is read only when
+// there is a list.
+function namesUnsent(pagesOf, env = process.env) {
+  const listed = namedList(env);
+  if (listed === null) return false;
+  const pages = pagesOf();
+  if (pages === null) return false;
+  const named = new Set();
+  for (const page of pages) {
+    const head = page.head;
+    if (head === null || typeof head !== "object" || !Object.hasOwn(head, "file")) continue;
+    if (show(own(head, "type")) !== "sent" || typeof head.file !== "string" || head.file === "") continue;
+    if (!lookedFor(head.file, env)) continue;
+    named.add(listKey(head.file));
+  }
+  return [...listed.keys()].some((rel) => !named.has(rel));
+}
+
 // What is at `file`, following links, as the sent item's `file:` is read: "a file", "a folder",
 // "something other than a file or a folder", or null when nothing is. A sent item cites a file
 // a reader can open, so only "a file" answers it; the finding says which of the others it met.
@@ -695,4 +771,6 @@ module.exports = {
   checkDesk,
   checkPages,
   narrowFindings,
+  namesUnsent,
+  NAMED,
 };

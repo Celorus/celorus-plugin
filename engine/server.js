@@ -11,6 +11,28 @@ require("./lib/guard.js").install();
 const { createHandler, PARSE_ERROR, failure } = require("./lib/mcp.js");
 const { TOOLS } = require("./lib/tools.js");
 const { pluginVersion } = require("./lib/version.js");
+const { namesUnsent } = require("./check/rules.js");
+const { readDesk } = require("./lib/desk.js");
+
+// On the desk server (host/server.js runs this door), a call whose list of files the link did
+// not send names a path no sent item on the desk names is refused before any tool runs (`namesUnsent`
+// in check/rules.js). The render service answers the caller in its own words
+// (the render service's `_reply`). On a laptop there is never a list (only the server
+// sets it, check/rules.js namedList), so nothing is read and nothing refused. A desk that
+// cannot be read is left to the tool, which meets it too.
+const INVALID_PARAMS = -32602;
+const NAMED_REFUSED = "The list of files not sent names a file no sent item names.";
+
+function refusesList(message) {
+  if (message === null || typeof message !== "object" || message.method !== "tools/call") return false;
+  return namesUnsent(() => {
+    try {
+      return readDesk(process.cwd()).pages;
+    } catch {
+      return null;
+    }
+  });
+}
 
 // Anything a tool prints by mistake must not corrupt the protocol channel.
 console.log = console.error;
@@ -33,6 +55,12 @@ async function respond(line) {
     message = JSON.parse(line);
   } catch {
     send(failure(null, PARSE_ERROR, "A message is one line of JSON."));
+    return;
+  }
+  if (refusesList(message)) {
+    const refused = failure(message.id ?? null, INVALID_PARAMS, NAMED_REFUSED);
+    refused.error.data = { refused: "named" };
+    send(refused);
     return;
   }
   const answer = await handle(message);
