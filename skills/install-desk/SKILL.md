@@ -19,6 +19,10 @@ hidden `.celorus/` beside it holds scratch that may be deleted at any time.
 Deleting it also deletes this seat's snapshot key, and snapshots taken before then can no longer be checked.
 This skill asks what the tool needs, calls it, and says what it made from its answer.
 
+Needs Node.js 18 or newer (the LTS from nodejs.org): the plugin starts its local servers with
+the `node` command, and without it the app shows only a warning triangle and "Reconnect". After Node.js is installed, the app must be
+quit and reopened: one that was already running does not see the new install.
+
 ## House rules
 
 These hold over every section of this skill, set-up, verify, refresh and update included.

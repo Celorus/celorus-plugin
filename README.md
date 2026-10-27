@@ -163,6 +163,11 @@ aside, so keep that name for desks alone.
 The connector is a standard MCP endpoint over OAuth, so it is not tied to one tool. The
 marketplace and the plugin are both named `celorus`, hence `celorus@celorus`.
 
+The plugin needs Node.js 18 or newer (the LTS from nodejs.org): it starts its two local
+servers with the `node` command. Without Node.js the app shows only a warning triangle and
+"Reconnect" beside them. After installing Node.js, quit and reopen the app: one that was already
+running does not see the new install, on Windows especially.
+
 ### Claude Code (CLI, IDE, or the desktop app's Code tab)
 
 In an interactive `claude` session, add the marketplace and install the plugin:

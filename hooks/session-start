@@ -89,7 +89,7 @@ misnamed_said() {
 # line naming what is wrong, by its path under that folder, and returns 2 otherwise: never a desk
 # above it. Returns 1, printing nothing, when the walk finds no celorus entry.
 find_desk() {
-  local d where m mk named="${CELORUS_DESK:-}"
+  local d up where m mk named="${CELORUS_DESK:-}"
   local shape="A desk's celorus/ is a plain folder holding a plain, readable index.md: make it one, then ask again."
   local walk="the first folder on the walk up from the working folder that holds a celorus entry"
   if [ -n "$named" ]; then
@@ -103,10 +103,20 @@ find_desk() {
     where="so the folder CELORUS_DESK names, ${named}, is no desk the tools can read. ${shape}"
   else
     d="${PWD}"
+    # A start in Windows form (C:\Users\x, C:/Users/x) is turned into the folder's path in bash's
+    # own form when cygpath is there to do it; a POSIX path is never passed to cygpath.
+    case "$d" in
+      [A-Za-z]:[\\/]*|*\\*) command -v cygpath >/dev/null 2>&1 && d="$(cygpath -u -- "$d" 2>/dev/null || printf '%s' "$d")" ;;
+    esac
     while [ -n "$d" ] && [ "$d" != "/" ] && ! holds_celorus "$d"; do
       m="$(misnamed "$d")"; mk=$?
       if [ -n "$m" ]; then misnamed_said "$m" "$walk" "$mk"; return 2; fi
-      d="$(dirname "$d")"
+      up="$(dirname "$d")"
+      # The walk ends where dirname stops climbing (".", "C:", "//" or the folder itself): a path
+      # in a form this walk cannot climb finds no desk, and never loops. A POSIX working folder
+      # is absolute, so dirname never answers "." for one.
+      if [ "$up" = "$d" ] || [ "$up" = "." ]; then d=""; break; fi
+      d="$up"
     done
     [ -n "$d" ] && [ "$d" != "/" ] || return 1
     where="so the first folder on the walk up from the working folder that holds a celorus entry is no desk the tools can read, and the walk stops there: no desk above it is used. ${shape}"
