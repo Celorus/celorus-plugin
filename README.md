@@ -23,7 +23,7 @@ Not sure where to start? Ask what Celorus can do.
 
 | | Claude Code (terminal, IDE, desktop Code tab) | Cowork (desktop app) | claude.ai chat, Claude Desktop, mobile |
 |---|---|---|---|
-| Your workday (the desk) | Yes. Needs Node.js 18 or newer on the machine. | Yes, when the task runs on your computer | No: the desk is a local program, and chat does not run one |
+| Your workday (the desk) | Yes. Needs Node.js 18 or newer on the machine; Claude offers to install it when it is missing. | Yes, when the task runs on your computer | No: the desk is a local program, and chat does not run one |
 | The record (account) | Yes | Yes | Yes |
 
 ## Your workday (free)
@@ -165,8 +165,11 @@ marketplace and the plugin are both named `celorus`, hence `celorus@celorus`.
 
 The plugin needs Node.js 18 or newer (the LTS from nodejs.org): it starts its two local
 servers with the `node` command. Without Node.js the app shows only a warning triangle and
-"Reconnect" beside them. After installing Node.js, quit and reopen the app: one that was already
-running does not see the new install, on Windows especially.
+"Reconnect" beside them. When Node.js is missing, Claude says so at the start of a session and
+offers to install it for you; it installs it only when you say yes. On a company computer that
+does not allow installs, it gives you one sentence to send to your IT team. To do it by hand
+instead, install the LTS from nodejs.org. Either way, after installing Node.js, quit and reopen
+the app: one that was already running does not see the new install, on Windows especially.
 
 ### Claude Code (CLI, IDE, or the desktop app's Code tab)
 
@@ -178,7 +181,7 @@ In an interactive `claude` session, add the marketplace and install the plugin:
 ```
 
 The install panel reloads the plugin itself; run `/reload-plugins` only if it says to. The
-desk needs Node.js 18 or newer on the machine; the record does not. To start the day, say
+desk needs Node.js 18 or newer on the machine, which Claude offers to install when it is missing; the record does not. To start the day, say
 "set up my desk": it asks for the free Celorus sign-in first, and reading the desk works
 without it. For the record, run `/mcp`, select the
 **celorus-data** server, and sign in (see *Authentication*).
@@ -227,7 +230,8 @@ labelled source naming the document, the section and the page.
 ## When something does not work
 
 - **"The desk tools are not running on this machine."** The local desk program did not
-  start. On Claude Code, check that Node.js 18 or newer is installed and run `/mcp` to see
+  start. On Claude Code, check that Node.js 18 or newer is installed (Claude offers to install it
+  when it is missing; or install the LTS from nodejs.org yourself) and run `/mcp` to see
   whether **celorus-desk** is listed. In chat the desk never runs; use Claude Code or Cowork.
 - **Claude says there is no desk here.** Your working folder is not inside a desk. Open
   Claude from the folder that holds `celorus/`, or say "set up my desk".

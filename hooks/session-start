@@ -2,6 +2,8 @@
 # SessionStart hook for the Celorus plugin: announce the desk, if there is one.
 # Reads the desk's stamps (celorus/desk.md; celorus/index.md on a layout 1 desk),
 # the seat pointer and the follow-up queue.
+# Asks for the version of Node.js once, only to say so when Node.js 18 or newer is missing
+# (the desk tools and the sign-in need it; this hook does not).
 # Writes nothing. Makes no network call. Needs bash and coreutils only.
 # Never fails the session: every branch exits 0.
 set -u
@@ -208,13 +210,31 @@ emit() {
   fi
 }
 
+# Whether Node.js 18 or newer is missing here: returns 0 when Node.js is not on the PATH, or its
+# --version does not read vNN.x.y with NN at least 18; returns 1 when it does. One call, no more.
+node_missing_or_old() {
+  command -v node >/dev/null 2>&1 || return 0
+  local v major
+  v="$(node --version 2>/dev/null </dev/null)" || return 0
+  v="${v%%$'\n'*}"
+  v="${v//$'\r'/}"
+  case "$v" in v*) major="${v#v}"; major="${major%%.*}" ;; *) return 0 ;; esac
+  case "$major" in ''|*[!0-9]*) return 0 ;; esac
+  [ "$major" -ge 18 ] && return 1
+  return 0
+}
+
 found=0
 desk="$(find_desk)" || found=$?
+node_note=""
+if node_missing_or_old; then
+  node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start; offer to install it now with the install-desk skill, and install it only if the person says yes."
+fi
 if [ "$found" -eq 2 ]; then
-  emit "Celorus is installed. ${desk}"
+  emit "Celorus is installed. ${desk}${node_note}"
   exit 0
 elif [ "$found" -ne 0 ]; then
-  emit "Celorus is installed. No desk workspace was found here; say 'set up my desk' to create one, or ask what Celorus can do."
+  emit "Celorus is installed. No desk workspace was found here; say 'set up my desk' to create one, or ask what Celorus can do.${node_note}"
   exit 0
 fi
 
@@ -270,7 +290,7 @@ else
   due_line="${due} follow-ups are due"
 fi
 
-emit "A Celorus desk is installed at ${desk} for ${desk_name:-this desk}: ${seat_line}.
+emit "A Celorus desk is installed at ${desk} for ${desk_name:-this desk}: ${seat_line}.${node_note}
 Today's board is ${board}; ${due_line}.
 Open the day with the day-open skill. The chain and the layout are in celorus/index.md.
 Before your first answer, read how you speak on this desk with the read_soul tool."

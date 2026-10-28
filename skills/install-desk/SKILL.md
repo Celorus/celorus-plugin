@@ -6,7 +6,9 @@ description: >-
   "check my desk setup" or "refresh my desk setup", or when any workday skill finds no
   desk. Two modes: a single seat (five minutes, with a free Celorus sign-in first) and a
   whole desk (the operator, from the desk's private bundle). Also checks a desk's setup, or
-  updates a desk to the newest model when someone says "update my desk". Free: the desk is
+  updates a desk to the newest model when someone says "update my desk". Also installs
+  Node.js, which the desk tools and the sign-in need, when someone says "install Node.js" or
+  the session line says Node.js is missing. Free: the desk is
   set up on this machine, and each change it makes to the desk asks for the free sign-in before it is made.
 ---
 
@@ -22,6 +24,7 @@ This skill asks what the tool needs, calls it, and says what it made from its an
 Needs Node.js 18 or newer (the LTS from nodejs.org): the plugin starts its local servers with
 the `node` command, and without it the app shows only a warning triangle and "Reconnect". After Node.js is installed, the app must be
 quit and reopened: one that was already running does not see the new install.
+Claude offers to install it when it is missing: see "When Node.js is missing" below.
 
 ## House rules
 
@@ -67,6 +70,11 @@ moved, renamed or synced and every skill finds it again.
 ## First, the free sign-in
 
 Setting up a desk begins with `celorus-link`'s `sign_in`: call it before the first question.
+One step comes before it: run `node --version` on this computer. When `node` is missing, or its
+major version is below 18, or the session line says Node.js is missing, offer the install first
+("When Node.js is missing", below), because `sign_in` cannot start without it. The skill makes
+this check itself because a resumed session gets no session line. Installing Node.js changes no
+desk and needs no sign-in. Then call `sign_in`.
 When it answers "You are signed in to Celorus on this computer.", go on. When it answers a
 page to open, show that page for the person to open in their own browser, say that the
 sign-in is free and that the link waits five minutes for it, and ask the questions below
@@ -244,6 +252,50 @@ list, in these words:
 
 Taking the desk out is `remove-desk`: it lists what to remove, in order, and removes
 nothing itself.
+
+## When Node.js is missing
+
+Offer this when the check before the sign-in finds Node.js missing or below version 18, when the
+session line says so, or when the person says "install Node.js". Without it the desk tools and
+the sign-in cannot start. Install it for them in this order, by the route for their computer and
+no other. Nothing here writes to the desk: the Mac download goes to a temporary folder outside
+the desk, so house rule 6, "The seat must be known before anything is written", does not stop it.
+
+1. Ask first, in one sentence, and install only when the person says yes: "Node.js is missing
+   on this computer, and Celorus needs it to run. May I install it for you now? Installing it
+   accepts the Node.js licence." Nothing is downloaded or installed before the yes.
+2. On Windows, first check that `winget` is there. Run
+   `winget install --id OpenJS.NodeJS.LTS -e --source winget --accept-package-agreements --accept-source-agreements`.
+   Tell them a Windows prompt will ask to allow changes, and they click Yes. winget checks the
+   installer against the hash in its manifest.
+3. On a Mac, read the newest LTS version from `https://nodejs.org/dist/index.json`: the first entry
+   whose `lts` is not false. Before that version is used in any URL, file name or command, it must
+   match `^v[0-9]+\.[0-9]+\.[0-9]+$` exactly; on anything else, stop and say the sentence in step 5.
+   Into a new temporary folder, download `node-<version>.pkg` and that
+   folder's `https://nodejs.org/dist/<version>/SHASUMS256.txt`, both from
+   `https://nodejs.org/dist/<version>/`. Then make two checks, in this order:
+   - Run `shasum -a 256` on the package. The digest must be the same as the line for
+     `node-<version>.pkg` in SHASUMS256.txt.
+   - Run `pkgutil --check-signature` on the package. Its answer must hold all three of these
+     lines, each exactly as written: "Status: signed by a developer certificate issued by Apple
+     for distribution", "Notarization: trusted by the Apple notary service", and, as certificate
+     chain entry 1, "1. Developer ID Installer: Node.js Foundation (HX7739G8FX)". Any other
+     status fails, "signed by untrusted certificate" included, though it also says "signed".
+
+   Only when both checks pass, `open` the package; the person clicks through and types
+   their Mac password. If either check fails, delete the download, say so plainly, and stop: the
+   package is never opened. After the person says the installer has finished, delete the
+   temporary folder.
+4. Then tell them to quit Claude completely and open it again: on Windows, right-click the
+   Claude icon in the tray and choose Quit; on a Mac, press Cmd+Q. An app that was already running
+   does not see the new install.
+5. When it cannot be done (no `winget`, a company laptop that refuses installs, no network, a
+   check fails), say this one sentence, which they can forward to their IT team, and stop: "Node.js
+   18 or newer (the LTS from nodejs.org) has to be installed on this computer before Celorus can
+   run; please ask your IT team to install it." No retry loop and no other route.
+
+If the session line said Node.js is missing, this offer comes before the sentence in "When the desk
+tools cannot run" below applies.
 
 ## When the desk tools cannot run
 
