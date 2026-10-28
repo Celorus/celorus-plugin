@@ -165,9 +165,13 @@ function commonWritable(rel, { folder = false } = {}) {
 const STRICT = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
 
 // A path in the desk the server takes: relative, forward slashes, at most the caps' parts and
-// characters, no empty, . or .. part, no backslash or NUL, nothing under a folder never sent.
+// characters, no empty, . or .. part, no backslash or NUL, no half of a character pair (a lone
+// surrogate, which the server cannot write as UTF-8), nothing under a folder never sent.
+const HALF_PAIR = /\p{Cs}/u;
+
 function pathOk(rel) {
   if (typeof rel !== "string" || rel === "" || rel.length > CAPS.pathChars || rel.includes("\\") || rel.includes("\0")) return false;
+  if (HALF_PAIR.test(rel)) return false;
   const parts = rel.split("/");
   if (parts.length > CAPS.pathParts || neverSent(parts[0])) return false;
   return parts.every((part) => part !== "" && part !== "." && part !== ".." && Buffer.byteLength(part, "utf8") <= CAPS.partBytes);

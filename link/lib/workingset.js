@@ -36,6 +36,11 @@
 // the file sent only when it is in the desk folder (on a graph, the seat's folder), outside
 // celorus/, with no part that starts with a dot (`..` among them), and a plain file: written in
 // full, or anywhere else, it is not sent, and the server's check says it is not there.
+// What such a `file:` names in the desk folder that the call does not send as text (a file that is
+// not text, in celorus/ or beside it, a folder, anything else) goes in the call's `named`, by its
+// path in the call, as "file", "folder" or "other": never a byte of it, nor its size, its date or
+// anything else read from it. The server's check reads that list where its disk has nothing, so a
+// sent item naming a PDF reads there as it reads on this computer. The six writers send no list.
 //
 // On a seat's graph (layout 3: desk.md says layout_version 3) the call sends a firm folder, as the
 // desk server takes one: the seat's desk under seats/<its folder's name>/ and the firm's common
@@ -264,25 +269,32 @@ function dotRules(tool, args, today) {
   };
 }
 
-// A sent item's `file:` as a path in the desk folder, joined as the engine's check joins it
-// (check/rules.js atDesk): an empty or `.` part dropped, nothing else tidied. null when it is
-// written in full, has a part that starts with a dot (`..` among them, so it never leaves the
-// folder), has a part a disk may read as another name (a Windows short name such as GIT~1, a
-// trailing dot or space, a colon; the link writes no such name either, lib/paths.js ODD_NAME), or
-// is in celorus/, whose files the walk has had.
+// A sent item's `file:` as a path in the desk folder, joined as the engine's check joins it and
+// keyed as its list is keyed (check/rules.js atDesk, listKey): an empty or `.` part dropped,
+// nothing else tidied. null when it is written in full, has a part that starts with a dot (`..`
+// among them, so it never leaves the folder), or has a part a disk may read as another name (a
+// Windows short name such as GIT~1, a trailing dot or space, a colon, a backslash; the link writes
+// no such name either, lib/paths.js ODD_NAME). So a `file:` written with a backslash
+// (files\deck.pdf) is neither sent nor listed.
 function attachedAt(file) {
   if (file.startsWith("/")) return null;
   const parts = file.split("/").filter((part) => part !== "" && part !== ".");
   const odd = (part) => P.ODD_NAME.test(part) || P.ODD_NAME.test(P.fold(part));
-  if (parts.length === 0 || parts.some(isDot) || parts.some(odd) || P.fold(parts[0]) === DESK) return null;
+  if (parts.length === 0 || parts.some(isDot) || parts.some(odd)) return null;
   return parts.join("/");
 }
+
+// A key for a path that folds letter case and how a letter is written at least as far as the desk
+// server does when it refuses two spellings of one path (as lib/pull.js keys a twin).
+const twinKey = (rel) => P.fold(rel).toUpperCase().toLowerCase().normalize("NFKC");
 
 // The files the desk's own sent items name in their `file:` lines, by their paths in the desk
 // folder, once each, in the order the pages are held: the pages in hand under the place's celorus/
 // (on a graph, the seat's) that the engine's check reads as pages, named `.md` exactly with no part
 // that starts with a dot (lib/desk.js markdownUnder), never the common space's. Only the pages in
-// hand are read for them.
+// hand are read for them. The engine's check names each of these too (check/rules.js
+// namesUnsent): the same header reader, a text `file:`, never one written in full or with a dot
+// part, read from a set of pages that holds these.
 function attachments(files, place) {
   const found = new Set();
   const under = `${place.prefix}${DESK}/`;
@@ -328,6 +340,13 @@ function wide(places, tool, args, today) {
       throw new LinkError("too_many", `The desk holds more than ${P.CAPS.files} files, more than the desk server takes in one call. Nothing was sent.`);
     }
   };
+  // A spelling held back, read only so that a file that is not text is counted as send() counts
+  // it; its text is never sent, so nothing about it refuses the call.
+  const counted = (place, rel) => {
+    const data = P.readBytes(place.root, rel);
+    if (data === null) return;
+    if (data === P.TOO_BIG ? !P.looksLikeText(place.root, rel) : P.textOf(data) === null) skipped += 1;
+  };
   const visit = (place, folder, rules, dotted) => {
     const at = folder === "" ? place.root : path.join(place.root, folder);
     for (const name of fs.readdirSync(at).sort()) {
@@ -357,10 +376,26 @@ function wide(places, tool, args, today) {
     }
   };
   for (const place of places) visit(place, "", place.kind === "common" ? none : desk, false);
-  // the files the sent items name, beside celorus/ in the desk folder (on a graph, the seat's
-  // folder), where the engine's check looks for them: one not there, not a plain file, or whose
-  // path the desk server does not take is not sent, and the server's check says so
+  // the files the sent items name, in the desk folder (on a graph, the seat's folder), where the
+  // engine's check looks for them. Beside celorus/ a plain file is sent when it is text, as the walk
+  // sends a page; in celorus/ the walk has had it. One that is there and was not sent as text (a
+  // file that is not text, a folder, anything else) is listed in `named` by what it is, and only
+  // that: the server's check reads the list where its disk has nothing. One not there, behind a
+  // file on its way, or on a path the desk server does not take is neither sent nor listed, and
+  // the server's check says it is not there. The list holds at most one path per sent item, and
+  // every sent item is in `files`, so it is within the pages' own cap. The server refuses two
+  // spellings of one path, or of a folder on its way, which a disk that folds case holds as one:
+  // a file beside celorus/ that another line has sent under another spelling is listed, not sent
+  // again. Only a spelling that was sent is kept for that. A spelling held back is still read, but
+  // only to be counted, so a file that is not text is counted for each line that names it.
   const [own] = places;
+  const named = {};
+  const spelled = new Map();
+  const ways = (sent) => sent.split("/").map((_, i, parts) => parts.slice(0, i + 1).join("/"));
+  const spell = (sent) => {
+    for (const at of ways(sent)) if (!spelled.has(twinKey(at))) spelled.set(twinKey(at), at);
+  };
+  const twin = (sent) => ways(sent).some((at) => (spelled.get(twinKey(at)) ?? at) !== at);
   for (const rel of attachments(files, own)) {
     const sent = own.prefix + rel;
     if (!P.pathOk(sent)) continue;
@@ -371,20 +406,27 @@ function wide(places, tool, args, today) {
       if (err instanceof LinkError && err.code === "not_folder") continue;
       throw err;
     }
-    if (st === "absent" || st.isDirectory()) continue;
-    if (!st.isFile()) {
-      skipped += 1;
-      continue;
-    }
-    send(own, rel);
+    if (st === "absent") continue;
+    const walked = P.fold(rel.split("/")[0]) === DESK;
+    if (!walked && st.isFile()) {
+      if (twin(sent)) counted(own, rel);
+      else {
+        send(own, rel);
+        if (Object.hasOwn(files, sent)) spell(sent);
+      }
+    } else if (!walked && !st.isDirectory()) skipped += 1;
+    if (Object.hasOwn(files, sent)) continue;
+    named[sent] = st.isFile() ? "file" : st.isDirectory() ? "folder" : "other";
   }
-  return { files, skipped };
+  return { files, skipped, named };
 }
 
 // The working set for `tool` called with `args` on the desk at `root`: { files, skipped, contract,
-// places }, `files` each page's text by its path in the call, `skipped` the files passed over as
-// not text, `contract` the shape of the call (1 a desk, 2 a firm folder), `places` where each path
-// in the call is on this computer. `today` is the day of the call (YYYY-MM-DD, in UTC).
+// places, named }, `files` each page's text by its path in the call, `skipped` the files passed
+// over as not text, `contract` the shape of the call (1 a desk, 2 a firm folder), `places` where
+// each path in the call is on this computer, and for a desk-wide tool `named`, what the sent items
+// name that was not sent, by its path in the call. `today` is the day of the call (YYYY-MM-DD, in
+// UTC).
 function workingSet(root, tool, args, { today = new Date().toISOString().slice(0, 10) } = {}) {
   if (LIST.version !== VERSION) {
     throw new LinkError("working_sets", `The plugin's list of the pages each tool sends is of a version this link does not read (${String(LIST.version).slice(0, 20)}). Nothing was sent. The plugin may need an update.`);

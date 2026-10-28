@@ -3,7 +3,8 @@
 //
 // In order: the desk, found as the engine finds it (the one named, or from where the work
 // started), refused when it is the home folder, holds the link's token, or has a linked root;
-// then any queued calls, in order; then the call's own pages (lib/workingset.js); the token
+// then any queued calls, in order; then the call's own pages, and for a desk-wide tool what its
+// sent items name that it does not send, by kind alone (lib/workingset.js); the token
 // (lib/token.js); one desk_make call to the desk server; and its answer written to the desk
 // (lib/apply.js).
 //
@@ -21,7 +22,8 @@
 // On a seat's graph (layout 3) the call sends a firm folder, contract_version 2: the seat's desk
 // and the firm's common space (lib/workingset.js); a desk sends contract_version 1.
 // The token is sent only in the call's Authorization header. The log carries the tool, the
-// outcome and counts: never a token, a page's text, a page's path or the desk's folder.
+// outcome and counts: never a token, a page's text, a page's or a listed file's path, or the
+// desk's folder.
 
 const path = require("node:path");
 const { findDesk, resolveDesk } = require("../../engine/lib/desk.js");
@@ -147,10 +149,13 @@ function madeFrom(out) {
 
 // One desk_make call, signed. `contract` is the shape of `files`: 1 a desk, 2 a firm folder (a
 // seat's graph). `readBase`, the base this seat's graph last read of its storage (lib/base.js),
-// goes as read_base when held.
-async function deskMake(tool, args, files, contract, d, readBase = null) {
+// goes as read_base when held. `named`, what the sent items name that the call does not send
+// (lib/workingset.js), goes as named when it lists anything: a call with nothing to list is as
+// before.
+async function deskMake(tool, args, files, contract, d, readBase = null, named = null) {
   const call = { tool, arguments: args, files, contract_version: contract };
   if (base.isBase(readBase)) call.read_base = readBase;
+  if (named !== null && Object.keys(named).length > 0) call.named = named;
   return served("desk_make", call, d);
 }
 
@@ -316,7 +321,7 @@ function written(places, sent, made, skipped = 0) {
 // that read, as a read since, at another base, may hold it already ({ readAgain }, nothing sent).
 // A network failure carries the base the call went over.
 async function makeOne(root, tool, args, d, { over } = {}) {
-  const { files, skipped, contract, places } = workingSet(root, tool, args);
+  const { files, skipped, contract, places, named } = workingSet(root, tool, args);
   let before = null;
   try {
     before = contract === 2 ? base.held(root) : null;
@@ -331,7 +336,7 @@ async function makeOne(root, tool, args, d, { over } = {}) {
   if (over !== undefined && over !== readBase) return { readAgain: true };
   let made;
   try {
-    made = await deskMake(tool, args, files, contract, d, readBase);
+    made = await deskMake(tool, args, files, contract, d, readBase, named ?? null);
   } catch (err) {
     if (err instanceof LinkError && err.network) err.readBase = readBase;
     throw err;
