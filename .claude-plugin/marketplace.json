@@ -4,12 +4,12 @@
     "name": "Celorus",
     "email": "tech@celorus.com"
   },
-  "description": "Sales intelligence on Indian companies and the people behind them: the sales workday from lead research to follow-up, and every record figure cited to its source.",
+  "description": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
   "plugins": [
     {
       "name": "celorus",
       "source": ".",
-      "description": "Sales intelligence on Indian companies and the people behind them: the sales workday from lead research to follow-up, and every record figure cited to its source."
+      "description": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source."
     }
   ]
 }
