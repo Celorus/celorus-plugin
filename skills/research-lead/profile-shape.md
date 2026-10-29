@@ -164,9 +164,6 @@ as a proof line. A connection you inferred, and no source showed, is a `guessed`
 
 ## A firm page
 
-Same frame, with the company's sections: what the record holds, as the case the record check
-picked, in the check's own words and never as a number · record · <date of the check>, the web
-ladder's findings (events, funding,
-leadership, disputes), the people
-behind it linked to their pages, the KFI-style layout the record skills use where the
-record was read, and "Not established" for the rest.
+Same frame, with the company's sections: the web ladder's findings (events, funding,
+leadership, disputes), the people behind it linked to their pages, the KFI-style layout
+the record skills use where the record was read, and "Not established" for the rest.
