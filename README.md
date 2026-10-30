@@ -33,7 +33,7 @@ Nothing goes out without you. Agents prepare; you decide.
 
 | | Claude Code (terminal, IDE, desktop Code tab) | Cowork (desktop app) | claude.ai chat, Claude Desktop, mobile |
 |---|---|---|---|
-| Milan, your workspace (the desk) | Yes. Needs Node.js 18 or newer on the machine; Claude offers to install it when it is missing. | Yes, when the task runs on your computer | Yes, on the hosted desk |
+| Milan, your workspace (the desk) | Yes. Needs Node.js 18 or newer on the machine; Claude offers to install it when it is missing. | Yes, when the task runs on your computer | Not open yet |
 | The record | Yes | Yes | Yes |
 
 ## Milan, your workspace
@@ -43,8 +43,7 @@ Milan opens your day and keeps what you owe in front of you.
 In Claude Code and Cowork, your **desk** is a folder named `celorus/` inside the folder you
 work from: your call queues, a page for each person, family and firm you talk to, your call
 notes, your follow-ups, your own notes. It is plain text, it is yours, and it stays on your
-machine. In chat, your desk is the hosted desk: the same pages, made on the Celorus desk
-server and kept in storage you or your firm connect for it, such as your own Google Drive. A **seat** is
+machine. In chat, the desk is not open yet; the record works there. A **seat** is
 one person's place on a desk; a **family** is the household a wealth desk sells to; the
 **operator** is whoever sets a whole firm's desk up.
 
@@ -58,7 +57,7 @@ one person's place on a desk; a **family** is the household a wealth desk sells 
   on its own.
 - **Open my day.** What moved overnight, what is due today, and how soon each thing matters.
   On Claude Code the desk announces itself when a new session starts in a folder inside it
-  (not when an old one is resumed). Everywhere else, say "open my day".
+  (not when an old one is resumed). In Cowork, or in a resumed Claude Code session, say "open my day".
 - **Who do I call first.** Today's calls in order, each with the reason in words: money in
   motion, a reason to call, handle with care.
 - **Research this lead.** One pass over the web, every line labelled as a web finding with
@@ -144,9 +143,7 @@ grievance@celorus.com.
   needs and the change's own details, such as a brief's notes, over your signed-in
   connection, and writes back the pages it answers, keeping no copy of them. Reading the
   desk sends nothing, and
-  neither does a page written by hand. In chat, the Celorus desk server reads and writes the
-  hosted desk's pages in the storage you or your firm connected. On Google Drive, that permission covers
-  only the files the desk server makes, and you can remove it in your Google account. The
+  neither does a page written by hand. The
   record tools send the question you ask over your signed-in connection. The plugin carries no tracker and reports no usage.
 - **What reaches Claude.** Whatever a skill reads to answer you goes to Claude as any
   conversation does: your desk pages, and your mail, calendar and CRM once you connect
@@ -225,7 +222,7 @@ in (see *Authentication*).
 
 1. Open **Customize, then Plugins**, then **Add, then Add marketplace**, and enter
    `Celorus/celorus-plugin`. Install the **celorus** plugin from it. You get the skills
-   and the connector; in chat, your desk is the hosted desk.
+   and the connector. The desk is not open in chat yet; the record works there.
 2. Connect **celorus-data** from the plugin's **Connectors** tab and sign in (see
    *Authentication*).
 
@@ -260,8 +257,8 @@ labelled source naming the document, the section and the page.
 - **"The desk tools are not running on this machine."** The local desk program did not
   start. On Claude Code, check that Node.js 18 or newer is installed (Claude offers to install it
   when it is missing; or install the LTS from nodejs.org yourself) and run `/mcp` to see
-  whether **celorus-desk** is listed. In chat there is no local desk program; your desk there is the hosted desk.
-- **Claude says there is no desk here.** In chat, connect the hosted desk's storage first.
+  whether **celorus-desk** is listed. In chat there is no local desk program, and the desk is not open there yet.
+- **Claude says there is no desk here.** In chat, the desk is not open yet; use Claude Code or Cowork.
   In Claude Code and Cowork, your working folder is not inside a desk. Open
   Claude from the folder that holds `celorus/`, or say "set up my desk".
 - **"Refused by the desk's argument guard."** A mail or calendar call fell outside the
