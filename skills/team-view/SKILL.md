@@ -56,9 +56,8 @@ they forbid, they win.
 
 Find the seat as `day-open` does. If it is not known, ask which seat this is, as its handle
 (the name of its page under `celorus/seats/`), never the person's name, and write nothing
-until it is known. This view is the desk head's: the seat is one whose `role` in
-`celorus/seats/<handle>.md` is `desk-head`. For any other seat's own console, use the
-`console` skill.
+until it is known. This view is the desk head's: the seat is the desk head, found as step 1 of
+"Assign a lead" says. For any other seat's own console, use the `console` skill.
 
 ## Show the team
 
@@ -68,9 +67,13 @@ until it is known. This view is the desk head's: the seat is one whose `role` in
 
 ## Assign a lead
 
-1. Only the desk head hands out leads. If the seat that asked is not one whose `role` in
-   `celorus/seats/<handle>.md` is `desk-head`, say so in one line, "Only the desk head hands out
-   leads, and this seat is not the desk head.", write nothing, and stop.
+1. Only the desk head hands out leads. On a seat's graph (`celorus/desk.md` says
+   `layout_version: 3`), the desk head is the seat whose handle the firm's common page,
+   `../../common/common.md`, names in `desk_head:`, and no seat page's `role` is read for it;
+   when that page names none, no seat is the desk head. Off a graph, the desk head is the seat
+   whose `role` in `celorus/seats/<handle>.md` is `desk-head`. If the seat that asked is not the
+   desk head, say so in one line, "Only the desk head hands out leads, and this seat is not the
+   desk head.", write nothing, and stop.
 2. Through `make`, `assign_lead(at=<now, with its offset>, by_seat=<the handle of the seat that asked>, family=<the family's page name>, to_seat=<the seat's handle>, list_name="new signals")`.
    The assignment is recorded under the seat that asked, never under another seat's handle.
 3. `desk_sync(...)`, as "Save to the desk's history" says.
