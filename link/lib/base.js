@@ -15,7 +15,11 @@
 //   - a pull, and a seed's kept answer, set it whole;
 //   - a seed's batch marks it as a seed's (seeding), and only a seed this desk marked goes on: a
 //     pull and a kept change carry the mark while the storage holds no desk.md of this seat
-//     (a seed under way), and the seed's last batch, or a pull of a desk, drops it.
+//     (a seed under way), and the seed's last batch, or a pull of a desk, drops it;
+//   - a seed's mark holds whether that seed opens the firm's common space (common), decided at
+//     its first batch: the common pages its batch 1 carried, each with its SHA-256, while no
+//     batch of it is known kept, and "kept" once one is, so a seed that goes on carries the rest
+//     of it, and no other seed any of it; it rides with the mark, and goes with it.
 // The link's own file, .celorus/link-base.json: 0600 in the seat's 0700 folder, written by the
 // link alone, never at a path a server named, never sent, and never written while the desk's
 // .gitignore does not keep .celorus/ out of git (the queue's rule). A file that does not read as
@@ -38,12 +42,30 @@ const baseRel = () => `${queue.SEAT}/${FILE}`;
 const isBase = (value) => typeof value === "string" && BASE.test(value);
 const isDigest = (value) => typeof value === "string" && DIGEST.test(value);
 
+// A seed's mark that it opens the firm's common space, as the link holds it: { sent }, the common
+// pages its batch 1 carried (path to SHA-256), before a batch of it is known kept; "kept" after;
+// null for anything else.
+function opensOf(value) {
+  if (value === "kept") return "kept";
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const sent = value.sent;
+  if (sent === null || typeof sent !== "object" || Array.isArray(sent)) return null;
+  const out = {};
+  for (const [rel, digest] of Object.entries(sent)) {
+    if (!P.pathOk(rel) || !rel.startsWith("common/") || !isDigest(digest)) return null;
+    out[rel] = digest;
+  }
+  return { sent: out };
+}
+
 // Whether a plain file is the link's own as it writes it: this user's, 0600.
 const ownFile = (st) => (st.mode & 0o777) === 0o600 && (typeof process.getuid !== "function" || st.uid === process.getuid());
 
-// The held { base, pages, seeding }, base null when none is held, seeding true only for a base
-// a seed's batch held; null when nothing is held, or the file is not the link's own or does not
-// read: a file the link cannot trust holds nothing.
+// The held { base, pages, seeding, common }, base null when none is held, seeding true only for a
+// base a seed's batch held, common { sent } or "kept" only for a seed's that opens the firm's
+// common space (null otherwise);
+// null when nothing is held, or the file is not the link's own or does not read: a file the link
+// cannot trust holds nothing.
 function held(root) {
   let data;
   try {
@@ -72,13 +94,14 @@ function held(root) {
     if (!P.pathOk(rel) || !isDigest(digest)) return null;
     out[rel] = digest;
   }
-  return { base: entry.base, pages: out, seeding: entry.seeding === true };
+  return { base: entry.base, pages: out, seeding: entry.seeding === true, common: entry.seeding === true ? opensOf(entry.common) : null };
 }
 
 // Holds `base` (or null) and `pages` (path to SHA-256) as this desk's, marked as a seed's when
-// `seeding`: a fresh file moved over the old. Answers false, holding nothing, when the desk's
-// .gitignore does not keep .celorus/ out of git.
-function hold(root, base, pages, { seeding = false } = {}) {
+// `seeding`, and as one that opens the firm's common space when `common` too: a fresh file moved
+// over the old. Answers false, holding nothing, when the desk's .gitignore does not keep .celorus/
+// out of git.
+function hold(root, base, pages, { seeding = false, common = null } = {}) {
   if (base !== null && !isBase(base)) throw new TypeError("not a base the storage gives");
   if (!queue.keptOutOfGit(root)) return false;
   const dir = queue.folder(root, queue.SEAT);
@@ -88,6 +111,8 @@ function hold(root, base, pages, { seeding = false } = {}) {
   fs.rmSync(next, { force: true });
   const entry = { version: VERSION, base, pages: sorted };
   if (seeding === true) entry.seeding = true;
+  const opens = seeding === true ? opensOf(common) : null;
+  if (opens !== null) entry.common = opens;
   queue.writeNew(next, JSON.stringify(entry));
   fs.renameSync(next, path.join(dir, FILE));
   return true;
@@ -117,7 +142,7 @@ function afterKept(root, before, kept, keptPaths) {
   const next = before && isBase(before.base) && isBase(kept.base) ? kept.base : null;
   const desk = /^seats\/[0-9]{1,12}\/celorus\/desk\.md$/u;
   const seeding = Boolean(before && before.seeding) && next !== null && !Object.keys(pages).some((rel) => desk.test(rel));
-  if (hold(root, next, pages, { seeding })) return next !== null;
+  if (hold(root, next, pages, { seeding, common: before ? before.common : null })) return next !== null;
   clear(root);
   return false;
 }

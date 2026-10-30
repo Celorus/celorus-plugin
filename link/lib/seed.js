@@ -21,9 +21,13 @@
 //     own seed (held marked as a seed's), sending only the pages the storage lacks; a storage that
 //     moved since stops the seed, and one whose base this desk holds from anything else (a pull,
 //     a kept change) or not at all is pulled instead;
-//   - the firm's common pages are sent only in batch 1 of a fresh seed, into a firm whose common
-//     space in the storage is empty, as many as batch 1 carries: otherwise the seat's folder alone
-//     is sent, and the answer says why;
+//   - the seed that opens an empty common space carries the whole of it, across as many batches
+//     as it needs, before the seat's own pages (Q19 = A, c/6495822092): decided at its first
+//     batch, from a storage whose common space is empty, and held in the seed's mark, so a seed
+//     that goes on over the base it kept carries the rest, and one whose common space moved is
+//     pulled first; a batch 1 whose answer was lost is the seed's own only where each common page
+//     the storage holds is one its mark says it carried, with the same text; any other seed sends
+//     the seat's folder alone, and the answer says why;
 //   - the whole graph, with what the storage holds, stays inside what one pull reads, so the
 //     storage never holds more than the desk can pull back;
 //   - batches of at most 50 pages and under the body cap; each batch kept, or the pages of one
@@ -207,7 +211,7 @@ async function seedAt(root, d) {
     storageBytes += Buffer.byteLength(page.content, "utf8");
   }
   for (const named of Array.isArray(got.skipped) ? got.skipped : []) if (typeof named === "string") storage.set(named, null);
-  const held = base.held(root);
+  let held = base.held(root);
   const deskNamed = `${own.prefix}celorus/desk.md`;
   const seatHeld = [...storage.keys()].filter((named) => named.startsWith(own.prefix));
   const commonHeld = [...storage.keys()].filter((named) => named.startsWith("common/"));
@@ -215,6 +219,24 @@ async function seedAt(root, d) {
     d.log("seed: refused (a desk)");
     throw M.refused(`This seat's storage holds its desk already (its celorus/desk.md, which a seed sends last), and a seed never adds to a desk. Pull the desk instead. ${NOTHING}`);
   }
+  // a seed whose mark says its batch 1 carried the firm's common space, none of it known kept,
+  // meets common pages in the storage while this seat's folder is empty: they are that batch's,
+  // kept with its answer lost, only where each is a page the mark says it carried, with the same
+  // text, and the seed goes on with the rest; otherwise another seat opened the common space, and
+  // this seed sends none of it (term 1). The mark says which before anything else is done; a pull
+  // in between never decides it, as the mark, not this computer's pages, is what is compared.
+  if (held !== null && held.common !== null && held.common !== "kept" && !seatHeld.length && commonHeld.length) {
+    const { sent } = held.common;
+    const ours = commonHeld.every((named) => storage.get(named) !== null && Object.hasOwn(sent, named) && sent[named] === storage.get(named));
+    const common = ours ? "kept" : null;
+    if (!base.hold(root, held.base, held.pages, { seeding: true, common })) {
+      throw M.refused(`This desk could not hold the seed's base at ${base.baseRel()}, so no batch was sent. ${NOTHING}`);
+    }
+    d.log(`seed: the common space is ${ours ? "this seed's" : "another seat's"}`);
+    held = { ...held, common };
+  }
+  // this desk's seed under way opens the firm's common space, and a batch of it is kept
+  const opening = held !== null && held.seeding && held.common === "kept";
   let first = true;
   let at = got.base;
   let pages = {};
@@ -235,18 +257,24 @@ async function seedAt(root, d) {
     at = held.base;
     pages = { ...held.pages };
   } else if (held !== null) {
+    if (opening && commonHeld.length && held.base !== got.base) {
+      d.log("seed: stopped (moved)");
+      return M.answer(
+        `The seed did not go on: this seat's storage changed since this desk's last batch was kept (${MOVED}), and it holds ${commonHeld.length} of the firm's common pages, which this seed sends before this seat's own, and none of this seat's pages. ${NOTHING} ${WAY}`,
+        { state: "not_seeded", reason: "moved", kept: commonHeld.length },
+        true,
+      );
+    }
     // what this desk read of the firm's common pages, where the storage holds them still as read
     for (const named of commonHeld) if (storage.get(named) !== null && held.pages[named] === storage.get(named)) pages[named] = held.pages[named];
   }
-  // the firm's common pages go only in batch 1 of a fresh seed, into an empty common space
-  const carryCommon = first && commonHeld.length === 0;
+  // the seed that opens an empty common space carries all of it, before the seat's own pages, and
+  // goes on with the rest over the base it kept, while the seat's folder holds none of its pages
+  const carryCommon = first && (commonHeld.length === 0 || (opening && held.base === got.base));
   const places = [...found];
   const { pages: here, notSent } = pagesHere(rows, places, carryCommon);
   const missing = here.filter((page) => !storage.has(page.named));
-  const commonHere = ordered(missing.filter((page) => page.named.startsWith("common/")), own.prefix);
-  const commonSent = commonHere.length ? batchesOf(commonHere)[0] : [];
-  const commonLeft = commonHere.length - commonSent.length;
-  const send = [...commonSent, ...ordered(missing.filter((page) => !page.named.startsWith("common/")), own.prefix)];
+  const send = ordered(missing, own.prefix);
   const already = here.length - missing.length;
   const bytes = send.reduce((n, page) => n + page.data.length, storageBytes);
   if (storage.size + send.length > P.CAPS.files || bytes > P.CAPS.totalBytes) {
@@ -257,16 +285,22 @@ async function seedAt(root, d) {
   // once every other page is kept
   const batches = [...batchesOf(send.slice(0, -1)), [send[send.length - 1]]];
   const sha = (text) => crypto.createHash("sha256").update(Buffer.from(text, "utf8")).digest("hex");
+  // a seed that opens the common space marks, before batch 1, the common pages that batch carries,
+  // so a batch 1 whose answer is lost is told from another seat's; one that goes on over a kept
+  // batch of it is marked "kept"
+  const sentCommon = Object.fromEntries(batches[0].filter((page) => page.named.startsWith("common/")).map((page) => [page.named, sha(P.textOf(page.data))]));
+  const opens = carryCommon ? (commonHeld.length ? "kept" : { sent: sentCommon }) : null;
   // a fresh seed's mark goes on before batch 1 is sent, so a batch 1 whose answer is lost leaves
   // this desk a seed to go on from once pulled; a batch 1 refused for certain puts back what was held
-  if (first && !base.hold(root, at, pages, { seeding: true })) {
+  if (first && !base.hold(root, at, pages, { seeding: true, common: opens })) {
     throw M.refused(`This desk could not hold the seed's base at ${base.baseRel()}, so no batch was sent. ${NOTHING}`);
   }
-  const putBack = () => (held === null ? base.clear(root) : base.hold(root, held.base, held.pages, { seeding: held.seeding }));
+  const putBack = () => (held === null ? base.clear(root) : base.hold(root, held.base, held.pages, { seeding: held.seeding, common: held.common }));
   let kept = 0;
-  // a resumed seed's storage holds the batches an earlier run kept (seatHeld) besides this run's
-  // (the lane H panel on E10-G-1)
-  const stop = (why, structured, maybe = 0) => stopped(why, seatHeld.length + kept, send.length - kept - maybe, structured, maybe);
+  // a resumed seed's storage holds the batches an earlier run kept (seatHeld, or the common pages
+  // of the seed that opens the common space) besides this run's (the lane H panel on E10-G-1)
+  const keptBefore = seatHeld.length + (carryCommon ? commonHeld.length : 0);
+  const stop = (why, structured, maybe = 0) => stopped(why, keptBefore + kept, send.length - kept - maybe, structured, maybe);
   for (const [n, batch] of batches.entries()) {
     const files = Object.fromEntries(batch.map((page) => [page.named, P.textOf(page.data)]));
     let out;
@@ -304,7 +338,7 @@ async function seedAt(root, d) {
       kept += named ? named.length : 0;
       d.log(`seed: stopped (partly_kept), ${n} batch(es) kept`);
       const part = named === null ? "and did not say which of its pages it kept" : `keeping ${named.length} of its ${batch.length} page(s)`;
-      const heldNow = named !== null && named.length > 0 ? base.hold(root, at, pages, { seeding: true }) : true;
+      const heldNow = named !== null && named.length > 0 ? base.hold(root, at, pages, { seeding: true, common: carryCommon ? "kept" : null }) : true;
       const heldWords = heldNow ? "" : ` What it kept could not be held at ${base.baseRel()}.`;
       return stop(`the storage stopped part way through batch ${n + 1} of ${batches.length}, ${part}.${heldWords}`, { reason: "partly_kept" }, named === null ? batch.length : 0);
     }
@@ -331,7 +365,7 @@ async function seedAt(root, d) {
     }
     kept += batch.length;
     // the last batch carries the desk.md, the seal: what is held after it is a desk's, no seed's
-    if (!base.hold(root, keptBase, pages, { seeding: n < batches.length - 1 })) {
+    if (!base.hold(root, keptBase, pages, { seeding: n < batches.length - 1, common: carryCommon ? "kept" : null })) {
       return stop(`what the storage kept could not be held at ${base.baseRel()}.`, { reason: "not_held" });
     }
     at = keptBase;
@@ -339,16 +373,16 @@ async function seedAt(root, d) {
   d.log(`seed: seeded, ${batches.length} batch(es)`);
   const notSentWords = notSent ? ` ${notSent} file(s) in this seat's folder stay on this computer only, as the desk's sync table keeps them here or names them nowhere.` : "";
   const alreadyWords = already ? ` ${already} page(s) the storage holds already were not sent.` : "";
-  const commonWords = !first
-    ? found[1] && !commonHeld.length ? " The firm's common pages were not sent, as a seed sends them in its first batch only." : ""
-    : commonHeld.length
-      ? " The firm's common pages were not sent, as the storage holds common pages already: pull the desk next, and it brings them."
-      : commonLeft
-        ? ` ${commonLeft} of the firm's common pages were not sent, as a seed sends them in its first batch only and they are more than one batch carries: they stay on this computer.`
+  const commonWords = carryCommon
+    ? ""
+    : first
+      ? " The firm's common pages were not sent, as the storage holds common pages already: pull the desk next. It brings them here, unless this computer holds any of them with other text: then it writes nothing, names those pages and says what to do."
+      : found[1] && !commonHeld.length
+        ? " The firm's common pages were not sent, as a seed sends them before this seat's own pages, and this seat's storage held its pages already."
         : "";
   return M.answer(
     `Seeded this seat's storage: ${kept} page(s) sent in ${batches.length} batch(es), each kept, and the storage's base held on this desk, so the next change made through the link is made over it.${alreadyWords}${notSentWords}${commonWords}`,
-    { state: "seeded", sent: kept, batches: batches.length, already: already, not_sent: notSent, common: carryCommon, common_not_sent: commonLeft },
+    { state: "seeded", sent: kept, batches: batches.length, already: already, not_sent: notSent, common: carryCommon },
     false,
   );
 }

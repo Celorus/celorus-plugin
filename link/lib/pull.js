@@ -324,7 +324,7 @@ async function pullAt(root, d) {
   // shows the file open to all, and the link trusts it no further
   // a seed under way this desk began stays its own while the storage holds no desk.md of the seat
   const sealed = [...incoming.values()].some((page) => page.named === `${got.seat_folder}celorus/desk.md`);
-  let notHeld = !base.hold(root, got.base, pagesHeld, { seeding: Boolean(held && held.seeding) && !sealed });
+  let notHeld = !base.hold(root, got.base, pagesHeld, { seeding: Boolean(held && held.seeding) && !sealed, common: held ? held.common : null });
   if (!notHeld) {
     try {
       const now = base.held(root);
@@ -373,7 +373,7 @@ function partWay(root, held, before, done, err) {
   for (const named of done.removed) delete pages[named];
   let kept = false;
   try {
-    kept = base.hold(root, held && base.isBase(held.base) ? held.base : null, pages, { seeding: Boolean(held && held.seeding) });
+    kept = base.hold(root, held && base.isBase(held.base) ? held.base : null, pages, { seeding: Boolean(held && held.seeding), common: held ? held.common : null });
   } catch {
     // what was held stays: a page written here then reads as changed here, and a pull refuses
     // it, never writing over it
