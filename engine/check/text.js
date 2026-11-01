@@ -11,9 +11,11 @@ const {
   show,
 } = require("./values.js");
 
-// A desk link, `[[name]]`, `[[name|label]]` or `[[name#part]]`; the name is group 1. It is named
-// in linkSpans and nowhere else: linkSpans is the engine's one link reader.
-const LINK = "\\[\\[([^\\]|#]+)(?:[|#][^\\]]*)?\\]\\]";
+// A desk link, `[[name]]`, `[[name|label]]` or `[[name#part]]`; the name is group 1. A pipe may
+// be escaped, `[[name\|label]]`, as a markdown table carries an alias (views.js cell): the
+// backslash then ends the name with the pipe and belongs to the tail, so the link names `name`.
+// It is named in linkSpans and nowhere else: linkSpans is the engine's one link reader.
+const LINK = "\\[\\[([^\\]|#]+?)(?:(?:\\\\?\\||#)[^\\]]*)?\\]\\]";
 
 // A proof line: a list item, its bullet a dash and one plain space, then the connection, the
 // far end, how it is known, whose register, the date, and the rest. A blank inside the line is

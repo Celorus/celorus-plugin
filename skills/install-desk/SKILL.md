@@ -76,8 +76,11 @@ major version is below 18, or the session line says Node.js is missing, offer th
 this check itself because a resumed session gets no session line. Installing Node.js changes no
 desk and needs no sign-in. Then call `sign_in`.
 When it answers "You are signed in to Celorus on this computer.", go on. When it answers a
-page to open, show that page for the person to open in their own browser, say that the
-sign-in is free and that the link waits five minutes for it, and ask the questions below
+page to open, start the reply with that page as a line of its own, the link whole: the answer's
+`show_the_person` line as it came, or, where only the answer's words reached you, the line of
+them that carries the page. Nothing comes before it: a reply that says to open the link without
+the link leaves the person no way to sign in. Then say that the sign-in is free and that the
+link waits five minutes for it, and ask the questions below
 while they sign in. Set nothing up (no folder, no page, no line in `.gitignore`, no seat
 note) until `sign_in`, called again, answers that they are signed in. Any other answer: say
 it as it came, and set nothing up. Checking a desk's setup only reads, and asks for no
@@ -87,9 +90,18 @@ sign-in.
 
 Ask, one at a time, only what the person has not already said:
 
-1. **Your role**: `rep` (an SDR, finding and supplying leads), `rm` (a relationship
-   manager), `desk-head`, `operator`, or `other`. The relationship manager's day is the
-   default profile.
+1. **What you do in the day**: ask "What do you do in the day? Pick the one that fits
+   best. Any seat can do any of this; the answer only shapes your morning list." Three
+   answers, one picked:
+   - Finding and reaching new people: prospects, first calls and mails, the follow-ups
+     they bring. Write `rep`.
+   - Meetings and the clients you look after: meeting briefs, the people you serve. Write
+     `rm`.
+   - All of it. Write `rm`, and say: "For now this gives you the meetings-and-clients list."
+     The relationship manager's day is the default profile.
+
+   The seat page's `role` line takes only `rep` or `rm`. Never offer or ask for a
+   permission word.
 2. **The desk's name, and your handle.** The handle is short, lowercase, no spaces; it
    names your seat file. This is the seat, and nothing is written before it is known.
 3. **Where your book lives**: `crm-export` (a CRM export you will drop into `celorus/crm/`),
@@ -315,8 +327,8 @@ it makes to the desk asks for a free Celorus sign-in before it is made.
 
 Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
 `sign_in`, and change nothing until it answers "You are signed in to Celorus on this
-computer.". When it answers a page to open instead, show that page for the person to open in
-their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+computer.". When it answers a page to open instead, show the person its link in full, as a line of its own
+(the answer's `show_the_person` line), change nothing, and call `sign_in` again when they have signed in. Any
 other answer: say it as it came, and change nothing. That answer is the link's own reading of
 the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
 every change made through `make`.
@@ -328,7 +340,7 @@ link writes its pages into the desk; never write those pages by hand, and never 
 change another way. Say each answer in its own words, and follow these as they say:
 
 - "You are not signed in to Celorus through the link, or the sign-in has ended.": call
-  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  `sign_in`, show the person the link it answers in full, as a line of its own, and when
   they have signed in, make the change again.
 - "The desk server could not be reached, so the change was queued on this desk": it is
   made at the next change made through the link, while online; go on with the steps that

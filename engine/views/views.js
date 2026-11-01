@@ -19,7 +19,7 @@ const { parseHeader, HeaderError, HEADER_SUBSET } = require("../lib/header.js");
 const { pluginVersion } = require("../lib/version.js");
 const { RULES, checkDesk, checkPages } = require("../check/rules.js");
 const { loadDeskModel, isKind } = require("../check/model.js");
-const { linkSpans, linkName, linksIn, proofMatch, sectionOf, Page } = require("../check/text.js");
+const { linkSpans, linkName, linksIn, proofMatch, sectionOf, Page, LINK_BRACKETS } = require("../check/text.js");
 const V = require("../check/values.js");
 const { checkCitations, notCheckedSaid } = require("../cite/cite.js");
 const { dumpLines } = require("../update/yaml.js");
@@ -58,6 +58,26 @@ function cell(value) {
     else out += spans.some(({ start, end }) => i > start && i < end) ? "\\|" : "/";
   }
   return out;
+}
+
+// A page's link as a table row of the pipeline and who-knows-whom views writes it: the file name
+// with the page's own title beside it, `[[stem|title]]`, so a reader sees the page's name and not
+// its file name (the base's P3, c/6342252048). The pipe is escaped, as cell() above escapes an
+// alias, since a bare one would end the table cell. A page with no title (none written, blank,
+// or not text) keeps the bare `[[stem]]`, and so does one whose title could not sit inside a link
+// or a cell (a bracket, a pipe, a backslash or a line break): never an empty alias, never a
+// title made up or cut to fit. The two brackets in the class come from check/text.js, where links
+// are read (DESK-60), and both forms are written through the one `[[${inner}]]` template.
+const NOT_IN_ALIAS = new RegExp(
+  `[|${LINK_BRACKETS.replace(/./gu, (c) => `\\${c}`)}` + "\\\\\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029]",
+  "u",
+);
+
+function pageLink(page) {
+  const title = V.own(page.head || {}, "title");
+  const alias = typeof title === "string" ? V.strip(title) : "";
+  const inner = alias === "" || NOT_IN_ALIAS.test(alias) ? page.stem : `${page.stem}\\|${alias}`;
+  return `[[${inner}]]`;
 }
 
 // A finding's or a line's own words: a link to a page on the desk stays a link, and a link to a
@@ -105,7 +125,7 @@ function pipeline(root, model, pages, now) {
     if (!V.holds(model.accountKinds, page.type)) continue;
     if (!model.accountFields.every((key) => V.truthy(V.own(head, key)))) continue;
     const row =
-      `| [[${page.stem}]] | ${V.show(page.type)} | ${cell(V.own(head, "stage"))} | ` +
+      `| ${pageLink(page)} | ${V.show(page.type)} | ${cell(V.own(head, "stage"))} | ` +
       `${cell(V.own(head, "relationship_kind"))} | ${cell(V.own(head, "owner"))} |`;
     // A stage written as a list, or one no step claims, lands under "not on a step", where the
     // person sees it.
@@ -193,7 +213,7 @@ function whoKnowsWhom(model, pages, onDesk, now) {
         const tail = V.strip(m.rest);
         const why = tail.startsWith(DOT) ? V.strip(tail.slice(1)) : tail;
         guesses.push(
-          `| [[${page.stem}]] | ${m.conn} | ${cell(target)} | ${m.date} | ${cell(plain(why, onDesk) || DOT)} |`,
+          `| ${pageLink(page)} | ${m.conn} | ${cell(target)} | ${m.date} | ${cell(plain(why, onDesk) || DOT)} |`,
         );
         continue;
       }
@@ -201,7 +221,7 @@ function whoKnowsWhom(model, pages, onDesk, now) {
       let where = parts.map(citation).find((c) => c !== null) ?? null;
       if (where === null && m.proof === "shown") where = parts.map(aPlace).find((c) => c !== null) ?? null;
       lines.push(
-        `| [[${page.stem}]] | ${m.conn} | ${cell(plain(m.target, onDesk))} | ` +
+        `| ${pageLink(page)} | ${m.conn} | ${cell(plain(m.target, onDesk))} | ` +
           `${m.proof} | ${m.register} | ${m.date} | ${cell(plain(where || DOT, onDesk))} |`,
       );
     }

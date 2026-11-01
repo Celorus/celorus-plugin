@@ -47,8 +47,8 @@ const TOOLS = [
       "are signed in and opens nothing: that is the link's own reading of the sign-in it keeps, so a sign-in ended on " +
       "the desk server reads as signed in until a change, a pull or a seed made through the link is answered " +
       "otherwise, and the desk " +
-      "server still checks every change made through make. Otherwise answers a page for the person to open in their " +
-      "own browser; the link waits five minutes on this computer for the sign-in to finish, and keeps the sign-in " +
+      "server still checks every change made through make. Otherwise answers a sign-in link to show the person in " +
+      "full, as a line of its own, for them to open in their own browser; the link waits five minutes on this computer for the sign-in to finish, and keeps the sign-in " +
       "under the home folder, never in the desk. Asks only for the desk server's own access.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
@@ -128,6 +128,11 @@ function text(words, structured, isError = false) {
 let pending = null;
 
 const SIGNED_IN = "You are signed in to Celorus on this computer.";
+// The words of a waiting answer speak to the assistant, and the page follows on a line of its own:
+// words addressed to the person, with the page inline, were said again in other words, and the
+// page was left out (DESK-279). The structured part carries the page alone as `show_the_person`,
+// the line the reply shows the person, whole, for a client that hands over only that part.
+const SHOW_LINK = "Show the person this sign-in link to click, in full, exactly as it is here:";
 // sign_in's renewal waits this long at most: every message behind it on the one stdio queue waits too.
 const RENEW_MS = 10 * 1000;
 
@@ -157,7 +162,11 @@ async function signIn(d) {
     return text(err.message, { state: "failed" }, true);
   }
   if (pending !== null) {
-    return text(`A sign-in is already waiting. Open this page in your browser and sign in: ${pending.url}`, { state: "waiting", url: pending.url });
+    return text(`A sign-in is already waiting. ${SHOW_LINK}\n${pending.url}`, {
+      state: "waiting",
+      url: pending.url,
+      show_the_person: pending.url,
+    });
   }
   const { verifier, challenge, state } = signin.pkce();
   const url = signin.authorizeUrl({ challenge, state });
@@ -182,9 +191,9 @@ async function signIn(d) {
     });
   d.log("sign_in: waiting");
   return text(
-    `To sign in to Celorus, open this page in your browser and sign in: ${url}\n` +
+    `${SHOW_LINK}\n${url}\n` +
       "The link waits five minutes for the sign-in to finish on this computer, then stops. Then make the change again.",
-    { state: "waiting", url },
+    { state: "waiting", url, show_the_person: url },
   );
 }
 

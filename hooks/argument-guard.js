@@ -14,6 +14,18 @@
 // uncaughtException handler main() sets once they are loaded. Built-in modules only, and the
 // engine's own block on the network (engine/lib/guard.js) is installed before any other engine
 // file is loaded.
+//
+// On a machine with no Node this file cannot start at all, and nothing in it runs. hooks.json says
+// what happens then (E10-L): the hook's entry carries onFailure "block" (Claude Code 2.1.295 or
+// later), so the harness refuses the guarded call instead of letting it pass unchecked. The same
+// field refuses the call when a hook times out, exits with a code other than 0 or 2, or writes a
+// line the harness cannot read; this file does none of those when it runs. The entry's matcher
+// leaves outside only a tool of the record server, named by one of its two prefixes (the plugin's
+// celorus-data server, or the desktop app's directory connector for the same address) and then
+// the tool's own name with no double underscore in it, since those tools are served over the web
+// and need no Node. Every other connector call stays inside, a name with a second double
+// underscore after either prefix included, because shapes.js's roleOf reads a connector up to the
+// last double underscore and would take such a name for a connector of its own.
 
 const path = require("path");
 

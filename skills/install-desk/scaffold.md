@@ -2,8 +2,9 @@
 
 Templates for every file `install-desk` writes. Placeholders: `{{desk}}` the desk's name
 (where it sits inside double quotes, write a `"` in the name as `\"` and a `\` as `\\`),
-`{{desk_id}}` the minted id, `{{handle}}` the seat handle, `{{role}}` one of `rep`, `rm`,
-`desk-head`, `operator`, `other`, `{{book_source}}` one of `crm-export`, `sheet`, `typed`,
+`{{desk_id}}` the minted id, `{{handle}}` the seat handle, `{{role}}` `rep` or `rm` (an
+older seat page may carry `desk-head`, `operator` or `other`), `{{book_source}}` one of
+`crm-export`, `sheet`, `typed`,
 `{{mail}}`, `{{calendar}}`, `{{drive}}` each `true` or `false`, `{{baseline}}` the
 self-reported minutes per lead, `{{now}}` the ISO 8601 timestamp with offset, `{{date}}`
 and `{{time}}` the same moment as a date, `YYYY-MM-DD`, and a 24-hour clock time, `HH:MM`.

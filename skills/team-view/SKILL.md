@@ -150,8 +150,8 @@ it makes to the desk asks for a free Celorus sign-in before it is made.
 
 Before each step that changes the desk, by hand or through `make`, call `celorus-link`'s
 `sign_in`, and change nothing until it answers "You are signed in to Celorus on this
-computer.". When it answers a page to open instead, show that page for the person to open in
-their own browser, change nothing, and call `sign_in` again when they have signed in. Any
+computer.". When it answers a page to open instead, show the person its link in full, as a line of its own
+(the answer's `show_the_person` line), change nothing, and call `sign_in` again when they have signed in. Any
 other answer: say it as it came, and change nothing. That answer is the link's own reading of
 the sign-in it keeps on this computer: a sign-in ended on the desk server reads as signed in until a change, a pull or a seed made through the link is answered otherwise, and the desk server still checks
 every change made through `make`.
@@ -163,7 +163,7 @@ link writes its pages into the desk; never write those pages by hand, and never 
 change another way. Say each answer in its own words, and follow these as they say:
 
 - "You are not signed in to Celorus through the link, or the sign-in has ended.": call
-  `sign_in`, show the page it answers for the person to open in their own browser, and when
+  `sign_in`, show the person the link it answers in full, as a line of its own, and when
   they have signed in, make the change again.
 - "The desk server could not be reached, so the change was queued on this desk": it is
   made at the next change made through the link, while online; go on with the steps that
