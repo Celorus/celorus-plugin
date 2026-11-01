@@ -231,6 +231,19 @@ connector alone: **Customize, then Connectors, then Add custom connector**, with
 **`https://app.celorus.com/mcp`**. On Team and Enterprise plans an Owner adds it from the
 organization's settings.
 
+### Updating
+
+In Claude Code (the CLI, an IDE, or the desktop app's Code tab), take a newer version by
+selecting **Update** on the Celorus plugin in the plugin list. If **Update** is greyed out, or
+the plugin's menu has no **Update** at all, Claude Code's copy of the marketplace is behind.
+Bring that copy up to date first, then select **Update**:
+
+- On Windows, in PowerShell: `git -C "$env:USERPROFILE\.claude\plugins\marketplaces\celorus" pull`
+- On a Mac: `git -C ~/.claude/plugins/marketplaces/celorus pull`
+
+Removing the plugin and installing it again does not move the version: it installs the same
+older copy.
+
 ## Authentication (OAuth)
 
 The connector signs in with **OAuth 2.0**. There is **no API key**. You sign in with your

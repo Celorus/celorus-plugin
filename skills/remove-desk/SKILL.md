@@ -86,9 +86,9 @@ done by a person, where the step says.
 
 ## When the desk tools cannot run
 
-The desk tools are the `celorus-desk` server this plugin starts on this machine. When
-`take_down` cannot be called, because the tool is missing or it does not run, say exactly
-this sentence and stop, and never make the list from these instructions instead:
+`celorus-desk` is the local server this plugin starts on this machine, and it serves the desk
+tools. When `take_down` is missing or not running, the skill's whole reply is the sentence
+below; no list is made from this skill's text in place of the tool:
 "The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
 
 ## Signing in

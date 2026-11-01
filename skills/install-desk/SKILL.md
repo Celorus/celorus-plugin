@@ -299,15 +299,14 @@ tools cannot run" below applies.
 
 ## When the desk tools cannot run
 
-The desk tools are the `celorus-desk` server this plugin starts on this machine. Before its
-first write, this skill calls `check_desk` once, so it knows the desk tools answer before
-anything is written; a refusal is an answer. When a desk tool call cannot be made before
-anything is written, because the tool is missing or it does not run, write nothing, say
-exactly this sentence and stop, and never make the page or the answer from these
-instructions instead:
+`celorus-desk` is the local server this plugin starts on this machine, and it serves the desk
+tools. Before its first write, this skill calls `check_desk` once, so it knows the desk tools
+answer before anything is written; a refusal is an answer. When a desk tool is missing or not
+running before the skill's writing starts, nothing is written and the skill's whole reply is the
+sentence below; no page or answer is made from this skill's text in place of the tools:
 "The desk tools are not running on this machine, so I cannot do this. Nothing was changed."
-If a desk tool call cannot be made after this skill has written, say which pages were
-written and stop; that sentence is never said then.
+If a desk tool call cannot be made after the skill has written, the skill names the pages it
+wrote and ends there; that sentence is never said then.
 
 ## Signing in
 
