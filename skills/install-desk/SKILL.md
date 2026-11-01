@@ -84,7 +84,9 @@ link waits five minutes for it, and ask the questions below
 while they sign in. Set nothing up (no folder, no page, no line in `.gitignore`, no seat
 note) until `sign_in`, called again, answers that they are signed in. Any other answer: say
 it as it came, and set nothing up. Checking a desk's setup only reads, and asks for no
-sign-in.
+sign-in. When the call could not be made at all because the app shows `celorus-link` or
+`celorus-desk` as failed right after a Node.js install and the reopen, follow "After the reopen"
+under "When Node.js is missing" below before you stop.
 
 ## Seat mode: ask only what is missing
 
@@ -306,8 +308,20 @@ the desk, so house rule 6, "The seat must be known before anything is written", 
    18 or newer (the LTS from nodejs.org) has to be installed on this computer before Celorus can
    run; please ask your IT team to install it." No retry loop and no other route.
 
-If the session line said Node.js is missing, this offer comes before the sentence in "When the desk
-tools cannot run" below applies.
+**After the reopen.** The first read of the desk tools can still fail: the app keeps the failure
+it saw before Node.js was there, and shows the two servers, `celorus-desk` and `celorus-link`,
+with the warning triangle and "Reconnect". That read is the app's memory, not the servers'. It is
+not yet a tool that cannot run, so house rule 3 does not apply until the one reconnect below has
+been tried. Do not stop there: ask the person to reconnect each of the two servers once (in the
+desktop app, "Reconnect" beside each; in Claude Code, `/mcp`, then reconnect each), say you will
+go on when they have, and then call the tool the step was on again, `sign_in` or `check_desk`,
+and go on with the set-up from that step. Only when a call still cannot be made after that one
+reconnect does the sentence in "When the desk tools cannot run" below apply; there is no second
+reconnect and no other route.
+
+If the session line said Node.js is missing, or Node.js was installed in this conversation, this
+offer, and "After the reopen", come before the sentence in "When the desk tools cannot run" below
+applies.
 
 ## When the desk tools cannot run
 
