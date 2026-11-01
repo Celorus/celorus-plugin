@@ -1514,6 +1514,13 @@ const CALL_KIND_KEYS = { "follow-up": "follow_up", reply: "reply", supplied: "su
 const LEAD_FOLDERS = new Set(["people", "families", "firms"]);
 const HANDLE_WITH_CARE = "handle-with-care";
 const REASON_TO_CALL = "reason-to-call";
+// A clock whose key, in one letter case with every run of spaces, hyphens and underscores as one
+// hyphen, equals the care key is the care clock (P6, item 4 of its ruling), however
+// a page writes it. Only the care key is folded; the other clocks keep an
+// exact match.
+function isCareClock(key) {
+  return String(key).trim().toLowerCase().replace(/[\s_-]+/gu, "-") === HANDLE_WITH_CARE;
+}
 // the day's order of clocks where motion-spec.md holds no list of them that can be read, and the
 // one sentence that says so
 const BUILT_IN_CLOCKS = ["money-in-motion", REASON_TO_CALL, HANDLE_WITH_CARE];
@@ -1641,7 +1648,7 @@ function byDay(a, b, newest) {
 
 // One row of the answer, and its place in the order: a lead with every reason it has and its
 // clock. Handle with care is the clock of a lead a never-say line names, by any name of
-// leadNames, and of a page whose own clock says so, whatever the day's order lists. A page's
+// leadNames, and of a page whose own clock says so (the key or its words, isCareClock), whatever the day's order lists. A page's
 // clock that the order does not hold places the row as reason-to-call and is said in
 // clock_not_listed; no_clock is said only of a lead with no page or a page with no clock.
 function callRow(desk, lead, kinds, order, careLines) {
@@ -1653,7 +1660,10 @@ function callRow(desk, lead, kinds, order, careLines) {
   const first = kindsHeld[0];
   const names = leadNames(lead, page);
   const named = careLines.some((line) => names.some((name) => lineNames(line, name)));
-  const onPage = page ? desk.get(page, "clock").trim() : "";
+  const written = page ? desk.get(page, "clock").trim() : "";
+  // a page's care clock in words is the canonical key on the row, so the split and every reader
+  // see one key
+  const onPage = isCareClock(written) ? HANDLE_WITH_CARE : written;
   let clock = REASON_TO_CALL;
   let noClock = null;
   let notListed = null;
