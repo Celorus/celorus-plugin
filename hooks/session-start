@@ -6,7 +6,45 @@
 # (the desk tools and the sign-in need it; this hook does not).
 # Writes nothing. Makes no network call. Needs bash and coreutils only.
 # Never fails the session: every branch exits 0.
+# Ends by itself (DESK-276): starts no background child, reads no stdin (it is closed at once, so
+# no program here can wait on it), runs the one outside program it asks (the Node.js version) under
+# a bound where the machine has GNU timeout, and the walk up from the working folder is capped in
+# steps and in seconds. hooks.json gives the hook 10 seconds. The walk stops at 6 and Node.js gets
+# what is left of a 9 second budget (at least 1), so a start whose walk stops on the clock is done
+# by 9 seconds, 10 at the most. Two things have no bound: the Node.js question where the machine
+# has no GNU timeout, and one folder step that the disk is slow to answer.
 set -u
+# Bash takes the start value of SECONDS from the environment; the hook's clock starts here.
+SECONDS=0
+exec </dev/null
+
+# The seconds after which the walk up from the working folder gives up, and the most folders it
+# climbs.
+WALK_SECONDS=6
+WALK_STEPS=256
+
+# bounded SECONDS COMMAND ARGUMENT...: COMMAND, found by the PATH and run by that absolute path
+# only (an empty PATH entry or a "." would answer with a file in the working folder, which is never
+# run), under GNU timeout when the PATH has one, else alone. A timeout in a folder named Windows is
+# Windows' own program of that name, and BusyBox's takes other arguments, so neither is used.
+# --foreground keeps timeout in the hook's own process group. The bound ends the program it
+# started, and kills it one second later (--kill-after=1) if it ignores the first signal. A
+# version manager's shim (Volta and the like) runs Node.js as a child of its own, which the bound
+# does not reach and which may outlive it: that case is unbounded.
+bounded() {
+  local secs="$1" prog tm
+  shift
+  prog="$(command -v "$1" 2>/dev/null)" || return 127
+  case "$prog" in /*) ;; *) return 127 ;; esac
+  shift
+  tm="$(command -v timeout 2>/dev/null)" || tm=""
+  case "$tm" in /*) ;; *) tm="" ;; esac
+  case "$(readlink "$tm" 2>/dev/null)" in *busybox*) tm="" ;; esac
+  case "$tm" in
+    ""|*/[Ww][Ii][Nn][Dd][Oo][Ww][Ss]/*) "$prog" "$@" ;;
+    *) "$tm" --foreground --kill-after=1 "$secs" "$prog" "$@" ;;
+  esac
+}
 
 # The kind of the entry at $1, looked at without following it, in the desk tools' words.
 odd_kind() {
@@ -89,11 +127,13 @@ misnamed_said() {
 # folder on the walk up from $PWD, that holds an entry named exactly `celorus`, of any kind. Prints that folder and
 # returns 0 only when its celorus/ is a plain folder holding a plain, readable index.md. Prints one
 # line naming what is wrong, by its path under that folder, and returns 2 otherwise: never a desk
-# above it. Returns 1, printing nothing, when the walk finds no celorus entry.
+# above it. Returns 1, printing nothing, when the walk finds no celorus entry. Returns 3, printing
+# one line, when the walk is stopped by its step cap or its clock before it reaches the top.
 find_desk() {
-  local d up where m mk named="${CELORUS_DESK:-}"
+  local d up where m mk steps=0 named="${CELORUS_DESK:-}"
   local shape="A desk's celorus/ is a plain folder holding a plain, readable index.md: make it one, then ask again."
   local walk="the first folder on the walk up from the working folder that holds a celorus entry"
+  local cut="The look for a desk above this folder stopped before it reached the top; start the session inside the desk folder, or set CELORUS_DESK to it."
   if [ -n "$named" ]; then
     d="$named"
     if ! holds_celorus "$d"; then
@@ -111,6 +151,11 @@ find_desk() {
       [A-Za-z]:[\\/]*|*\\*) command -v cygpath >/dev/null 2>&1 && d="$(cygpath -u -- "$d" 2>/dev/null || printf '%s' "$d")" ;;
     esac
     while [ -n "$d" ] && [ "$d" != "/" ] && ! holds_celorus "$d"; do
+      # a walk that has climbed WALK_STEPS folders, or run past WALK_SECONDS since the hook began,
+      # stops where it is and says so (returning 3): it never outlasts the hook's budget, and it
+      # does not say that no desk exists, since one may sit above the folder it reached
+      steps=$((steps + 1))
+      if [ "$steps" -gt "$WALK_STEPS" ] || [ "$SECONDS" -ge "$WALK_SECONDS" ]; then printf '%s' "$cut"; return 3; fi
       m="$(misnamed "$d")"; mk=$?
       if [ -n "$m" ]; then misnamed_said "$m" "$walk" "$mk"; return 2; fi
       up="$(dirname "$d")"
@@ -214,8 +259,9 @@ emit() {
 # --version does not read vNN.x.y with NN at least 18; returns 1 when it does. One call, no more.
 node_missing_or_old() {
   command -v node >/dev/null 2>&1 || return 0
-  local v major
-  v="$(node --version 2>/dev/null </dev/null)" || return 0
+  local v major left=$((9 - SECONDS))
+  [ "$left" -ge 1 ] || left=1
+  v="$(bounded $left node --version 2>/dev/null </dev/null)" || return 0
   v="${v%%$'\n'*}"
   v="${v//$'\r'/}"
   case "$v" in v*) major="${v#v}"; major="${major%%.*}" ;; *) return 0 ;; esac
@@ -230,7 +276,7 @@ node_note=""
 if node_missing_or_old; then
   node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start, and the plugin's guard refuses the use of every other connector (mail, calendar, any connector but the Celorus record server's own tools) until it is installed; offer to install it now with the install-desk skill, and install it only if the person says yes."
 fi
-if [ "$found" -eq 2 ]; then
+if [ "$found" -eq 2 ] || [ "$found" -eq 3 ]; then
   emit "Celorus is installed. ${desk}${node_note}"
   exit 0
 elif [ "$found" -ne 0 ]; then
