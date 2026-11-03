@@ -6,7 +6,8 @@ description: >-
   "check my desk setup" or "refresh my desk setup", or when any workday skill finds no
   desk. Two modes: a single seat (five minutes, with a free Celorus sign-in first) and a
   whole desk (the operator, from the desk's private bundle). Also checks a desk's setup, or
-  updates a desk to the newest model when someone says "update my desk". Also installs
+  updates a desk to the newest model when someone says "update my desk". Also says how to
+  take a newer plugin version when Update is greyed out or missing. Also installs
   Node.js, which the desk tools and the sign-in need, when someone says "install Node.js" or
   the session line says Node.js is missing. Free: the desk is
   set up on this machine, and each change it makes to the desk asks for the free sign-in before it is made.
@@ -222,6 +223,34 @@ your own: call `take_down`, which changes nothing, and say its `not_connected` r
 is what the set-up recorded, not what is connected now: say so, in those words. A role the
 harness shows connected now is said connected, never still to connect. A desk set up before
 the systems table has none, and its answer says so.
+
+The check also says which plugin version is running: `plugin_version` in the answer of the same
+`take_down` call, as it came. Whether the app's copy of the marketplace is behind cannot be read
+on this computer without the network, so never say it is current, and never guess a newer
+version. Say "the plugin's marketplace copy is out of date", and give the step in "When the
+plugin is an older version" below, only when the running `plugin_version` is older than the
+version the person names, compared part by part, or when **Update** is greyed out or missing on
+the Celorus plugin. A person who says only that a newer version exists, or names one that is not
+newer than `plugin_version`, is told which version is running, and nothing more.
+
+## When the plugin is an older version
+
+This is the plugin's own version, not the desk's. "Update my desk" moves a desk to the newest
+desk model and says nothing of the plugin; the steps here move the plugin and touch no desk.
+
+A person on an older plugin version takes the update in the app. When **Update** is greyed out,
+or the plugin's menu has no **Update** at all, the app's copy of the marketplace is behind. Bring
+that copy up to date first, then select **Update**:
+
+1. Pull the marketplace folder. On Windows, in PowerShell:
+   `git -C "$env:USERPROFILE\.claude\plugins\marketplaces\celorus" pull`. On a Mac or Linux:
+   `git -C ~/.claude/plugins/marketplaces/celorus pull`.
+2. Select **Update** on the Celorus plugin in the plugin list.
+
+Removing the plugin and installing it again is not the way: it installs the same older copy, so
+the version does not move. A fresh install on a computer with no earlier copy needs none of this.
+Say these steps as they are, and run nothing for the person: the pull changes a folder outside
+the desk, so it is theirs to run.
 
 ## Update mode: "update my desk"
 
