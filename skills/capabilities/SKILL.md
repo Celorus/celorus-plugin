@@ -59,8 +59,13 @@ record's tools returned, verbatim, as the hard rules below say.
   `install-desk`, and that the record door needs no desk.
 - **A desk, and the day not yet opened**: point at `day-open`.
 - **They named a company or a person**: the record door if the ask is a report or a
-  figure; `research-lead` if the ask is "who is this". If the record door's first call
-  settles that this session is not signed in to the record, *When this session is not signed in to the record* below decides what you
+  figure; `research-lead` if the ask is to research them: "who is this", "research <name>",
+  "find out about <name>", said with or without Celorus addressed by name ("celorus,
+  research <name>"). A question about a named company's revenue, auditor, directors or financial year, a
+  report, or a cap table stays with the record door even when it is worded "research" or "find
+  out about". A research ask that wants nothing narrower is handed to `research-lead` straight
+  away, before any call to the record and without a question about which road; this skill does
+  not hold it. If the record door's first call settles that this session is not signed in to the record, *When this session is not signed in to the record* below decides what you
   say, and nothing calls the record again. Ask a short either/or when it is unclear; never
   guess.
 

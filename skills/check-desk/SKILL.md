@@ -189,6 +189,12 @@ retyped. `findings` is how many rows needs-attention holds, and `citations_check
 `citations_not_checked` are how many cited lines the check read and how many it could not.
 Every number you say is one it returned.
 
+`make` adds a line of its own to the answer, that begins `Written on this desk through the link:`
+and says what it wrote and what it removed. Show that line in the reply exactly as the tool wrote
+it, on a line of its own after the page shown, or on its own when none is, on a rebuild of the
+views as on any other change this skill makes through `make`. Never fold it into other words, shorten it or leave it out: it
+is how the seller sees what was written.
+
 It ends the change with one line in `celorus/log.md`, directly under today's heading
 `## <date>`: `* <time> · <handle> · check-desk · wrote views · yours`, and returns that line as
 `logged`. The register label `yours` marks that every line here came from the desk itself. Never
@@ -385,7 +391,10 @@ A step that names a desk tool and `make` changes the desk on the desk server: ca
 `celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
 arguments as the step gives them, `desk` included. The desk server makes the change and the
 link writes its pages into the desk; never write those pages by hand, and never make the
-change another way. Say each answer in its own words, and follow these as they say:
+change another way. Say each answer in its own words, except the line that ends a made change
+and begins `Written on this desk through the link:`. Show that line exactly as the tool wrote it, on a
+line of its own, and never fold it into other words, shorten it or leave it out: it is how the seller
+sees what was written. Follow these as they say:
 
 - "You are not signed in to Celorus through the link, or the sign-in has ended.": call
   `sign_in`, show the person the link it answers in full, as a line of its own, and when

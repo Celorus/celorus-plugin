@@ -2,8 +2,12 @@
 name: research-lead
 description: >-
   Research a lead: a person, a family or a company, from the desk's queue or by name.
-  Use when someone says "research this lead", "who is this", "what do we know about",
-  "look up this company", "look up this person", or from triage. Runs the web register on
+  Use when someone asks to research or find out about a named company, person or family:
+  "research <name>", "celorus, research <name>", "research <name> for me",
+  "find out about <name>", "research this lead", "who is this", "what do we know about",
+  "look up this company", "look up this person", or from triage. A targeted question about
+  a named company is `ask-company`'s, a full financial report is `financial-analysis`'s, and
+  a cap table is `cap-table`'s, even when the ask says research or find out about. Runs the web register on
   the harness's own search, reads the record when this session is signed in to it,
   and writes one profile page in the desk workspace (on a
   hosted desk, shows it in the chat) with every line labelled by which class of truth it is. Free: the web register runs on this machine
@@ -257,7 +261,10 @@ A step that names a desk tool and `make` changes the desk on the desk server: ca
 `celorus-link`'s `make` with `tool`, that tool's name, and `arguments`, the tool's own
 arguments as the step gives them, `desk` included. The desk server makes the change and the
 link writes its pages into the desk; never write those pages by hand, and never make the
-change another way. Say each answer in its own words, and follow these as they say:
+change another way. Say each answer in its own words, except the line that ends a made change
+and begins `Written on this desk through the link:`. Show that line exactly as the tool wrote it, on a
+line of its own, and never fold it into other words, shorten it or leave it out: it is how the seller
+sees what was written. Follow these as they say:
 
 - "You are not signed in to Celorus through the link, or the sign-in has ended.": call
   `sign_in`, show the person the link it answers in full, as a line of its own, and when
