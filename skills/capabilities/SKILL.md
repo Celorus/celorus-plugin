@@ -3,9 +3,10 @@ name: capabilities
 description: >-
   The front door to Celorus: use when someone asks "what can you do?", "what can Celorus
   do?", "what reports can you make?", "what do you have on <company>?", wants to browse
-  what is available, names a company without a specific ask, or asks how to run their
-  sales day with Celorus. It orients them to the two doors, the workday and the record,
-  and hands them to the right skill. The record's menu is drawn live from the server,
+  what is available, names a company without a specific ask, asks how to run their
+  sales day with Celorus, or calls on Milan or Celorus by name with no other ask ("Milan",
+  "hi Milan", "Celorus?", or the name the desk gave its assistant). It orients them to
+  the two doors, the workday and the record, and hands them to the right skill. The record's menu is drawn live from the server,
   never from a stale list; every figure cites its source; data not on record is "not
   available", never invented.
 ---
@@ -54,6 +55,15 @@ record's tools returned, verbatim, as the hard rules below say.
 
 ## First, where they are
 
+- **Called on by name, with no other ask** ("Milan", "hi Milan", "Celorus?", or the name the
+  desk gave its assistant): the reply opens with where they are and the next step, from the
+  cases below, briefly. On a desk it speaks in the voice of the desk's soul page,
+  read with the `read_soul` tool if this session has not read it. Unless a `celorus-data` call
+  in this session has already come back with data, its last line names the record's sign-in: "To
+  read the record, sign in to celorus-data under /mcp if you have not." on Claude Code, Cowork
+  and Claude Desktop, and the lane's own sign-in step from *When this session is not signed in
+  to the record* elsewhere. It makes no call to the record to find out, and says nothing of what
+  the record holds.
 - **No desk workspace here** (no `celorus/index.md` found by walking up from the working
   directory, and `CELORUS_DESK` unset): say the day can be set up with
   `install-desk`, and that the record door needs no desk.

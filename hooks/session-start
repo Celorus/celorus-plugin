@@ -6,6 +6,17 @@
 # (the desk tools and the sign-in need it; this hook does not).
 # Writes nothing. Makes no network call. Needs bash and coreutils only.
 # Never fails the session: every branch exits 0.
+# Speaks as Milan (DESK-262): every start line opens with "Milan here.", names the next step, and
+# ends with the line on signing in to the record, which this hook cannot see (it makes no network
+# call), so it says it every time. Milan is the engine's default name for the assistant
+# (engine/lib/persona.js DEFAULT_NAME, the one reader of a desk's own name): a desk whose desk.md
+# sets its own assistant_name is greeted with no name, and this hook never reads or says that name.
+# With no desk here, the next step depends on whether the link keeps a sign-in on this machine,
+# its token file under ~/.celorus/link/, which is looked at and never opened. The seat's workflow
+# page is not on this desk yet, so the next step is read from today's board and the follow-ups due.
+# A seat's graph (layout 3, the desk a first bring-down leaves, with no seat pointer here) names
+# its seat in its desk.md; that seat is used and its handle never said, since a handle the set-up
+# page made carries the seat's number.
 # Ends by itself (DESK-276): starts no background child, reads no stdin (it is closed at once, so
 # no program here can wait on it), runs the one outside program it asks (the Node.js version) under
 # a bound where the machine has GNU timeout, and the walk up from the working folder is capped in
@@ -235,6 +246,30 @@ frontmatter_value() {
   ' "$1"
 }
 
+# frontmatter_every FILE KEY: every value KEY has in the leading --- block, one a line, as written:
+# at any indentation, a carriage return read as a line break (as the engine reads one), and only
+# the spaces at its ends taken off. A line that holds KEY as a key elsewhere (after { or , in a
+# one-line mapping such as `celorus: {desk: S, KEY: x}`, or with blanks before its colon) is printed
+# whole, so its reader takes it as a value. Nothing when absent.
+frontmatter_every() {
+  tr '\r' '\n' < "$1" | awk -v key="$2" '
+    NR == 1 && $0 != "---" { exit }
+    NR > 1 && $0 == "---" { exit }
+    NR > 1 {
+      line = $0
+      sub(/^[ \t]+/, "", line)
+      if (index(line, key ":") == 1) {
+        v = substr(line, length(key) + 2)
+        sub(/^ +/, "", v)
+        sub(/ +$/, "", v)
+        print v
+      } else if (line ~ ("(^|[{,])[ \t]*" key "[ \t]*:")) {
+        print line
+      }
+    }
+  '
+}
+
 escape_for_json() {
   local s="$1"
   s="${s//\\/\\\\}"
@@ -242,6 +277,8 @@ escape_for_json() {
   s="${s//$'\n'/\\n}"
   s="${s//$'\r'/\\r}"
   s="${s//$'\t'/\\t}"
+  # any other control character would break the JSON: dropped, each named, no locale range
+  s="${s//[$'\001\002\003\004\005\006\007\010\013\014\016\017\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\037']/}"
   printf '%s' "$s"
 }
 
@@ -270,6 +307,136 @@ node_missing_or_old() {
   return 0
 }
 
+# The assistant's name the start line opens with, the engine's default (lib/persona.js
+# DEFAULT_NAME), and the line every start line ends with.
+NAME="Milan"
+RECORD_LINE="To read the record, sign in to celorus-data under /mcp if you have not."
+
+# Whether the link keeps a sign-in on this machine: ~/.celorus/link/token.json is there as a plain
+# file, with no link on the way. The file is never opened; a sign-in that has ended still counts,
+# and the link asks again when it is used.
+link_signed_in() {
+  local h="${HOME:-}"
+  [ -n "$h" ] || return 1
+  [ -d "$h/.celorus" ] && [ ! -L "$h/.celorus" ] &&
+    [ -d "$h/.celorus/link" ] && [ ! -L "$h/.celorus/link" ] &&
+    [ -f "$h/.celorus/link/token.json" ] && [ ! -L "$h/.celorus/link/token.json" ]
+}
+
+# A handle as a name under the desk or ~/.celorus: only lowercase letters, digits and hyphens,
+# spelled out so no locale widens the range. Anything else reads as none.
+plain_handle() {
+  case "$1" in ''|*[!abcdefghijklmnopqrstuvwxyz0123456789-]*) printf '' ;; *) printf '%s' "$1" ;; esac
+}
+
+# look_up WALK: masked()'s look-up of one spelling of the path, part by part from the top, each part
+# looked up in the folder the last one found as the disk has it, so a run of / or ./ costs nothing
+# and never makes a long path. It adds to the caller's more and sets its stop and keep where the
+# look-up ends short (the shorter keep of two looks). The system's pwd asks the disk for the names
+# as stored; bash's own keeps them as typed. A folder path longer than 250 characters is not looked
+# up: it and the rest are hidden, as the system may refuse a long path as if it were not there. As
+# the walk up does, it enters WALK_STEPS parts at most and stops at the hook's clock (WALK_SECONDS):
+# the part it reached and the rest are hidden then too.
+look_up() {
+  local rest="$1" part sep said="" pfx cand got last="" steps=0 cut="" k="" nl=$'\n'
+  while [ -n "$rest" ]; do
+    case "$rest" in
+      */*) part="${rest%%/*}" rest="${rest#*/}" sep="/" ;;
+      *) part="$rest" rest="" sep="" ;;
+    esac
+    case "$part" in '' | .) said="${said}${part}${sep}" && continue ;; esac
+    pfx="${said}${part}"
+    if [ -z "$said" ]; then case "$part" in [A-Za-z]:) pfx="${pfx}/" ;; esac; fi
+    if [ -n "$last" ]; then cand="${last%/}/${part}"; else cand="$pfx"; fi
+    steps=$((steps + 1))
+    if [ "$steps" -gt "$WALK_STEPS" ] || [ "${#cand}" -gt 250 ] || [ "$SECONDS" -ge "$WALK_SECONDS" ]; then
+      cut=1 k="$said" && break
+    fi
+    got="$(cd -P -- "$cand" 2>/dev/null && { /bin/pwd -P 2>/dev/null || pwd -P; } && printf x)"
+    # $(...) drops the newlines at the end of what it reads, and a folder's name can end in one: the
+    # x after pwd's own newline keeps them, and then the x and pwd's newline go
+    case "$got" in *"$nl"x) got="${got%?x}" ;; *) got="" ;; esac
+    if [ -z "$got" ]; then
+      case "$last" in */[Ss][Ee][Aa][Tt][Ss]) more="${more}/${part}" ;; esac
+      if [ -e "$cand" ] || [ -L "$cand" ]; then cut=1 k="$pfx"; fi
+      # a .. after a part that is not there climbs back onto the disk, where the hook did not look
+      case "/${rest//\\//}/" in */../*) cut=1 k="$pfx" ;; esac
+      break
+    fi
+    if [ "$part" != ".." ]; then
+      case "${got%/*}" in */[Ss][Ee][Aa][Tt][Ss]) more="${more}/${part}/${got##*/}" ;; esac
+    fi
+    last="$got" said="${said}${part}${sep}"
+  done
+  if [ -n "$cut" ] && { [ -z "$stop" ] || [ "${#k}" -lt "${#keep}" ]; }; then stop=1 keep="$k"; fi
+}
+
+# masked TEXT PATH SEAT: TEXT, with each place it says PATH said with the seat's handle hidden. A
+# seat's graph sits in a folder named for its seat (<firm>/seats/<seat>), so in PATH, split at / and
+# at \, every part that is SEAT, or the part after a seats part, is said as "(your seat)". That
+# part is read in PATH as written, in the folder PATH names (under the working folder when PATH is
+# relative, each .. taken back), and on the disk. There each part of PATH is looked up in turn from
+# the top, as the disk has it (every link followed, the names as stored; a PATH with no / is read at
+# its \), and a part whose folder sits in a seats folder is the seat, however it is spelled. The
+# first part that cannot be entered ends the look-up. When it is not on the disk, it and the parts
+# after it are said as written, unless a .. follows that climbs back onto the disk. When it is there
+# but cannot be entered (no permission to search, a link that cannot be followed), or a .. follows
+# it, the hook cannot see what the parts after it name, so they are said as "(hidden)"; past
+# WALK_STEPS parts, or the hook's clock, the rest is "(hidden)" too. Every match ignores case, as
+# macOS's and Windows' disks do. The match is by bytes (LC_ALL=C) and literal: no locale, pattern
+# or & reads it.
+masked() {
+  local where="$2" more="" stop="" keep=""
+  case "$where" in /*|\\*|[A-Za-z]:*) ;; *) where="${PWD}/${where}" ;; esac
+  if [ -n "$2" ]; then
+    look_up "$where"
+    case "$2" in */*) ;; *\\*) look_up "${where//\\//}" ;; esac
+  fi
+  MASK_TEXT="$1" MASK_PATH="$2" MASK_SEAT="$3" MASK_WHERE="$where" MASK_MORE="$more" \
+    MASK_STOP="$stop" MASK_KEEP="$keep" LC_ALL=C awk 'BEGIN {
+    t = ENVIRON["MASK_TEXT"]; p = ENVIRON["MASK_PATH"]; seat = ENVIRON["MASK_SEAT"]
+    if (p == "") { printf "%s", t; exit }
+    n = 1; part[1] = ""; cut[1] = ""
+    for (i = 1; i <= length(p); i++) {
+      c = substr(p, i, 1)
+      if (c == "/" || c == "\\") { cut[n] = c; n++; part[n] = ""; cut[n] = "" }
+      else part[n] = part[n] c
+    }
+    if (seat != "") mine[tolower(seat)] = 1
+    x = split(ENVIRON["MASK_MORE"], extra, "/")
+    for (k = 1; k <= x; k++) if (extra[k] != "") mine[tolower(extra[k])] = 1
+    before = ""
+    for (k = 1; k <= n; k++) {
+      if (part[k] == "" || part[k] == "." || part[k] == "..") continue
+      if (before == "seats") mine[tolower(part[k])] = 1
+      before = tolower(part[k])
+    }
+    w = ENVIRON["MASK_WHERE"]
+    m = 0; piece = ""
+    for (i = 1; i <= length(w) + 1; i++) {
+      c = (i <= length(w)) ? substr(w, i, 1) : "/"
+      if (c == "/" || c == "\\") {
+        if (piece == "..") { if (m > 0) m-- }
+        else if (piece != "" && piece != ".") { m++; folder[m] = tolower(piece) }
+        piece = ""
+      } else piece = piece c
+    }
+    for (k = 2; k <= m; k++) if (folder[k - 1] == "seats") mine[folder[k]] = 1
+    # Below a part the look-up could not enter, nothing is said: PATH is said up to its byte limit.
+    limit = length(p) + 1
+    if (ENVIRON["MASK_STOP"] != "") limit = length(ENVIRON["MASK_KEEP"]) - (length(w) - length(p))
+    shown = ""; at = 0
+    for (k = 1; k <= n; k++) {
+      if (at + length(part[k]) > limit) { shown = shown "(hidden)"; break }
+      shown = shown ((tolower(part[k]) in mine) ? "(your seat)" : part[k]) cut[k]
+      at += length(part[k]) + length(cut[k])
+    }
+    # each place TEXT says PATH, left to right; the loop ends, as each pass takes PATH off the text
+    for (out = ""; (i = index(t, p)) > 0; t = substr(t, i + length(p))) out = out substr(t, 1, i - 1) shown
+    printf "%s", out t
+  }'
+}
+
 found=0
 desk="$(find_desk)" || found=$?
 node_note=""
@@ -277,45 +444,102 @@ if node_missing_or_old; then
   node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start, and the plugin's guard refuses the use of every other connector (mail, calendar, any connector but the Celorus record server's own tools) until it is installed; offer to install it now with the install-desk skill, and install it only if the person says yes."
 fi
 if [ "$found" -eq 2 ] || [ "$found" -eq 3 ]; then
-  emit "Celorus is installed. ${desk}${node_note}"
+  # The one path a fault line says is CELORUS_DESK's value, as it was set: said with the seat its
+  # desk.md names hidden too, when celorus/desk.md there is a plain file under a plain folder.
+  named="${CELORUS_DESK:-}" named_seat=""
+  if [ -n "$named" ] && [ -d "$named/celorus" ] && [ ! -L "$named/celorus" ] &&
+    [ -f "$named/celorus/desk.md" ] && [ ! -L "$named/celorus/desk.md" ] && [ -r "$named/celorus/desk.md" ]; then
+    named_seat="$(plain_handle "$(frontmatter_value "$named/celorus/desk.md" seat 2>/dev/null)")"
+  fi
+  emit "${NAME} here. Celorus is installed. $(masked "$desk" "$named" "$named_seat")${node_note}
+${RECORD_LINE}"
   exit 0
 elif [ "$found" -ne 0 ]; then
-  emit "Celorus is installed. No desk workspace was found here; say 'set up my desk' to create one, or ask what Celorus can do.${node_note}"
+  if link_signed_in; then
+    emit "${NAME} here. Say '${NAME}, open my day' and I will set up this machine first.${node_note}
+${RECORD_LINE}"
+  else
+    emit "${NAME} here. Celorus is installed. Sign in (it is free) and say '${NAME}, set up my desk'.${node_note}
+${RECORD_LINE}"
+  fi
   exit 0
 fi
 
 stamps="$desk/celorus/desk.md"
 [ -f "$stamps" ] || stamps="$desk/celorus/index.md"
 desk_name="$(frontmatter_value "$stamps" desk)"
-desk_id="$(frontmatter_value "$stamps" desk_id)"
-# The id names a file under ~/.celorus, so it is used only when it holds nothing but lowercase
-# letters, digits and hyphens, spelled out so no locale widens the range. Anything else reads
-# as no id, and no seat pointer is read.
-case "$desk_id" in *[!abcdefghijklmnopqrstuvwxyz0123456789-]*) desk_id="" ;; esac
+desk_id="$(plain_handle "$(frontmatter_value "$stamps" desk_id)")"
+# A desk that sets its own assistant_name is greeted with no name: the engine reads and says it.
+# The hook greets only when every assistant_name line in the header, at any indentation, is one the
+# engine reads as none, written in one of these shapes: nothing, null, Null, NULL, ~, or a pair of
+# quotes holding only spaces, each with or without a comment (spaces, then #) after it; or only a
+# comment. Blanks are spaces alone, spelled out, as the engine reads them. Any other value, one the
+# engine refuses included, gets no name here: the hook never says a name the desk did not choose.
+greeting="${NAME} here. "
+by_name="${NAME}, "
+own_none="^((null|Null|NULL|~|\"[ ]*\"|'[ ]*')?([ ]+#.*)?|#.*)\$"
+# Each line in turn, split at newlines alone and with no * or ? read as a pattern, in a subshell so
+# neither setting reaches the rest of the hook; a blank line, which the split drops, is none anyway.
+own_set="$(
+  IFS=$'\n'
+  set -f
+  for own_raw in $(frontmatter_every "$stamps" assistant_name); do
+    [[ $own_raw =~ $own_none ]] || { printf 1; break; }
+  done
+)"
+if [ -n "$own_set" ]; then greeting=""; by_name=""; fi
+# A seat's graph, layout 3: the desk a first bring-down leaves, whose desk.md names its seat.
+graph=0
+[ "$(frontmatter_value "$stamps" layout_version)" = "3" ] && graph=1
 
-seat="${CELORUS_SEAT:-}"
+# The seat: on a seat's graph, the one its desk.md names first; then CELORUS_SEAT, then this
+# machine's pointer. Each is a plain handle or none.
+seat=""
+[ "$graph" -eq 1 ] && seat="$(plain_handle "$(frontmatter_value "$stamps" seat)")"
+[ -z "$seat" ] && seat="$(plain_handle "${CELORUS_SEAT:-}")"
 if [ -z "$seat" ] && [ -n "$desk_id" ] && [ -f "${HOME:-/nonexistent}/.celorus/seat-${desk_id}" ]; then
-  seat="$(head -n 1 "${HOME}/.celorus/seat-${desk_id}" | tr -d '[:space:]')"
+  seat="$(plain_handle "$(head -n 1 "${HOME}/.celorus/seat-${desk_id}" | tr -d '[:space:]')")"
+fi
+# Where the pages are: a seat's graph keeps the board in personal/, the follow-ups in shared/, and a
+# seat's page in shared/, personal/ or team/ (the layout of a graph); other desks keep them flat.
+if [ "$graph" -eq 1 ]; then
+  seat_dirs="shared/seats personal/seats team/seats"
+  boards="$desk/celorus/personal/today"
+  queue="$desk/celorus/shared/queues/follow-ups.md"
+else
+  seat_dirs="seats"
+  boards="$desk/celorus/today"
+  queue="$desk/celorus/queues/follow-ups.md"
 fi
 role=""
-if [ -n "$seat" ] && [ -f "$desk/celorus/seats/${seat}.md" ]; then
-  role="$(frontmatter_value "$desk/celorus/seats/${seat}.md" role)"
-fi
 if [ -n "$seat" ]; then
+  for dir in $seat_dirs; do
+    page="$desk/celorus/${dir}/${seat}.md"
+    if [ -f "$page" ] && [ ! -L "$page" ]; then
+      role="$(plain_handle "$(frontmatter_value "$page" role)")"
+      break
+    fi
+  done
+fi
+if [ -n "$seat" ] && [ "$graph" -eq 1 ]; then
+  # the graph's own seat, its handle never said
+  seat_line="your own seat${role:+ (${role})}"
+elif [ -n "$seat" ]; then
   seat_line="seat ${seat}${role:+ (${role})}"
+elif [ "$graph" -eq 1 ]; then
+  seat_line="its desk.md names no seat"
 else
-  seat_line="no seat claimed on this machine; say 'set up my desk' to claim one"
+  seat_line="no seat claimed on this machine"
 fi
 
 today="$(date +%F)"
 board="not yet opened"
-if [ -f "$desk/celorus/today/${today}.md" ]; then
-  opened="$(frontmatter_value "$desk/celorus/today/${today}.md" opened_at)"
+if [ -f "$boards/${today}.md" ]; then
+  opened="$(frontmatter_value "$boards/${today}.md" opened_at)"
   board="opened${opened:+ at ${opened}}"
 fi
 
 due=0
-queue="$desk/celorus/queues/follow-ups.md"
 if [ -f "$queue" ]; then
   due="$(awk -F'|' -v t="$today" '
     !in_table {
@@ -336,8 +560,24 @@ else
   due_line="${due} follow-ups are due"
 fi
 
-emit "A Celorus desk is installed at ${desk} for ${desk_name:-this desk}: ${seat_line}.${node_note}
-Today's board is ${board}; ${due_line}.
-Open the day with the day-open skill. The chain and the layout are in celorus/index.md.
-Before your first answer, read how you speak on this desk with the read_soul tool."
+# The next step, from what the desk has: a seat to claim, the day to open, the follow-ups due, or
+# the day's calls to order. Each is said in the words the skill it leads to answers to.
+if [ -z "$seat" ] && [ "$graph" -eq 0 ]; then
+  next="say '${by_name}set up my desk' to claim a seat on this machine"
+elif [ "$board" = "not yet opened" ]; then
+  next="say '${by_name}open my day'"
+elif [ "$due" != "0" ]; then
+  next="say '${by_name}what do I owe' for the follow-ups due"
+else
+  next="say '${by_name}order my calls'"
+fi
+
+# On a seat's graph the path is said with its seat hidden, whichever way the seat was found.
+graph_seat=""
+[ "$graph" -eq 1 ] && graph_seat="$seat"
+emit "${greeting}A Celorus desk is installed at $(masked "$desk" "$desk" "$graph_seat") for ${desk_name:-this desk}: ${seat_line}.${node_note}
+Today's board is ${board}; ${due_line}. The next step: ${next}.
+The day opens with the day-open skill; the chain and the layout are in celorus/index.md.
+Before your first answer, read how you speak on this desk with the read_soul tool.
+${RECORD_LINE}"
 exit 0
