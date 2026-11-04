@@ -68,17 +68,25 @@ function deskFor(named, { cwd, env }) {
     if (base === null && !path.isAbsolute(named)) throw refused(`\`desk\` is not a full path. ${NAME_IT_IN_FULL}`);
     return resolveDesk(named, base === null ? PLUGIN_ROOT : base);
   }
-  if (base === null && env.CELORUS_DESK) {
-    if (!path.isAbsolute(env.CELORUS_DESK)) throw refused(`CELORUS_DESK is not a full path. ${NAME_IT_IN_FULL}`);
-    return findDesk({ start: null, env: { CELORUS_DESK: env.CELORUS_DESK }, writes: true });
-  }
-  const found = findDesk({ start: base, env, writes: true });
+  const found = deskFound({ cwd, env });
   if (found) return found;
   if (base === null) throw refused(`No desk was named. ${NAME_IT_IN_FULL}`);
   throw refused(
     "No desk was named and none was found: the walk up from the working folder found no folder " +
       "that holds celorus/index.md. Name the desk folder as `desk`, or set CELORUS_DESK to it.",
   );
+}
+
+// The desk a call with none named writes on, as deskFor finds it, or null where none is found (the
+// pull's way to a desk this computer remembers, DESK-263): CELORUS_DESK when the link was started
+// in the plugin folder, else the walk up from the working folder.
+function deskFound({ cwd, env }) {
+  const base = workingFolder(cwd);
+  if (base === null && env.CELORUS_DESK) {
+    if (!path.isAbsolute(env.CELORUS_DESK)) throw refused(`CELORUS_DESK is not a full path. ${NAME_IT_IN_FULL}`);
+    return findDesk({ start: null, env: { CELORUS_DESK: env.CELORUS_DESK }, writes: true });
+  }
+  return findDesk({ start: base, env, writes: true }) || null;
 }
 
 function inside(child, parent) {
@@ -625,4 +633,4 @@ async function makeIn(input, deps, at) {
   }
 }
 
-module.exports = { NOTHING, SERVED, SIGN_IN_CODES, answer, deskFor, make, namingSetAside, refuseHomeDesk, refused, say, served, setAsideReadAgain, shown, withDefaults };
+module.exports = { NOTHING, SERVED, SIGN_IN_CODES, answer, deskFor, deskFound, make, namingSetAside, refuseHomeDesk, refused, say, served, setAsideReadAgain, shown, withDefaults };

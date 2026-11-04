@@ -44,6 +44,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { refuseLinkedRoot } = require("../../engine/lib/linkedroot.js");
 const base = require("./base.js");
+const desks = require("./desks.js");
 const { LinkError } = require("./errors.js");
 const M = require("./make.js");
 const P = require("./paths.js");
@@ -371,6 +372,8 @@ async function seedAt(root, d) {
     at = keptBase;
   }
   d.log(`seed: seeded, ${batches.length} batch(es)`);
+  // the seat's graph is on this computer here: a later pull with none named finds it (UTF-040)
+  desks.remember(d.home, got.seat_folder, root);
   const notSentWords = notSent ? ` ${notSent} file(s) in this seat's folder stay on this computer only, as the desk's sync table keeps them here or names them nowhere.` : "";
   const alreadyWords = already ? ` ${already} page(s) the storage holds already were not sent.` : "";
   const commonWords = carryCommon

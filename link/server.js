@@ -100,10 +100,20 @@ const TOOLS = [
       "Bring this seat's graph to what its storage on the Celorus desk server holds now, and hold that read on this " +
       "desk, so the next change made through the link is made over it. A page changed on this computer since the " +
       "desk last read its storage is never written over: the pull is refused, naming each such page and the way " +
-      "through, and nothing is written.",
+      "through, and nothing is written. With nothing named and no desk found from the working folder, the seat's " +
+      "graph this computer last pulled or seeded is pulled, and the answer names its folder; with none, the answer " +
+      "says whether the storage holds the desk. With `into`, a new or empty folder, the seat's desk the storage " +
+      "holds (the one the set-up page made) is brought down onto this computer there, and the answer names the " +
+      "desk's folder to open the AI in.",
     inputSchema: {
       type: "object",
-      properties: { desk: { type: "string", description: "The seat's graph folder; left out, the desk is found as make finds it." } },
+      properties: {
+        desk: { type: "string", description: "The seat's graph folder; left out, the desk is found as make finds it." },
+        into: {
+          type: "string",
+          description: "The full path of a new or empty folder to bring the seat's desk down into, on a computer that holds none.",
+        },
+      },
       additionalProperties: false,
     },
   },

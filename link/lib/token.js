@@ -215,4 +215,4 @@ async function current({ home, request, now = nowSeconds, timeoutMs }) {
   return refresh(token, { home, request, now, timeoutMs });
 }
 
-module.exports = { SIGNED_OUT, current, dropToken, dropTokenIfStill, exchange, readToken, refresh, saveToken, tokenFile, tokenFolder };
+module.exports = { SIGNED_OUT, current, dropToken, dropTokenIfStill, exchange, folderThere, makeFolder, readToken, refresh, saveToken, tokenFile, tokenFolder };

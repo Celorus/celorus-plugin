@@ -18,22 +18,46 @@
 //     letters' case or form as one file; and an answer naming two such pages is refused;
 //   - then each page is written, each removed, and the storage's base held with each page's
 //     digest, so the next change made through the link is made over this read; a queued change
-//     whose answer was lost, sent over another read, is set aside (lib/make.js).
+//     whose answer was lost, sent over another read, is set aside (lib/make.js);
+//   - the folder of the seat's graph a pull ends on is remembered beside the link's sign-in
+//     (lib/desks.js).
+//
+// The first bring-down (DESK-263; door A of its census, c/6613613367): a seat's desk the
+// server keeps (the set-up page's, or any seeded one) brought onto a computer that holds none.
+// `into`, a new or empty folder, becomes the firm folder: seats/<n>/ with the seat's .gitignore
+// (the engine's own lines, never the storage's: the link writes no name starting with a dot that
+// an answer gives) and its celorus/desk.md, then the pull above writes the rest. Only a storage
+// that holds the seat's finished desk (its desk.md, layout 3) is brought down. A thrown refusal
+// leaves nothing of what the bring-down made. And a pull with no desk named, where none is found,
+// pulls the seat's graph this computer remembers, or says where the desk is: never a second copy
+// (walk finding UTF-040).
 
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
+const { headOf } = require("../../engine/lib/desk.js");
 const { refuseLinkedRoot } = require("../../engine/lib/linkedroot.js");
 const { writePage } = require("./apply.js");
 const base = require("./base.js");
+const desks = require("./desks.js");
 const { LinkError } = require("./errors.js");
 const M = require("./make.js");
 const P = require("./paths.js");
 const queue = require("./queue.js");
+const token = require("./token.js");
 const { placesOf } = require("./workingset.js");
 
 const NOTHING = "Nothing was written.";
 const SEAT_FOLDER = /^seats\/[0-9]{1,12}\/$/u;
+// The seat's .gitignore a bring-down writes: the scaffold's own lines (skills/install-desk/
+// scaffold.md, held equal by link_bring_down.test.js), .celorus/ first, so the link's held read
+// and queue stay out of git.
+const GITIGNORE_LINES = Object.freeze([".celorus/", "celorus/.obsidian/workspace*.json", "celorus/.views/"]);
+const LAYOUT = require("../../engine/lib/workingsets.json").layout_3.layout_version;
+// What a firm folder a bring-down goes into may hold already: its two folders, and a Mac's own file.
+const FIRM_HOLDS = Object.freeze(["seats", "common", ".DS_Store"]);
+const { SETUP_PAGE } = require("./origins.js");
+const FOLDER_LINE = "The desk's folder, to open your AI in:";
 const NAMED = 20;
 const VIEWS = "celorus/.views";
 
@@ -203,7 +227,18 @@ function notPulled(got) {
   );
 }
 
-async function pullAt(root, d) {
+// The server's read of the seat's storage, checked: a pulled answer whose base and seat folder
+// read, or the answer that says why nothing was read.
+async function storageRead(d) {
+  const got = await M.served("desk_pull", {}, d);
+  if (got.state !== "pulled") return { got, refusal: notPulled(got) };
+  if (!base.isBase(got.base) || typeof got.seat_folder !== "string" || !SEAT_FOLDER.test(got.seat_folder)) throw malformed();
+  return { got, refusal: null };
+}
+
+// `fetched`, the server's read already made (the bring-down's, and the remembered desk's), else
+// the pull reads the storage itself.
+async function pullAt(root, d, fetched = null) {
   const { contract, places: found } = placesOf(root);
   if (contract !== 2) {
     throw M.refused(`The pull is for a seat's graph (a desk of layout 3, in its firm's seats/ folder), and this desk is not one. ${NOTHING}`);
@@ -211,9 +246,12 @@ async function pullAt(root, d) {
   if (!queue.keptOutOfGit(root)) {
     throw M.refused(`The desk's .gitignore does not keep .celorus/ out of git, where the link holds what it pulled. Add the line .celorus/ to the desk's .gitignore, then pull again. ${NOTHING}`);
   }
-  const got = await M.served("desk_pull", {}, d);
-  if (got.state !== "pulled") return notPulled(got);
-  if (!base.isBase(got.base) || typeof got.seat_folder !== "string" || !SEAT_FOLDER.test(got.seat_folder)) throw malformed();
+  let got = fetched;
+  if (got === null) {
+    const read = await storageRead(d);
+    if (read.refusal !== null) return read.refusal;
+    got = read.got;
+  }
   const own = found[0];
   if (own.prefix !== got.seat_folder) {
     throw M.refused(`This seat's folder on this computer is ${own.prefix}, and its storage holds it as ${got.seat_folder}: the folder is named by the seat's number. ${NOTHING}`);
@@ -333,6 +371,9 @@ async function pullAt(root, d) {
       notHeld = true;
     }
   }
+  // the seat's graph is on this computer here: a later pull with none named finds it (UTF-040),
+  // held or not, as a desk on a disk that keeps no file permissions is still this seat's only one
+  desks.remember(d.home, got.seat_folder, root);
   // the desk is pulled whatever setting aside meets: a queue folder the link cannot use stops
   // every change made through the link, so a change that may be kept is never made again
   let aside = 0;
@@ -390,19 +431,264 @@ function partWay(root, held, before, done, err) {
   );
 }
 
-// The link's `pull` tool: { desk } in (or nothing, the desk found as make finds it), an MCP tool
-// result out.
+// A folder as the person reads it: under the home folder, from ~.
+function shownPath(folder, home) {
+  if (typeof home !== "string" || home === "") return folder;
+  const at = path.resolve(home);
+  return folder === at || folder.startsWith(at + path.sep) ? `~${folder.slice(at.length)}` : folder;
+}
+
+const within = (child, parent) => {
+  const rel = path.relative(parent, child);
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+};
+
+// A pull's answer with the folder of the desk it ended on: words before it where given, the folder
+// on a line of its own last, and `desk` in the structured part, so the person is told where to open
+// their AI.
+function withFolder(result, root, d, { before = "", state = null } = {}) {
+  const shown = shownPath(root, d.home);
+  const words = `${before}${result.content.map((c) => c.text).join("\n")}\n${FOLDER_LINE}\n${shown}`;
+  const { message, ...rest } = result.structuredContent;
+  return M.answer(words, { ...rest, ...(state === null ? {} : { state }), desk: shown }, result.isError);
+}
+
+const noDesk = () =>
+  M.answer(
+    `This seat's storage holds no finished desk yet, so there is nothing to bring down. Make the desk on the set-up page of your Celorus dashboard, ${SETUP_PAGE}, then pull again. ${NOTHING}`,
+    { state: "not_pulled", reason: "no_desk" },
+    true,
+  );
+
+const noDeskHere = () =>
+  M.answer(
+    `No folder on this computer that the link knows of holds this seat's desk, and its storage holds the desk. Bring it down: pull again with \`into\`, the full path of a new or empty folder to put it in. ${NOTHING}`,
+    { state: "not_pulled", reason: "no_desk_here", in_storage: true },
+    true,
+  );
+
+// The seat's finished desk in the server's read: its celorus/desk.md at layout 3, or null.
+function finishedDesk(got) {
+  if (!Array.isArray(got.files)) return null;
+  const page = got.files.find((one) => one !== null && typeof one === "object" && one.path === `${got.seat_folder}celorus/desk.md`);
+  if (!page || typeof page.content !== "string") return null;
+  const head = headOf(page.content);
+  return head !== null && typeof head === "object" && !Array.isArray(head) && head.layout_version === LAYOUT ? page : null;
+}
+
+// Whether `root` holds the seat's graph of `seatFolder`, in its firm's seats/ folder; never throws.
+function isGraphOf(root, seatFolder) {
+  try {
+    if (!desks.fits(seatFolder, root) || !fs.lstatSync(root).isDirectory()) return false;
+    return placesOf(root).contract === 2;
+  } catch {
+    return false;
+  }
+}
+
+// A pull with no desk named, where none is found: the seat's graph this computer remembers, pulled
+// over the one read of the storage; or the answer that says where the desk is.
+async function fromMemory(d) {
+  const { got, refusal } = await storageRead(d);
+  if (refusal !== null) return { root: null, result: refusal };
+  const remembered = desks.recall(d.home, got.seat_folder);
+  if (remembered !== null && isGraphOf(remembered, got.seat_folder)) {
+    M.refuseHomeDesk(remembered, d.home);
+    refuseLinkedRoot(remembered);
+    const result = await pullAt(remembered, d, got);
+    return { root: remembered, result };
+  }
+  return { root: null, result: finishedDesk(got) === null ? noDesk() : noDeskHere() };
+}
+
+// Each empty folder under `dir` and `dir` itself, deepest first; a file is never removed.
+function pruneEmpty(dir) {
+  const st = P.lstatOrNull(dir);
+  if (st === null || !st.isDirectory()) return;
+  for (const name of fs.readdirSync(dir)) pruneEmpty(path.join(dir, name));
+  if (fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
+}
+
+// What a bring-down made, taken back after a thrown refusal: each file it wrote while it is still as
+// written, then each folder it made (and the common folder the pull made) where it holds nothing.
+function undo(made) {
+  for (const one of [...made].reverse()) {
+    try {
+      if (one.file) {
+        const st = P.lstatOrNull(one.file);
+        if (st !== null && st.isFile() && fs.readFileSync(one.file).equals(one.data)) fs.unlinkSync(one.file);
+      } else {
+        pruneEmpty(one.folder);
+      }
+    } catch {
+      // what cannot be taken back stays, and the next pull reads it as this computer's
+    }
+  }
+}
+
+// A path as this computer finds it: each link on the way followed and each name as the disk holds
+// it, up to the nearest folder that is there; the rest as named.
+function realOf(at) {
+  const rest = [];
+  let here = path.resolve(at);
+  for (;;) {
+    try {
+      return path.join(fs.realpathSync.native(here), ...rest);
+    } catch {
+      const up = path.dirname(here);
+      if (up === here) return path.resolve(at);
+      rest.unshift(path.basename(here));
+      here = up;
+    }
+  }
+}
+
+// A path to compare with another: as this computer finds it, and in one case, since a disk may
+// find a name whatever the case of its letters.
+const compared = (at) => realOf(at).normalize("NFC").toLowerCase();
+
+const mine = (st) => typeof process.getuid !== "function" || st.uid === process.getuid();
+
+// The folder named as `into`, as a bring-down may use it: a new folder in a folder that is there,
+// or a folder of this user's holding no more than a firm folder's seats and common folders, each a
+// folder of this user's. With `seat` (once the storage is read), where this seat's folder is not
+// there yet, the seats and common folders hold nothing: another desk's pages are never taken in
+// for this one's. Checked before the storage is read, and again after it, as the folder may
+// change while the server answers.
+function checkFirm(firm, seat = null) {
+  const st = P.lstatOrNull(firm);
+  if (st === null) {
+    let up = null;
+    try {
+      up = fs.statSync(path.dirname(firm));
+    } catch {
+      up = null;
+    }
+    if (up === null || !up.isDirectory()) throw M.refused(`The folder that would hold the folder named as \`into\` is not there. Name a new folder inside one that is. ${NOTHING}`);
+    return;
+  }
+  if (!st.isDirectory()) throw M.refused(`The folder named as \`into\` is a link or a file, and a desk is brought down only into a folder. Name a new or empty folder. ${NOTHING}`);
+  if (!mine(st)) throw M.refused(`The folder named as \`into\` belongs to another user of this computer. Name a new folder, or an empty one of your own. ${NOTHING}`);
+  if (fs.readdirSync(firm).some((name) => !FIRM_HOLDS.includes(name))) {
+    throw M.refused(`The folder named as \`into\` holds other files, and a desk is brought down only into a new or empty folder. Name a new folder, or an empty one. ${NOTHING}`);
+  }
+  for (const name of ["seats", "common"]) {
+    const inner = P.lstatOrNull(path.join(firm, name));
+    if (inner === null) continue;
+    if (!inner.isDirectory()) throw M.refused(`${name} in the folder named as \`into\` is a link or a file, not a folder. Name a new or empty folder. ${NOTHING}`);
+    if (!mine(inner)) throw M.refused(`${name} in the folder named as \`into\` belongs to another user of this computer. Name a new folder, or an empty one of your own. ${NOTHING}`);
+  }
+  if (seat === null || P.lstatOrNull(seat) !== null) return;
+  for (const name of ["seats", "common"]) {
+    const inner = path.join(firm, name);
+    if (P.lstatOrNull(inner) !== null && fs.readdirSync(inner).some((one) => one !== ".DS_Store")) {
+      throw M.refused(`The folder named as \`into\` holds another desk's folders: its ${name} folder is not empty, and this seat's desk is not in it. Name a new or empty folder. ${NOTHING}`);
+    }
+  }
+}
+
+// The first bring-down: `into`, a new or empty folder, becomes the firm folder of the seat's desk.
+// { root, result, before, state }: the seat's folder the pull ended on, its answer, and on a desk
+// brought down the words and state its answer starts with.
+async function bringDown(into, d) {
+  if (typeof into !== "string" || into.trim() === "" || !path.isAbsolute(into)) {
+    throw M.refused(`\`into\` is the full path of a new or empty folder to bring the desk down into. Name a new or empty folder by its full path. ${NOTHING}`);
+  }
+  const firm = path.resolve(into);
+  if (typeof d.home === "string") {
+    const at = compared(firm);
+    const home = compared(d.home);
+    const signIn = compared(token.tokenFolder(path.resolve(d.home)));
+    if (at === home || within(at, signIn) || within(signIn, at)) {
+      throw M.refused(`A desk is never brought down into the home folder, nor where the link keeps its sign-in (~/.celorus/link). Name a new or empty folder. ${NOTHING}`);
+    }
+  }
+  checkFirm(firm);
+  const { got, refusal } = await storageRead(d);
+  if (refusal !== null) return { root: null, result: refusal };
+  const deskPage = finishedDesk(got);
+  if (deskPage === null) return { root: null, result: noDesk() };
+  const seats = path.join(firm, "seats");
+  const seat = path.join(seats, got.seat_folder.slice("seats/".length, -1));
+  checkFirm(firm, seat);
+  if (P.lstatOrNull(seat) !== null) {
+    if (!isGraphOf(seat, got.seat_folder)) {
+      throw M.refused(`The folder named as \`into\` holds ${got.seat_folder} already, and it is not this seat's desk. Name a new or empty folder. ${NOTHING}`);
+    }
+    refuseLinkedRoot(seat);
+    return { root: seat, result: await pullAt(seat, d, got) };
+  }
+  const deskData = Buffer.from(deskPage.content, "utf8");
+  if (deskPage.encoding !== "utf-8" || deskPage.sha256 !== sha(deskData)) throw malformed();
+  const made = [];
+  const folder = (at) => {
+    if (P.lstatOrNull(at) === null) {
+      fs.mkdirSync(at);
+      made.push({ folder: at });
+    }
+  };
+  const common = path.join(firm, "common");
+  if (P.lstatOrNull(common) === null) made.push({ folder: common });
+  let result;
+  try {
+    folder(firm);
+    folder(seats);
+    folder(seat);
+    const ignore = Buffer.from(`${GITIGNORE_LINES.join("\n")}\n`, "utf8");
+    writePage(seat, ".gitignore", ignore);
+    made.push({ file: path.join(seat, ".gitignore"), data: ignore });
+    folder(path.join(seat, "celorus"));
+    writePage(seat, "celorus/desk.md", deskData);
+    made.push({ file: path.join(seat, "celorus", "desk.md"), data: deskData });
+    result = await pullAt(seat, d, got);
+  } catch (err) {
+    undo(made);
+    throw err;
+  }
+  if (result.structuredContent.state === "pulled") return { root: seat, result, before: "Brought this seat's desk down from its storage onto this computer. ", state: "brought_down" };
+  // a pull that stopped part way holds what it wrote, and is remembered: the same `into`, or a
+  // pull with nothing named, ends it. Any other answer wrote nothing of the storage's, and the
+  // bring-down leaves nothing of its own
+  if (result.structuredContent.reason === "part_way") {
+    desks.remember(d.home, got.seat_folder, seat);
+    return { root: seat, result };
+  }
+  undo(made);
+  return { root: null, result };
+}
+
+// The link's `pull` tool: { desk } in (or nothing, the desk found as make finds it, else the one
+// this computer remembers), or { into } for the first bring-down; an MCP tool result out. A pulled
+// answer on a desk the person did not name ends with the desk's folder on its last line, after any
+// words on changes set aside, so they are told where to open their AI.
 async function pull(input, deps) {
   const d = M.withDefaults(deps);
   let root = null;
   let result;
+  let before = "";
+  let state = null;
+  let found = true;
   try {
-    if (input !== undefined && (input === null || typeof input !== "object" || Array.isArray(input))) throw M.refused(`pull takes { desk }, the desk folder, or nothing. ${NOTHING}`);
-    const at = M.deskFor(input ? input.desk : undefined, d);
-    M.refuseHomeDesk(at, d.home);
-    refuseLinkedRoot(at);
-    root = at;
-    result = await pullAt(root, d);
+    if (input !== undefined && (input === null || typeof input !== "object" || Array.isArray(input))) {
+      throw M.refused(`pull takes { desk }, the desk folder, { into }, a new or empty folder to bring the desk down into, or nothing. ${NOTHING}`);
+    }
+    const named = input ? input.desk : undefined;
+    const into = input ? input.into : undefined;
+    if (into !== undefined && named !== undefined && named !== null) throw M.refused(`pull takes \`desk\` or \`into\`, never both. ${NOTHING}`);
+    if (into !== undefined) {
+      ({ root, result, before = "", state = null } = await bringDown(into, d));
+    } else {
+      found = named === undefined || named === null;
+      const at = found ? M.deskFound(d) : M.deskFor(named, d);
+      if (at === null) {
+        ({ root, result } = await fromMemory(d));
+      } else {
+        M.refuseHomeDesk(at, d.home);
+        refuseLinkedRoot(at);
+        root = at;
+        result = await pullAt(root, d);
+      }
+    }
     d.log(`pull: ${result.structuredContent.state}`);
   } catch (err) {
     if (err instanceof LinkError && err.network) {
@@ -416,7 +702,9 @@ async function pull(input, deps) {
       result = M.answer("The link stopped on an error it has no words for, part way through the pull. Look at the desk, then pull again.", { state: "failed" }, true);
     }
   }
-  return root === null ? result : M.namingSetAside(root, result);
+  if (root === null) return result;
+  const out = M.namingSetAside(root, result);
+  return found && out.structuredContent.state === "pulled" ? withFolder(out, root, d, { before, state }) : out;
 }
 
-module.exports = { pull, takes };
+module.exports = { GITIGNORE_LINES, pull, takes };

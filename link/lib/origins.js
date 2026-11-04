@@ -6,6 +6,8 @@
 // refused before a request is made: lib/transport.js asks `pinned` first, and an address passes
 // only when it is, character for character, the one pinned for its purpose. The sign-in page is
 // opened by the person in their own browser; the link builds its address and never calls it.
+// The set-up page of the Celorus dashboard, where a seat's desk is made, is only named in an
+// answer for the person to open: the link never calls it, and it is pinned for no purpose.
 //
 // The client is the desk server's public client: it holds no secret, signs in by PKCE, and has
 // one registered loopback address. Its id is public by design. It lives here, in the link's own
@@ -22,6 +24,7 @@ const REDIRECT_URI = "http://localhost:8484/callback";
 // The one scope the desk server needs. Nothing else is asked for: no openid, no email, no
 // profile, and never a scope of any mail, calendar or file service.
 const SCOPE = "celorus-mcp/invoke";
+const SETUP_PAGE = "https://app.celorus.com/dashboard/setup";
 
 const PINNED = Object.freeze({ make: MAKE_URL, token: TOKEN_URL });
 
@@ -37,4 +40,4 @@ function pinned(url, purpose) {
   return new URL(url);
 }
 
-module.exports = { AUTHORIZE_URL, CLIENT_ID, MAKE_URL, PINNED, REDIRECT_URI, SCOPE, TOKEN_URL, pinned };
+module.exports = { AUTHORIZE_URL, CLIENT_ID, MAKE_URL, PINNED, REDIRECT_URI, SCOPE, SETUP_PAGE, TOKEN_URL, pinned };

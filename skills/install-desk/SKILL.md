@@ -52,7 +52,7 @@ Where a section below seems to ask for something they forbid, they win.
 - **"update my desk"** moves a desk to the newest model, after a preview and one yes, and
   records `none on this desk` for a system the person says the firm has none of. It never deletes
   a page.
-- **On a seat's graph** (`celorus/desk.md` says `layout_version: 3`), the desk was made by its conversion, never by this skill: set nothing up and update nothing. "Check my desk setup" there reads `celorus/desk.md` only, and says the rest is the desk server's.
+- **On a seat's graph** (`celorus/desk.md` says `layout_version: 3`), the desk was made by its conversion or on the set-up page, and came to this computer by the link's `pull`, never by this skill: set nothing up and update nothing. "Check my desk setup" there reads `celorus/desk.md` only, and says the rest is the desk server's.
 
 ## Where the desk lives: the one path convention
 
@@ -60,7 +60,9 @@ Where a section below seems to ask for something they forbid, they win.
    folder.
 2. Otherwise walk up from the current working directory to the first folder that contains
    `celorus/index.md`. That is the desk folder.
-3. Otherwise there is no desk. In set-up mode the desk folder is the one the person names,
+3. Otherwise there is no desk in this folder. In set-up mode the link may still find the seat's
+   desk on this computer or in its storage ("Then, the desk the server already keeps", below);
+   where it finds none, the desk folder is the one the person names,
    or the current working directory once they confirm it. In the other modes, say there is
    no desk here and offer to set one up.
 
@@ -81,13 +83,61 @@ page to open, start the reply with that page as a line of its own, the link whol
 `show_the_person` line as it came, or, where only the answer's words reached you, the line of
 them that carries the page. Nothing comes before it: a reply that says to open the link without
 the link leaves the person no way to sign in. Then say that the sign-in is free and that the
-link waits five minutes for it, and ask the questions below
-while they sign in. Set nothing up (no folder, no page, no line in `.gitignore`, no seat
+link waits five minutes for it. Ask nothing while they sign in: the next step, below, may find
+their desk and need no question. Set nothing up (no folder, no page, no line in `.gitignore`, no seat
 note) until `sign_in`, called again, answers that they are signed in. Any other answer: say
 it as it came, and set nothing up. Checking a desk's setup only reads, and asks for no
 sign-in. When the call could not be made at all because the app shows `celorus-link` or
 `celorus-desk` as failed right after a Node.js install and the reopen, follow "After the reopen"
 under "When Node.js is missing" below before you stop.
+
+## Then, the desk the server already keeps
+
+One person has one desk. A desk made on the set-up page of the Celorus dashboard is in the
+person's storage already, and a desk pulled or seeded on this computer before is here already;
+neither is ever set up a second time. So in set-up mode, once `sign_in` answers that they are
+signed in, and before the first question, call `celorus-link`'s `pull` with no arguments. It
+writes only this seat's own desk, and only what its answer says. Then, by the answer's `state`
+and `reason`:
+
+- `pulled`: the desk is on this computer already, and now as its storage holds it. Set nothing
+  up and ask nothing. Say where it is, from the answer's last line (its `desk`), and end as "When
+  the desk is on this computer" below says.
+- `not_pulled` with `no_desk_here`: the storage holds the desk, and no folder here does. Ask one
+  question, where to put it, offering a new folder named `Celorus` in their Documents folder, as
+  its full path. Then call `pull` with `into`, the full path of the folder they chose, and go by
+  its answer:
+  - `brought_down`: say how many pages it wrote and where the desk is, from its last line, and
+    end as below.
+  - `pulled`: that folder held this seat's desk already, and it is now as its storage holds it.
+    Say where it is, from its last line, and end as below.
+  - `refused`: say the answer. Ask again for a new or empty folder only when the answer itself
+    says to name one ("Name a new ..."): it is the folder that is wrong. Any other refusal is
+    about the desk already in that folder, not the choice of folder. Set nothing up and never
+    ask for another folder.
+  - `not_pulled` with `part_way`: the desk is in that folder in part. Say the answer, and once
+    what stopped it is put right, call `pull` with the same `into` again. Never ask for another
+    folder.
+  - "The desk server could not be reached", or any other answer: say it as it came, and set
+    nothing up. The same folder is named again later, never another.
+- `not_pulled` with `no_desk`, or with `not_connected` (the seat has no storage connected): in seat mode,
+  the desk is made on the set-up page, not here. Say so, give the page,
+  https://app.celorus.com/dashboard/setup, and set nothing up on this computer. In desk mode, go
+  on with the steps below.
+- `not_pulled` with `not_basic`: the storage was not read, either because this seat's plan keeps
+  its desk on this computer, or because its account or firm is not active now. Say the answer's
+  words, then ask one question: was their desk made on the set-up page of their Celorus
+  dashboard? Only when they say no, go on with the questions below. When they say yes, or are not
+  sure, set nothing up, and send them to the dashboard, https://app.celorus.com/dashboard/setup.
+- "The desk server could not be reached": say so and set nothing up. The desk may be in the
+  storage already, so try again once online.
+- Any other answer: say it as it came, and set nothing up.
+
+**When the desk is on this computer.** The workday skills find the desk from the folder the AI
+is opened in. Tell the person to open their AI in the desk's folder: in the Claude desktop app, a
+new session in the Code tab with that folder chosen; in a terminal, go to that folder and start
+`claude` or `codex` there. Then tell them the first thing to ask there: "Open my day".
+Nothing else is set up on this path, and `scaffold_desk` is never called.
 
 ## Seat mode: ask only what is missing
 
@@ -409,4 +459,4 @@ sees what was written. Follow these as they say:
 - Never send anything anywhere but through `make`, which sends the desk server only what the
   change it makes needs.
 
-**Next:** `day-open`. When this skill is done the scaffold exists and `log.md` has its first line.
+**Next:** `day-open`. When this skill is done the scaffold exists and `log.md` has its first line; or, for a desk the server keeps, the desk is on this computer and the person knows the folder to open their AI in.
