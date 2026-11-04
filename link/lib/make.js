@@ -23,7 +23,9 @@
 // and the firm's common space (lib/workingset.js); a desk sends contract_version 1.
 // The token is sent only in the call's Authorization header. The log carries the tool, the
 // outcome and counts: never a token, a page's text, a page's or a listed file's path, or the
-// desk's folder.
+// desk's folder. Through the link's server (`d.userAgent`, server.js), each call's User-Agent
+// names the link, its version and the tool it runs in, which the desk server reads to keep an
+// account's first sign-in through the link (DESK-263); nothing else rides it.
 
 const path = require("node:path");
 const { findDesk, resolveDesk } = require("../../engine/lib/desk.js");
@@ -180,6 +182,7 @@ async function served(name, args, d) {
       "MCP-Protocol-Version": PROTOCOL,
       Authorization: `Bearer ${tok.access_token}`,
     };
+    if (typeof d.userAgent === "string" && d.userAgent) headers["User-Agent"] = d.userAgent;
     const out = await post(MAKE_URL, "make", headers, body, { request: d.request });
     const made = madeFrom(out);
     if (!made.unauthorized) return made;
@@ -519,6 +522,7 @@ function withDefaults(deps = {}) {
     cwd: deps.cwd || process.cwd(),
     env: deps.env || process.env,
     request: deps.request,
+    userAgent: deps.userAgent,
     now: deps.now || (() => Math.floor(Date.now() / 1000)),
     log: deps.log || (() => {}),
   };

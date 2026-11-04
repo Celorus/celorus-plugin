@@ -39,6 +39,25 @@ function version() {
   }
 }
 
+// DESK-263: the tool this link runs in, as the harness named itself at `initialize`
+// (`clientInfo.name`), kept for the process's life. Each call to the desk server names it in the
+// User-Agent, `celorus-link/<version> (<tool>)`, which the server maps onto its own closed list
+// to keep an account's first sign-in through the link. The word is cut to lower-case letters,
+// digits, dots and dashes, at most 40, and the version to letters, digits, dots, pluses and
+// dashes, at most 32, so neither can break the header or carry anything but a name.
+let client = null;
+
+function clientWord(info) {
+  const name = info && typeof info === "object" && typeof info.name === "string" ? info.name : "";
+  const word = name.toLowerCase().replace(/[\s_]+/gu, "-").replace(/[^a-z0-9.-]/gu, "").slice(0, 40);
+  return word || null;
+}
+
+function userAgent() {
+  const v = version().replace(/[^0-9A-Za-z.+-]/gu, "").slice(0, 32) || "unknown";
+  return `${NAME}/${v} (${client || "unknown"})`;
+}
+
 const TOOLS = [
   {
     name: "sign_in",
@@ -110,6 +129,7 @@ function defaults() {
     cwd: process.cwd(),
     env: process.env,
     request: undefined,
+    userAgent: userAgent(),
     createServer: undefined,
     now: () => Math.floor(Date.now() / 1000),
     log: (line) => process.stderr.write(`${NAME}: ${line}\n`),
@@ -237,6 +257,7 @@ async function handleOne(message, d) {
   switch (message.method) {
     case "initialize": {
       const asked = params.protocolVersion;
+      client = clientWord(params.clientInfo);
       return reply(id, {
         protocolVersion: PROTOCOL_VERSIONS.includes(asked) ? asked : PROTOCOL_VERSIONS[0],
         capabilities: { tools: { listChanged: false } },
