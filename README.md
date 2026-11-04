@@ -256,7 +256,8 @@ credentials never touch this repository.
   choose to register automatically; Celorus supports dynamic client registration, so your
   client registers itself.
 
-Don't have an account yet? Write to **tech@celorus.com**.
+New to Celorus? The sign-in page Claude opens makes your account: choose **Continue with
+Google**, or sign up with your email address.
 
 ## Verify it connected
 
