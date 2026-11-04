@@ -1,17 +1,18 @@
 ---
 name: research-lead
 description: >-
-  Research a lead: a person, a family or a company, from the desk's queue or by name.
-  Use when someone asks to research or find out about a named company, person or family:
-  "research <name>", "celorus, research <name>", "research <name> for me",
-  "find out about <name>", "research this lead", "who is this", "what do we know about",
-  "look up this company", "look up this person", or from triage. A targeted question about
-  a named company is `ask-company`'s, a full financial report is `financial-analysis`'s, and
-  a cap table is `cap-table`'s, even when the ask says research or find out about. Runs the web register on
-  the harness's own search, reads the record when this session is signed in to it,
-  and writes one profile page in the desk workspace (on a
-  hosted desk, shows it in the chat) with every line labelled by which class of truth it is. Free: the web register runs on this machine
-  without signing in, and writing the page asks for a free Celorus sign-in before it is made.
+  Research a lead: a person, a family or a company, from the desk's queue or by name. Use when
+  someone asks to research or find out about a named company, person or family: "research
+  <name>", "celorus, research <name>", "research <name> for me", "find out about <name>",
+  "research this lead", "who is this", "what do we know about", "look up this company", "look
+  up this person", or from triage. A targeted question about a named company is
+  `ask-company`'s, a full financial report is `financial-analysis`'s, and a cap table is
+  `cap-table`'s, even when the ask says research or find out about. Where the server offers a
+  research pack, asks for one instead; otherwise runs the web register on the harness's own
+  search, reads the record when this session is signed in to it, and writes one profile page in
+  the desk workspace with every line labelled by which class of truth it is. Free: the web
+  register needs no sign-in, and writing the page asks for a free Celorus sign-in; a research
+  pack is paid in credits.
 ---
 
 # Research a lead
@@ -50,6 +51,9 @@ Celorus, as *Signing in* below says.
 - `family_facts`, for a family already on the desk: its people, their pages and CRM ids, and
   what the desk already holds on it, so step 1 starts from the desk's own facts.
 - `check_desk`, over the pages written, at the end.
+- `research_ask`, when this session has it, as *Before the web register: ask for a research
+  pack* says. That section, not the rule on a refusal below, says what follows each of its
+  answers, and this skill never asks it again on its own.
 - The record's tools, as step 3 says: every figure from the record is the one
   its tool returned, verbatim.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
@@ -87,6 +91,61 @@ Read the existing page if there is one, the queue row, the CRM export's row for 
 in `celorus/crm/` (name, employer, stage, owner, last touch; nothing else), and
 `celorus/context/notes.md`. Every line from here is labelled `yours · <where it came from>
 · <date>`. It is the desk's knowledge, never a fact about the subject.
+
+## Before the web register: ask for a research pack
+
+The server judges whether this seat may have a research pack; this skill never reads a plan.
+When `research_ask` is among this session's tools and the desk is a seat's graph, by the test
+*Where the desk's pages are* gives, ask it for this lead before the web register, with these
+arguments and no others:
+
+- `about`: the stem of the lead's page on the desk, or, when the lead has no page yet, the slug
+  its page would take, as the page-writing step below says.
+- `name`: the lead's name as the desk writes it.
+- `context`: only when the person gave a note on who the lead is, and only that note, with no
+  contact detail and no personal identifier in it. With no such note, leave `context` out.
+
+Then go by the answer's `state`, and for a refusal by its `reason`:
+
+- **No `research_ask` in this session, a desk that is not a seat's graph or no desk, or a refusal
+  for `not_offered` or `no_account`:** run the web register and every step after it as they
+  stand below, and say nothing of the ask.
+- **`asked`:** say that the research pack is being made, that its page will appear in the
+  folder the answer's `appears_at` names (`celorus/shared/research/`), and that the link's
+  `pull` brings it to this desk after the research run has written it. Write nothing by hand for
+  this lead: no page, no desk-log row and no line in `log.md`. The web register, the record and
+  the page below are not done for it. On a hosted desk the pack is kept on the desk, in that
+  folder.
+- **`unsettled`:** say its `message` as it came, with the folder its `appears_at` names, then run
+  the web register and every step after it as they stand below. Before this lead is asked for
+  again, call `celorus-link`'s `pull` and look in that folder for its page; ask again only on the
+  person's word, after that look.
+- **`payment_required`:** say these, in this order:
+  - "Nothing was asked and nothing was charged: this research pack needs more credits than this
+    seat can spend now."
+  - When `reason` is `seat_limit`: "This seat has reached its spending limit for this billing
+    month. The limit starts again next billing month; a recharge does not change it." Nothing
+    from the reply follows it.
+  - For any other `reason`: "Balance: {balance} credits. Needed: {needed} credits, for this pack
+    and any still being made.", with the reply's `balance` and `needed` in their places. Where
+    the reply carries no whole `balance`, leave out its sentence; where it carries no whole
+    `needed`, leave out the sentence that begins "Needed:". Then, when the reply carries
+    `upgrade`: "To buy credits, move to a paid plan on the pricing page.", and not the recharge
+    line. Otherwise, when its `recharge` names the `account` page: "Recharge on your account
+    page."
+
+  Then offer to research this lead now on the free path, the web register and the steps after
+  it, and run it on the person's yes. Say no price and no link, never "make the change again",
+  and never ask again on your own.
+- **Any other answer** (`too_many_open`, `unavailable`, `bad_argument`, or a state this page
+  does not name): say its `message` as it came, then run the web register and every step after
+  it as they stand below. After a `celorus-data` call has come back with data in this session,
+  `unavailable` and a state this page does not name are a tool that cannot run: say it, and the
+  skill stops there, as the house rules say.
+
+No answer of `research_ask` says whether this session is signed in to the record: the record
+step's own calls decide that, as that step says. Never ask `research_ask` again on your own,
+after any answer: another ask can make and charge another pack.
 
 ## Step 2: the web register
 
@@ -216,10 +275,11 @@ about a person.
 
 ## While you work
 
-One plain progress line per step ("Reading what the desk already holds", "Searching the
-web for the company", "Reading the record", "Writing the page", or on a hosted desk
+One plain progress line per step ("Reading what the desk already holds", "Asking for a
+research pack", "Searching the web for the company", "Reading the record", "Writing the page", or on a hosted desk
 "Showing the profile here").
-Never name a tool, a stream or a path to the user.
+Never name a tool, a stream or a path to the user, except the folder a research pack appears
+in and the link's pull that brings it.
 
 ## When the desk tools cannot run
 
@@ -291,4 +351,4 @@ sees what was written. Follow these as they say:
 - Never fill from memory or general knowledge; "Not established" is the honest line.
 - Never send anything.
 
-**Next:** `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and nothing was kept.
+**Next:** `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and nothing was kept. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.
