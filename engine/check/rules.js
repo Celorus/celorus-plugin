@@ -1,5 +1,5 @@
 "use strict";
-// The desk check, rules C01 to C19. It lists; it never blocks. It reads the desk's own model
+// The desk check, rules C01 to C20. It lists; it never blocks. It reads the desk's own model
 // pages under celorus/model/, so a desk one model version behind is checked against its own
 // words. A finding is { page, rule, message }: the page under celorus/, the rule's id, and what
 // is wrong, in words the person can act on.
@@ -18,6 +18,7 @@ const { own, hasOwn, truthy, isEmpty, show, same, items, holds, strip, splitLine
 const { Page, linksIn, hasLink, proofMatch, headingOf, isHeading, sectionSpan, sectionOf } = text;
 const { persona } = require("../lib/persona.js");
 const { partOf, commonOfGraph } = require("../layout/layout.js");
+const { readTable, unlink: unlinkCell } = require("../render/desk.js");
 
 const RULES = {
   C01: "unknown kind",
@@ -39,7 +40,57 @@ const RULES = {
   C17: "the soul and manner pages are the desk's own",
   C18: "soul text that is not read",
   C19: "assistant name the pages cannot say",
+  C20: "lead id that is not ours",
 };
+// C20 (Track G, row G1): a store lead id is the lead store's own id for one listing, the
+// SHA-256 hex of its source (people/leads.py lead_id): exactly 64 characters of 0 to 9 and a to f.
+// assign_lead holds its lead_id to this shape before it writes (write/writers.js), and C20 reads
+// the names-supplied list's lead_id cells back against it. The one shape both read.
+const STORE_LEAD_ID = /^[0-9a-f]{64}$/u;
+const SUPPLIED = "queues/supplied.md";
+const STORE_ID_SAID = "64 characters of 0 to 9 and a to f";
+
+// C20's findings on a names-supplied list's text: (a) a lead_id cell that is neither the blank mark
+// nor a store lead id's shape, one finding per row; (b) one store lead id on rows for two or more
+// different desk pages, one finding per id. The list's first table is read, as the writer reads it,
+// through the desk's one table reader (render/desk.js readTable: a blank mark is null, and so is a
+// cell a short row lacks). A list with no lead_id column has nothing to read. A finding names the row
+// and its lead, never the cell's value: the value may be anything written by hand, and an id is not
+// shown on the desk. A lead is the page its link names, read as the desk's link reader reads one
+// (check/text.js linkName: the name stripped), so `[[ a ]]` and `[[a]]` are one page. A finding of
+// (b) names the rows the id is on, so two ids each on the same pages' rows are two findings.
+const andList = (said) => `${said.slice(0, -1).join(", ")} and ${said[said.length - 1]}`;
+function leadIdsNotOurs(body) {
+  const lines = splitLines(body);
+  const first = lines.findIndex((line) => line.startsWith("|"));
+  if (first === -1) return [];
+  let end = first;
+  while (end < lines.length && lines[end].startsWith("|")) end += 1;
+  const rows = readTable(lines.slice(first, end).join("\n"));
+  if (!rows.length || !Object.hasOwn(rows[0], "lead_id")) return [];
+  const out = [];
+  const onId = new Map();
+  rows.forEach((row, i) => {
+    const id = row.lead_id;
+    if (id === null) return;
+    const page = row.lead === null ? "" : strip(unlinkCell(row.lead));
+    // the lead named as every rule names a page, by its link
+    const lead = page === "" ? "no lead" : `[[${page}]]`;
+    if (!STORE_LEAD_ID.test(id)) {
+      out.push(`row ${i + 1} (${lead}): its lead_id is neither the blank mark · nor a store lead id, ${STORE_ID_SAID}`);
+      return;
+    }
+    if (!onId.has(id)) onId.set(id, { pages: new Set(), rows: [] });
+    onId.get(id).rows.push(i + 1);
+    if (page !== "") onId.get(id).pages.add(page);
+  });
+  for (const { pages, rows: at } of onId.values()) {
+    if (pages.size < 2) continue;
+    const named = sortedText([...pages]).map((slug) => `[[${slug}]]`);
+    out.push(`${andList(named)} carry one store lead id, on rows ${andList(at.map(String))}, so more than one desk page claims one store lead`);
+  }
+  return out;
+}
 // C18 (DESK-156, F7): the page the soul's written copy is on, and what the check says when its text
 // is not the soul the assistant speaks from. `name` is the desk's assistant name as lib/persona.js
 // answers it. The founder's words (c/5908751152).
@@ -630,6 +681,13 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
   // absent, empty or blank field is no refusal and draws nothing.
   if (who.refused) add("C19", "desk.md", nameNotSaid(who.refused, who.name));
 
+  // C20 (Track G, row G1): the store lead id on the names-supplied list, read back. On a seat's
+  // graph the list is the firm's common space's.
+  const suppliedPage = graph ? (common ? common.pages.find((p) => p.rel === SUPPLIED) : null) : readPages.find((p) => p.rel === SUPPLIED);
+  if (suppliedPage && typeof suppliedPage.body === "string") {
+    for (const message of leadIdsNotOurs(suppliedPage.body)) add("C20", graph ? `common/${SUPPLIED}` : SUPPLIED, message);
+  }
+
   // One hop: the pages a page links, read when a scope asks. A page no rule reads (under views/
   // or merges/, or in a folder below model/) is in the same read of the desk, `readPages`, and
   // its links are followed the same way, so a scope naming it keeps the findings on the pages it
@@ -773,4 +831,5 @@ module.exports = {
   narrowFindings,
   namesUnsent,
   NAMED,
+  STORE_LEAD_ID,
 };

@@ -27,7 +27,8 @@ written. Say that as it came, and stop.
    sitting where a page would move (step 1), a desk whose stamps would have to be made up
    (step 2), a missing `log.md` or follow-ups queue, a follow-ups table whose columns neither
    layout writes or a row that does not hold as many cells as its columns name, a promise in a
-   call's header that does not say what was promised (step 5), and a model or changes page
+   call's header that does not say what was promised (step 5), a names-supplied row that does
+   not hold as many cells as its columns name (step 12), and a model or changes page
    that cannot be read. When one applies it refuses, names the step or the link, and ends
    "Nothing was changed.": say its sentence and stop. A later step can still stop, on a page
    whose header cannot be read or a changes page that names a word nothing holds: what keeps
@@ -133,9 +134,16 @@ written. Say that as it came, and stop.
     preview's `ask_about` named, recorded `still to connect` with no connector named (`·`): a
     role recorded any other way, or a desk with no systems table, stops the update before
     anything is written. With no role passed, this step does nothing.
-12. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
+12. **Adding the lead id column.** The names-supplied list, `queues/supplied.md`, gains
+    `lead_id` as its last column, where the lead store's id of a lead given from it is written;
+    every old row's is blank (`·`). Skip this step if the list has the column, has no table, or
+    is not there. Only the list's first table changes, each of its lines gaining one cell at its
+    end: the person's writing around it, and any other table, stay as they are. If a row
+    holds more or fewer cells than its columns name, stop and say so; never guess which cell is
+    which. The step runs at any model version, and moves none.
+13. **Rebuilding the views.** Only if something changed: write the views and the sent lists as
     a `render_views` made through `make` does.
-13. **Logging the update.** Only if something changed: one line under today's heading,
+14. **Logging the update.** Only if something changed: one line under today's heading,
     `* <time> · <handle> · install-desk · updated the desk to model version <N> · yours`.
     When step 11 recorded a role, the line names it:
     `* <time> · <handle> · install-desk · updated the desk to model version <N>, recording none on this desk: <roles> · yours`.

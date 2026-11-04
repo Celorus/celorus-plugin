@@ -781,7 +781,7 @@ const TOOLS = [
   {
     name: "update_desk",
     description:
-      "Move the desk to the newest layout and model version in thirteen steps, as install-desk's " +
+      "Move the desk to the newest layout and model version in fourteen steps, as install-desk's " +
       "update.md says, and records none on this desk in the systems table for each role passed " +
       "in none_on_this_desk. With apply false (the default) it previews on a copy, changes " +
       "nothing, and returns the plan's digest and ask_about, the roles recorded still to connect " +

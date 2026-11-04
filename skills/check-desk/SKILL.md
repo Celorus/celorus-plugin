@@ -68,7 +68,7 @@ its stamp. Tell the person not to save `desk.md` while the check records.
 Its answer is the whole of what this skill knows about the desk's rules:
 
 - `findings`: one row per finding, each with its `page`, its `rule` and its `message`.
-- `rules`: the words of each rule, by its id, C01 to C16.
+- `rules`: the words of each rule, by its id, C01 to C20.
 - `findings_by_rule`: how many rows each rule has.
 - `summary`: the check's own sentence about the run.
 - `pages_with_problems`: each page the check could not read, or whose stamps it could not

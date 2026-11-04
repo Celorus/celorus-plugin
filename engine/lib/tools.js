@@ -7,7 +7,7 @@
 // counts itself) or throws a Refusal naming the valid values.
 //
 // Tool names are the demo's or the checker oracle's, so each port is testable against them.
-// `check_desk` reads the desk through the shared reader and runs rules C01 to C19
+// `check_desk` reads the desk through the shared reader and runs rules C01 to C20
 // (check/rules.js) over it. It is read-only unless asked to record (`record: true`): then a
 // whole-desk check writes `checked_with: <version>` and `checked_findings: <n>` into desk.md
 // (lib/stamp.js), clean or not.
@@ -484,7 +484,7 @@ const TOOLS = [
   {
     name: "check_desk",
     description:
-      "Check a desk against rules C01 to C19 and list what to look at, each finding with its " +
+      "Check a desk against rules C01 to C20 and list what to look at, each finding with its " +
       "page, rule and message. It lists; it never blocks. Only when record is true, a " +
       "whole-desk check writes checked_with: <version> and checked_findings: <n> into desk.md." +
       " What the seat says about themselves is never written to the desk: leave it out of every field.",

@@ -215,6 +215,10 @@ const withRows = (t, rows) => [...t.before, ...t.head, ...rows, ...t.after].join
 // one for one: a rule line among them is passed over, as the readers pass it, and a short row is
 // filled out to the new cell. Its lines end as they did. Stopped where the desk reads rows the
 // table's lines do not hold.
+// Track G, row G1: the list also gets a `lead_id` column, the lead store's id for a row,
+// last, after `seat`: a seat's graph has no update that adds it later (one-desk's ruling,
+// c/6616893542). A list with no lead_id column gets one, blank (·) in every row; a list that has
+// one keeps its cells, and gets its seat column just before it when lead_id is its last column.
 function suppliedWithSeats(old, bytes) {
   const text = bytes.toString("utf8");
   const eol = text.includes("\r\n") ? "\r\n" : text.includes("\r") ? "\r" : "\n";
@@ -224,25 +228,49 @@ function suppliedWithSeats(old, bytes) {
   const parts = (line) => line.trim().split(/(?<!\\)\|/u);
   const columns = t === null ? [] : parts(t.head[0]).slice(1, -1).map((c) => c.trim());
   const had = columns.indexOf("seat");
-  const at = had === -1 ? columns.length : had;
+  const idAt = columns.indexOf("lead_id");
+  const addId = idAt === -1;
+  const at = had !== -1 ? had : !addId && idAt === columns.length - 1 ? idAt : columns.length;
+  // The cells a row holds once its seat is in: lead_id goes after them, last.
+  const width = columns.length + (had === -1 ? 1 : 0);
   let i = 0;
   const rows = (t === null ? [] : t.rows).map((line) => {
     if (ruleLine(line) || i >= desk.supplied.length) return line;
     const r = desk.supplied[i++];
     const seat = suppliedSeat(desk, r, seatSet);
-    if (had !== -1 && (seat === null || seat === unlink(r.seat))) return line;
+    const seatKept = had !== -1 && (seat === null || seat === unlink(r.seat));
+    if (seatKept && !addId) return line;
     const p = parts(line);
     const cells = p.slice(1, -1).map((c) => c.trim());
-    while (cells.length < at) cells.push(BLANK);
-    if (had === -1) cells.splice(at, 0, seat === null ? BLANK : seat);
-    else cells[at] = seat;
+    if (!seatKept) {
+      while (cells.length < at) cells.push(BLANK);
+      if (had === -1) cells.splice(at, 0, seat === null ? BLANK : seat);
+      else cells[at] = seat;
+    }
+    if (addId) {
+      while (cells.length < width) cells.push(BLANK);
+      cells.splice(width, 0, BLANK);
+    }
     return `| ${cells.join(" | ")} |${p[p.length - 1]}`;
   });
   if (i !== desk.supplied.length) {
     throw stop("reading the desk", `${SUPPLIED} holds rows the desk reads apart from its table's lines, so the converter cannot give each its seat; make it one table of whole rows, and convert again. Nothing was written`);
   }
-  if (t === null || (had !== -1 && rows.every((line, k) => line === t.rows[k]))) return bytes;
-  const head = had !== -1 ? t.head : [`| ${[...columns, "seat"].join(" | ")} |`, `|${[...parts(t.head[1]).slice(1, -1), "---"].join("|")}|`];
+  if (t === null || (had !== -1 && !addId && rows.every((line, k) => line === t.rows[k]))) return bytes;
+  let head = t.head;
+  if (had === -1 || addId) {
+    const names = [...columns];
+    const rule = parts(t.head[1]).slice(1, -1);
+    if (had === -1) {
+      names.splice(at, 0, "seat");
+      rule.splice(at, 0, "---");
+    }
+    if (addId) {
+      names.push("lead_id");
+      rule.push("---");
+    }
+    head = [`| ${names.join(" | ")} |`, `|${rule.join("|")}|`];
+  }
   return withRows({ ...t, head }, rows).split("\n").join(eol);
 }
 

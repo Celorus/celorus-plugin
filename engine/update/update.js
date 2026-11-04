@@ -2,7 +2,7 @@
 // The desk update (design section 7): it moves a desk to the newest layout and model version.
 // It previews on a copy first, never deletes a page, stops and names the step before a move
 // would overwrite or a value would have to be made up, and changes nothing when run twice.
-// install-desk's update.md says the same thirteen steps in words.
+// install-desk's update.md says the same fourteen steps in words.
 //
 // A header line the update does not change is kept as written: a flat header is put together
 // from the old header's own lines wherever a detail keeps its name and value.
@@ -66,6 +66,7 @@ const STEP_NAMES = [
   "writing the model pages and settings",
   "stamping the versions",
   "recording none on this desk",
+  "adding the lead id column",
   "rebuilding the views",
   "logging the update",
 ];
@@ -1226,6 +1227,62 @@ function queuePromises(run) {
   run.notes.push("The follow-ups queue gains a first column, owed_by; every old row is ours.");
 }
 
+// Track G, row G1: the names-supplied list gains `lead_id`, the lead store's id for a
+// row, as its last column; every old row's cell is blank (·). Only the list's first table is
+// rewritten, each of its lines gaining one cell after its last pipe; the words around it stay as
+// they are (read as every step reads a page, its line endings made "\n"). A row whose cells are not one for each column stops the update before anything is written,
+// as the follow-ups queue's does: which cell is which is never guessed. A list that has the column,
+// or no table, or is not there (step 9 writes the plugin's, which has it) is left as it is. No
+// model version moves: the step runs on a desk at any version (one-desk's ruling,
+// c/6616893542).
+const SUPPLIED_LIST = "celorus/queues/supplied.md";
+const LEAD_ID_COLUMN = "lead_id";
+
+// A table line's cells, split where a pipe is not escaped, as the writers split them (write/text.js).
+function tableCells(line) {
+  return V.strip(line).split(/(?<!\\)\|/u).slice(1, -1).map(V.strip);
+}
+
+// The list's lines, and its first table's line indexes when the column is still to add; null when
+// there is nothing to do. Read once for the up-front check and once for the write.
+function suppliedTable(run) {
+  if (!isFile(at(run.desk, SUPPLIED_LIST))) return null;
+  const lines = run.read(SUPPLIED_LIST).split("\n");
+  const first = lines.findIndex((line) => line.startsWith("|"));
+  if (first === -1) return null;
+  const table = [first];
+  while (table[table.length - 1] + 1 < lines.length && lines[table[table.length - 1] + 1].startsWith("|")) table.push(table[table.length - 1] + 1);
+  const columns = tableCells(lines[first]);
+  if (columns.includes(LEAD_ID_COLUMN)) return null;
+  const rule = (line) => [...V.strip(line).split("|").join("")].every((ch) => "-: ".includes(ch));
+  for (const i of table.slice(1)) {
+    if (rule(lines[i])) continue;
+    const cells = tableCells(lines[i]);
+    if (cells.length !== columns.length) {
+      throw new UpdateFault(`the names-supplied row ${pathsSaid(V.strip(lines[i]))} has ${cells.length} cells, not the ${columns.length} its columns name`);
+    }
+  }
+  return { lines, table, rule };
+}
+
+function addLeadIdColumn(run) {
+  const read = suppliedTable(run);
+  if (read === null) return;
+  const { lines, table, rule } = read;
+  // After a line's last pipe, so any spaces that end the line stay after it.
+  const after = (line, cell) => {
+    const last = line.lastIndexOf("|");
+    return `${line.slice(0, last + 1)}${cell}${line.slice(last + 1)}`;
+  };
+  table.forEach((i, k) => {
+    if (k === 0) lines[i] = after(lines[i], ` ${LEAD_ID_COLUMN} |`);
+    else if (rule(lines[i])) lines[i] = k === 1 ? after(lines[i], "---|") : lines[i];
+    else lines[i] = after(lines[i], " \u00b7 |");
+  });
+  run.write(SUPPLIED_LIST, lines.join("\n"));
+  run.notes.push("The names supplied list gains a last column, lead_id, for the lead store's id of a lead; every old row's is blank.");
+}
+
 // A layout 1 citation as a layout 2 source: its `ref` (or a `url`) is the `resource`.
 function source(item) {
   if (typeof item === "string") return { resource: item };
@@ -1883,6 +1940,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
   const changesList = step("renaming words", () => pending(modelDir, have, target));
   const drawn = step("flattening headers", () => drawnKinds(modelView(modelDir, packDir, run.workingLeft)));
   const recording = step("recording none on this desk", () => checkNone(run, roles));
+  step("adding the lead id column", () => suppliedTable(run));
   // Last before the first write, so a check above that stops leaves nothing it made.
   const aheadMade = upFront === null ? [] : checkAhead(run, upFront);
 
@@ -1898,6 +1956,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
     step("writing the model pages and settings", () => writeModelPagesAndSettings(run, modelDir, packDir));
     step("stamping the versions", () => stampVersions(run, target, packDir));
     step("recording none on this desk", () => recordNone(run, recording));
+    step("adding the lead id column", () => addLeadIdColumn(run));
     if (run.touched().length) {
       step("rebuilding the views", () => rebuildViews(run));
       step("logging the update", () => logUpdate(run, target, time, handle, recording));

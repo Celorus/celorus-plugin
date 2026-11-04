@@ -193,8 +193,8 @@ queue: supplied
 lists: []
 ---
 
-| lead | list | date | state |
-|---|---|---|---|
+| lead | list | date | state | lead_id |
+|---|---|---|---|---|
 ```
 
 ## `celorus/queues/follow-ups.md`
