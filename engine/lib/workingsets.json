@@ -32,6 +32,9 @@
       "names": ["seat", "family"],
       "templates": ["celorus/briefs/{at:day}-{family}-{kind}.md"]
     },
+    "write_firm_card": {
+      "names": ["seat", "firm"]
+    },
     "register_routine": {
       "names": ["seat"],
       "files": ["celorus/scheduled.md"]

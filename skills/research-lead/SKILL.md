@@ -197,7 +197,9 @@ reaches the firm, and no desk tool keeps a profile yet. Show the whole profile i
 instead, in the shape `profile-shape.md` gives, every line labelled as it says, a web line in
 full with its URL and the word `unverified`, and say plainly to the person: on a hosted desk the
 profile shows here in the chat and is not kept on the desk yet, so it will not be there to open
-later. On any other desk:
+later. A hosted desk keeps the record card all the same, for a company lead: made as *The
+record card* below says, the desk server writes it on the firm page by day, making the page new
+when the desk has none. On any other desk:
 
 `profile-shape.md` is the contract; follow it section by section, every section present
 even when it reads "Not established" (the Connections section excepted: with nothing to
@@ -236,6 +238,22 @@ role.
 If a page exists, update it: keep every older line the new read did not contradict, show
 a contradiction on two lines with the record winning, bump `timestamp`, and add to
 `registers_used`.
+
+**The record card, for a company lead only.** When the lead is a company and the record was
+read, signed in to it, put the record's card on its firm page: through `make`, call
+`write_firm_card` with `seat`, the seat's handle; `firm`, the firm page's file name without
+`.md` (with no firm page yet, the slug as above, after the "same firm?" check); and `company`,
+the company's name as the lead gives it, and nothing else. The desk server reads the record for
+the card itself and writes it on the firm page, making the page new when the desk has none. On
+any desk but a seat's graph, write the firm page by hand before the call, as above, so the card
+lands on it. The card says the day the record was read. Show the firm page from the path the
+answer gives; never retype the card, and never add a record line of your own to it. When this
+session is not signed in to the record, make no card: nothing from the record is said then.
+
+For a person lead or a family lead, make no card. Say only that the record card is not
+established for a person, and nothing more: the card makes no lookup by a person's name, no list
+of candidates and no comparison of names, and it is never made for the firm a person works at in
+the person's place.
 
 Then:
 
@@ -351,4 +369,4 @@ sees what was written. Follow these as they say:
 - Never fill from memory or general knowledge; "Not established" is the honest line.
 - Never send anything.
 
-**Next:** `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and nothing was kept. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.
+**Next:** `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to the record, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.

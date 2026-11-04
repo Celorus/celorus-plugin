@@ -68,6 +68,9 @@ record's tools returned, verbatim, as the hard rules below say.
   not hold it. If the record door's first call settles that this session is not signed in to the record, *When this session is not signed in to the record* below decides what you
   say, and nothing calls the record again. Ask a short either/or when it is unclear; never
   guess.
+- **They want the record's card on a company kept on their desk**, on its firm page: that is
+  `research-lead`'s, for a company lead only. A person has no card: it reads "not established",
+  and nothing is looked up by the person's name for it.
 
 ## The three hard rules (non-negotiable)
 

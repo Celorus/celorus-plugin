@@ -597,6 +597,8 @@ const WRITERS = new Set([
   "add_follow_up",
   "assign_lead",
   "write_brief",
+  // W2-2 minimal: the record card on a firm page writes the page and log.md
+  "write_firm_card",
   "scaffold_desk",
   "overnight_reconcile",
   "write_board",
@@ -648,6 +650,9 @@ const GRAPH_TAUGHT = new Set([
   "add_follow_up",
   "assign_lead",
   "write_brief",
+  // W2-2 minimal: the firm page in its kind's part, never from-my-team, for the graph's
+  // own seat (writers.js writeFirmCard: placed, heldSeat); pinned by desk_engine/firm_card.test.js
+  "write_firm_card",
   "merge_pages",
   "undo_merge",
   "soul_feedback",

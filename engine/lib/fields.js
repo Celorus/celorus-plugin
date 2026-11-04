@@ -34,6 +34,8 @@ const ACT_ON = {
   "add_follow_up path": 1,
   "assign_lead path": 1,
   "write_brief path": 1,
+  // W2-2 minimal: the firm page the record card was written on
+  "write_firm_card path": 1,
   // 9: the six before, the upstream check before the pull (0.19.0 K1c), the branch check after
   // the commit (K1d), and the remote's refresh before the upstream check (K1e); 62 since K1j (R96): each
   // command names the desk once, by its -C; 69 since K1k (R101 (B)): the one seat-pages check is

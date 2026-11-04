@@ -339,4 +339,4 @@ function writeSteps(celorus, steps) {
   return { written: done.map((step) => step.rel) };
 }
 
-module.exports = { fileOf, generatedByOf, headerOf, readOwned, withGeneratedBy, writeSteps, within };
+module.exports = { fileOf, generatedByOf, headerOf, readOwned, sameValue, withGeneratedBy, writeSteps, within };

@@ -76,6 +76,23 @@ shows the three with its own lit.
    bracket, why now and a contact, all read off the family's page. Show it, and say one line
    at most.
 
+## The record card, for a company lead only
+
+When the lead the seat is about to reach is a company, read the record's card on its firm page
+before the first call or mail. The card is made only in a chat signed in to the record, where a
+call to the record has come back with data, as `research-lead` makes it. In a chat not signed
+in to the record, make no card and say nothing from the record: say that `research-lead` makes
+the card, signed in to the record. Signed in, when the firm page carries no card yet (no
+`record_card_on` in its header), or the seat asks for it again: through `make`, call
+`write_firm_card` with `seat`,
+the seat's handle; `firm`, the firm page's file name; and `company`, the company's name as the
+lead gives it, and nothing else. The desk server reads the record for the card itself and writes
+it on the firm page, making the page new when the desk has none. Show the firm page from the
+path the answer gives, and say one line at most. The card says the day the record was read.
+
+For a person or a family, make no card. The record card is not established for a person: the
+card makes no lookup by a person's name, no list of candidates and no comparison of names.
+
 ## A mail draft, only when asked
 
 1. Find the person's CRM record in the facts, and their email address through the harness's

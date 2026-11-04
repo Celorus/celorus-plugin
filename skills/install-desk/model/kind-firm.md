@@ -11,6 +11,9 @@ usual:
 - part_of
 - introduced_by
 - not_same_as
+- registry_id
+- registry_id_kind
+- record_card_on
 connections:
 - part_of -> firm, draws a line
 - introduced_by -> person, draws a line
@@ -23,7 +26,7 @@ Group: the world. Pages live in `firms/`.
 
 Must carry: nothing beyond type and title.
 
-May carry: `part_of`, `introduced_by`, `not_same_as`.
+May carry: `part_of`, `introduced_by`, `not_same_as`, `registry_id`, `registry_id_kind`, `record_card_on`.
 
 - `part_of -> firm, draws a line`
 - `introduced_by -> person, draws a line`
