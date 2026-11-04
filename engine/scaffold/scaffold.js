@@ -27,6 +27,10 @@ const T = require("./starter.js");
 
 const PLUGIN = path.resolve(__dirname, "..", "..");
 const NOTHING = "Nothing was written.";
+// The sample (DESK-258): install-desk/sample.md's one page, written only when the set-up asks for
+// it, under a folder whose name starts with a dot, so no reader of the desk sees it.
+const SAMPLE_MD = path.join(PLUGIN, "skills", "install-desk", "sample.md");
+const SAMPLE_REL = "celorus/.sample/morning.md";
 
 // The seat's role, where its book lives, and the other answers' shapes.
 const SEAT_ROLES = Object.freeze(["rep", "rm", "desk-head", "operator", "other"]);
@@ -180,6 +184,23 @@ function packOf(pack, version) {
   if (typeof pack !== "string" || !PACK.test(pack)) refuse("`pack` is the pack's name from the desk bundle, lowercase letters and digits with single hyphens.");
   if (!Number.isInteger(version) || version < 1) refuse("`pack_version` is the pack's version from the desk bundle, a whole number from 1.");
   return { pack, version: String(version) };
+}
+
+// Whether the set-up writes the sample: true or false, left out for false.
+function sampleOf(value) {
+  if (value === undefined || value === false) return false;
+  if (value !== true) refuse("`sample` is true or false; leave it out for no sample.");
+  return true;
+}
+
+// The sample's page, its one placeholder filled with the set-up's own moment. Its meeting is
+// "tomorrow" in words, never a date, so the page holds true on whatever day it is first shown.
+function samplePage(now) {
+  const text = H.readText(SAMPLE_MD);
+  if (text === null) throw new Error("the plugin's install-desk/sample.md cannot be read");
+  const template = templates(text)[SAMPLE_REL];
+  if (template === undefined) throw new Error(`install-desk/sample.md no longer shows ${SAMPLE_REL}`);
+  return fill(template, { now });
 }
 
 // The home folder, with the seat pointer's folder in it looked at: a real folder, or none yet.
@@ -422,6 +443,7 @@ function planOf(a) {
   // empty and its body the soul this plugin ships, byte for byte, for people to read. The
   // assistant never speaks from this copy (lib/persona.js reads the shipped soul).
   file("celorus/soul.md", Buffer.from(soulCopy(`celorus-plugin ${pluginVersion()} scaffold_desk`), "utf8"));
+  if (a.sample) file(SAMPLE_REL, Buffer.from(samplePage(a.now), "utf8"));
   for (const rel of emptyFolders(scaffold)) file(`${rel}.gitkeep`, Buffer.alloc(0));
   for (const [rel, body] of obsidianBlocks()) file(rel, Buffer.from(body, "utf8"));
   const pointer = {
@@ -546,6 +568,7 @@ function scaffoldDesk(args, { readBack, starterDir = T.STARTER_DIR }) {
   const seats = seatsOf(args.seats);
   const systems = systemsOf(args.systems);
   const pack = packOf(args.pack, args.pack_version);
+  const sample = sampleOf(args.sample);
   const starter = T.readStarter(pack.version === "0" ? null : pack.pack, starterDir);
   const now = H.momentOf(args.now);
   const home = homeOf();
@@ -569,7 +592,7 @@ function scaffoldDesk(args, { readBack, starterDir = T.STARTER_DIR }) {
     ...(home.made ? [{ what: S.MADE[S.POINTER_FOLDER], path: S.POINTER_FOLDER }] : []),
     { what: S.POINTER_SAID, path: pointerRel },
   ];
-  const a = { name, seats, systems, pack, starter, now, deskId, made, madeFolder, ignore, modelVersion: modelVersion() };
+  const a = { name, seats, systems, pack, starter, sample, now, deskId, made, madeFolder, ignore, modelVersion: modelVersion() };
   const { plan, pointer } = planOf(a);
   if (pointer.rel !== pointerRel) throw new Error("the scaffold's seat pointer is not at ~/.celorus/seat-<desk_id>");
   const done = execute(folder, home, plan, pointer, a);
@@ -598,6 +621,8 @@ function scaffoldDesk(args, { readBack, starterDir = T.STARTER_DIR }) {
     gitignore_line_break_added: Boolean(ignore && ignore.joint),
     folders_made: folders + (madeFolder ? 1 : 0),
     seat_pointer: pointerRel,
+    // The sample's page, desk-relative, or null when the set-up wrote none.
+    sample: sample ? SAMPLE_REL : null,
     systems: back.systems,
     connected,
     still_to_connect: still,
@@ -609,7 +634,8 @@ function scaffoldDesk(args, { readBack, starterDir = T.STARTER_DIR }) {
       `every one new, nothing written over, and the seat pointer ${pointerRel} on this machine.${ignoreSaid} ` +
       (connected.length ? `Connected: ${said(connected)}. ` : "Nothing is connected yet. ") +
       (still.length ? `Still to connect: ${said(still)}.` : "Nothing is left to connect.") +
-      (none.length ? `\nNone on this desk: ${said(none)}.` : ""),
+      (none.length ? `\nNone on this desk: ${said(none)}.` : "") +
+      (sample ? `\nA sample morning, made up and counted nowhere, is at ${SAMPLE_REL}.` : ""),
   };
 }
 

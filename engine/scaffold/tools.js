@@ -14,7 +14,7 @@ function registry() {
   return require("../lib/tools.js");
 }
 
-const ARGUMENTS = ["desk", "name", "seats", "systems", "pack", "pack_version", "now"];
+const ARGUMENTS = ["desk", "name", "seats", "systems", "pack", "pack_version", "now", "sample"];
 
 function scaffoldDeskTool(args = {}) {
   registry().onlyArguments("scaffold_desk", args, ARGUMENTS);
@@ -88,6 +88,13 @@ const TOOLS = [
           description:
             "The moment of the set-up, in ISO 8601 with a T between the date and the time and the " +
             "local offset, as 2026-09-03T10:00:00+05:30. Leave it out to use this machine's clock.",
+        },
+        sample: {
+          type: "boolean",
+          description:
+            "true to also write a made-up sample morning, celorus/.sample/morning.md: a sample firm, " +
+            "two leads and one meeting tomorrow, every line marked as a sample. " +
+            "No count, view or check of the desk reads it. Leave it out for no sample.",
         },
       },
       required: ["desk", "name", "seats"],

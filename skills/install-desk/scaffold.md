@@ -36,7 +36,7 @@ are in `desk.md`. The workday skills read and write this folder; every write is 
 
 ## How to open the day
 
-Say **"open my day"**. On Claude Code the desk announces itself when a session starts; on
+Say **"Milan, open my day"**. On Claude Code the desk announces itself when a session starts; on
 other harnesses the words do the same. The chain is day-open, then triage, then
 research-lead for each lead that needs a page, then call-review after each call, then
 follow-up, and tomorrow's day-open reads the follow-up queue first.

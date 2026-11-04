@@ -48,9 +48,9 @@ const NOTHING = "Nothing was committed.";
 //   file of one.
 // - overnight: every seat's, but only the overnight changes and commits these: staged for it alone (`overnight: true`, and then the pages, *.md, and the merge record only: tableOf), held back from every other caller.
 // - shared: every seat should have it: staged, one glob pathspec per row the desk holds a file of.
-// In a glob, `*` is any name within one folder, as git's glob pathspec reads it, and `**` any
-// depth (seat rows only, which never reach git).
+// In a glob, `*` is any name within one folder, as git's glob pathspec reads it, and `**` any depth (seat rows only, which never reach git).
 const SEAT = [
+  ["celorus/.sample/**", "scaffold_desk's made-up sample morning (sample: true): no real person, firm or meeting, and no figure of the desk"],
   [`${VIEWS}/**`, "render_view's pages (.html) and their saved sentences (.prose.json): one seat's mail senders and subjects, chat text and CRM rows, and the model's gists of its mail"],
   [".obsidian/**", "render_view's Obsidian settings at the desk folder (app, appearance, graph, snippets/hide-model.css), fixed text as written; Obsidian rewrites this folder with the seat's own state (workspace.json the pages open, graph.json its search), so it can hold desk content, and render_view writes any one missing on each seat's own first render"],
   ["celorus/.obsidian/workspace*.json", "Obsidian's record of the panes and pages the seat has open"],

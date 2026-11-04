@@ -285,6 +285,17 @@ On a seat's graph, this skill changes nothing by hand: it marks no follow-up `re
   desk tools write them, with `<time>` as two-digit `HH:MM`:
   `* <time> · <handle> · day-open · wrote today/<date>.md · yours`.
 
+## The sample morning
+
+A desk set up on a person's own may hold a made-up sample morning, `celorus/.sample/morning.md`,
+written by the set-up to show how a day looks. Show it only while the desk is new: when that
+page is there and `celorus/today/` holds no board dated before today. Then, after the board,
+give the page's heading and lines as they are, each still starting "Sample:", never retyped
+into other words, never mixed into the board, and with no line of your own inside them. Write
+nothing from it onto the desk: no row, no page and no line in either log. After it, say in a
+line that their own desk fills as they work, and that a good start is "research" and the name
+of a lead they know. When an older board is there, say nothing of the sample.
+
 ## While you work
 
 One plain progress line per step ("Reading the follow-up queue", "Looking for replies",

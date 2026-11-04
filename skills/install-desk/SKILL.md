@@ -192,7 +192,11 @@ Call `scaffold_desk` with:
 - `systems`: one row per role asked about, as `role`, `connector` (the name as the harness
   shows it) and `state`; a role left out is written `still to connect`;
 - `now`: the moment, in ISO 8601 with a `T` between the date and the time and the local
-  offset (leave it out for this machine's clock).
+  offset (leave it out for this machine's clock);
+- `sample`: `true`, so the desk opens with a made-up morning to show how a day looks (seat
+  mode only; desk mode leaves it out). The tool writes it as `celorus/.sample/morning.md`: a
+  sample firm, two leads and one meeting tomorrow, every line marked as a sample. No count,
+  view or check of the desk reads it.
 
 A refusal comes back as a sentence naming what is wrong, ending "Nothing was written.":
 say it as it came and ask again for the one answer it names. Never try another folder, role
@@ -319,12 +323,21 @@ From `scaffold_desk`'s answer, never from a count of your own:
 - Each role in `still_to_connect`, one line each, and that nothing was invented to cover it.
 - Each role in `none_on_this_desk`, on its own line, as the desk has none of it: for the CRM,
   "no CRM on this desk". Never say it among what is still to connect.
-- How to open the day on this harness: on Claude Code the desk announces itself at
-  session start; everywhere else, say "open my day".
+- What to ask first, on a line of its own, in these words: "Ask this first: Milan, open my day".
+  Then one line: on this desk's first day it shows a made-up sample morning, so they see how a
+  day looks before their own leads are on it.
 
-Then say that the rest of the setup is Celorus's to do, not the firm's. Our people do it
-with the desk, it is part of what we deliver, and it runs in this order. Say it as this
-list, in these words:
+In seat mode, a person setting the desk up on their own, say what they can do next, as this
+list, in these words, and nothing about anyone else doing the set-up for them:
+
+1. "Milan, open my day": your day, and on the first day the sample morning.
+2. "Research" and the name of a lead you know: a page on them, every line with its source.
+3. Your calendar and mail, connected in this app when you are ready: the day then reads your
+   meetings and replies for the people on your desk. Nothing is needed before that.
+
+In desk mode, the operator's, say instead that the rest of the setup is Celorus's to do, not
+the firm's. Our people do it with the desk, it is part of what we deliver, and it runs in
+this order. Say it as this list, in these words:
 
 1. The plugin, installed with the plain install command in a terminal. The slash command
    opens a manager and applies nothing when it is closed.

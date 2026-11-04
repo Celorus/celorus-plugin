@@ -13,6 +13,7 @@
 // overnight reads it, with the graph rows after its seat rows, each derived from the engine's row
 // of the same kind folder (tests/desk_engine/graph_rows.js), and its matcher equal to that table's.
 module.exports = Object.freeze([
+  ["celorus/.sample/**", "seat"],
   ["celorus/.views/**", "seat"],
   [".obsidian/**", "seat"],
   ["celorus/.obsidian/workspace*.json", "seat"],
