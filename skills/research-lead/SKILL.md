@@ -137,11 +137,11 @@ Then go by the answer's `state`, and for a refusal by its `reason`:
   Then offer to research this lead now on the free path, the web register and the steps after
   it, and run it on the person's yes. Say no price and no link, never "make the change again",
   and never ask again on your own.
-- **Any other answer** (`too_many_open`, `unavailable`, `bad_argument`, or a state this page
-  does not name): say its `message` as it came, then run the web register and every step after
-  it as they stand below. After a `celorus-data` call has come back with data in this session,
-  `unavailable` and a state this page does not name are a tool that cannot run: say it, and the
-  skill stops there, as the house rules say.
+- **Any other answer** (`no_lead_page`, `too_many_open`, `unavailable`, `bad_argument`, or a
+  state this page does not name): say its `message` as it came, then run the web register and
+  every step after it as they stand below. After a `celorus-data` call has come back with data
+  in this session, `unavailable` and a state this page does not name are a tool that cannot
+  run: say it, and the skill stops there, as the house rules say.
 
 No answer of `research_ask` says whether this session is signed in to the record: the record
 step's own calls decide that, as that step says. Never ask `research_ask` again on your own,
