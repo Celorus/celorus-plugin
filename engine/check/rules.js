@@ -49,10 +49,14 @@ const RULES = {
 const STORE_LEAD_ID = /^[0-9a-f]{64}$/u;
 const SUPPLIED = "queues/supplied.md";
 const STORE_ID_SAID = "64 characters of 0 to 9 and a to f";
+// The list the nightly placement's rows carry (write/writers.js PLACE_LIST).
+const PLACED_LIST = "icp-record";
 
 // C20's findings on a names-supplied list's text: (a) a lead_id cell that is neither the blank mark
 // nor a store lead id's shape, one finding per row; (b) one store lead id on rows for two or more
-// different desk pages, one finding per id. The list's first table is read, as the writer reads it,
+// different desk pages, one finding per id; (c) a row the nightly placement made (its list
+// icp-record) whose lead_id is the blank mark: the placed row has lost its store lead id. A blank
+// lead_id on any other list's row is clean. The list's first table is read, as the writer reads it,
 // through the desk's one table reader (render/desk.js readTable: a blank mark is null, and so is a
 // cell a short row lacks). A list with no lead_id column has nothing to read. A finding names the row
 // and its lead, never the cell's value: the value may be anything written by hand, and an id is not
@@ -72,10 +76,15 @@ function leadIdsNotOurs(body) {
   const onId = new Map();
   rows.forEach((row, i) => {
     const id = row.lead_id;
-    if (id === null) return;
-    const page = row.lead === null ? "" : strip(unlinkCell(row.lead));
+    const page = typeof row.lead === "string" ? strip(unlinkCell(row.lead)) : "";
     // the lead named as every rule names a page, by its link
     const lead = page === "" ? "no lead" : `[[${page}]]`;
+    if (id === null) {
+      if (typeof row.list === "string" && strip(row.list) === PLACED_LIST) {
+        out.push(`row ${i + 1} (${lead}): its lead_id is the blank mark ·, and its list ${PLACED_LIST} says the lead store placed it`);
+      }
+      return;
+    }
     if (!STORE_LEAD_ID.test(id)) {
       out.push(`row ${i + 1} (${lead}): its lead_id is neither the blank mark · nor a store lead id, ${STORE_ID_SAID}`);
       return;

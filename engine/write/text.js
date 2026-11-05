@@ -262,6 +262,7 @@ module.exports = {
   unlink,
   dumpHeader,
   pageText,
+  cell,
   lineBreakIn,
   tableColumns,
   tableRuns,
