@@ -29,7 +29,9 @@
 // stands: authenticate and complete_authentication), always go through. Every other tool reads
 // or writes data: it goes through only in the shape its table below gives it, and a tool the
 // table does not name is refused, so a data tool a connector adds later is refused until it is
-// read and added here.
+// read and added here, on a connector a role holds by its name. On a connector neither of whose
+// names holds a word of a role (an id the desktop app assigns), a tool is held only by its own
+// name: ROLES below says which.
 //
 // It fails closed: input it cannot read, a data tool of a guarded role it does not know, an
 // argument outside the shape, and any fault while deciding are refused, never passed.
@@ -57,12 +59,83 @@ const ASIDE_LINE =
   "The desk's argument guard stood aside for this call: this session has no desk, none named and none found " +
   "from its working folder, so the call was not held to a desk's pages.";
 
-// The roles this guard holds, by the connector's name as the harness shows it in a tool's name,
-// mcp__<connector>__<tool>, read in lower case: the harness's own directory connector, or the
-// same connector declared by a plugin (its name last).
+// The roles this guard holds. A call is put in a role by any name it carries, never by an id
+// (DESK-275: the desktop app names a directory connector's tools from an id it assigns,
+// mcp__<id>__<tool>, so the connector's name may say nothing). Three names are read, each in the
+// two readings readingsOf gives (lower case whole; and words split where a capital follows a
+// lower-case letter, or a letter meets a digit either way, then lower case; in both, each run of
+// other characters than a letter or a digit one underscore):
+//   the connector's name as the harness shows it in a tool's name, mcp__<connector>__<tool>;
+//   the server's declared name, the call's mcp_server.name (Claude Code 2.1.274 or later);
+//   the tool's own name.
+// A role holds a call when either reading of any of the three holds one of its words (`words`:
+// Gmail, or Google Calendar, as a whole word, in any of the spellings below), or when either
+// reading of the tool's own name is one of that connector's tools (`tools`, named from each connector's tool list as it stands, its
+// connection tools aside, CONNECTION below). A bare "mail" or "calendar" is no word of a role:
+// other servers' tools carry them.
+// A name only ever puts a call in a role, so it only ever holds a call, never lets one through: a
+// server that declares a guarded connector's name is held to that role's shapes. So is a tool of
+// another connector that shares a name with one of a role's tools (a chat server's reply or
+// send_message, a notes server's get_thread): in a desk's session it is held to that role's
+// shapes, the same as the role's own tools: a call outside them is refused in the words said of
+// those tools, and one inside them passes. A tool that is a role's only in another spelling
+// (sendMessage, sEnd_message, Authenticate) is refused, a connection tool in another spelling
+// included, since the checks and the connection list are read by the name as the call gives it.
+// A call its names put in both roles is refused, its connection tools aside. What is not held: on a connector neither of
+// whose names holds a word of a role, a tool whose own name holds none and is on neither list,
+// such as a data tool Gmail or Google Calendar adds later, until it is read and added here.
 const ROLES = [
-  { role: "mail", connector: /(?:^|_)gmail$/u },
-  { role: "calendar", connector: /(?:^|_)google_calendar$/u },
+  {
+    role: "mail",
+    words: /(?:^|_)(?:gmail|g_mail|google_mail)(?:_|$)/u,
+    tools: [
+      "apply_sensitive_message_label",
+      "apply_sensitive_thread_label",
+      "create_draft",
+      "create_label",
+      "delete_draft",
+      "delete_label",
+      "forward",
+      "get_draft",
+      "get_message",
+      "get_thread",
+      "label_message",
+      "label_thread",
+      "list_drafts",
+      "list_labels",
+      "mark_message_spam",
+      "mark_thread_spam",
+      "reply",
+      "search_threads",
+      "send_message",
+      "trash_message",
+      "trash_thread",
+      "unlabel_message",
+      "unlabel_thread",
+      "unmark_message_spam",
+      "unmark_thread_spam",
+      "untrash_message",
+      "untrash_thread",
+      "update_draft",
+      "update_label",
+      "update_message_labels",
+    ],
+  },
+  {
+    role: "calendar",
+    words: /(?:^|_)(?:google_calendar|gcal)(?:_|$)/u,
+    tools: [
+      "create_event",
+      "delete_event",
+      "get_event",
+      "list_calendars",
+      "list_events",
+      "respond_to_event",
+      "search_events",
+      "suggest_time",
+      "update_event",
+    ],
+  },
 ];
 
 // A plain address, ASCII only, so a look-alike letter is never read as a letter.
@@ -250,13 +323,35 @@ const CALENDAR = {
 
 const CHECKS = { mail: MAIL, calendar: CALENDAR };
 
-// The role a tool's name puts it in, and the tool's own name, or null for a tool no role holds.
-function roleOf(name) {
+// A name as ROLES reads it, in two readings, each with every run of other characters than a letter
+// or a digit made one underscore and none at either end: the name in lower case whole (a stray
+// capital inside a word, gmAil, leaves the word whole); and the name with its words split where a
+// capital follows a lower-case letter, or a letter meets a digit either way, then in lower case
+// (sendMessage, Gmail2, 2gmail). A call is held when either reading holds, so the split never loses a
+// word the whole reading holds.
+function readingsOf(text) {
+  const plain = (one) => one.toLowerCase().replace(/[^a-z0-9]+/gu, "_").replace(/^_+|_+$/gu, "");
+  const split = text
+    .replace(/([a-z])([A-Z])/gu, "$1_$2")
+    .replace(/([A-Za-z])([0-9])/gu, "$1_$2")
+    .replace(/([0-9])([A-Za-z])/gu, "$1_$2");
+  return [plain(text), plain(split)].filter((one) => one !== "");
+}
+
+// The roles a call's names put it in, and the tool's own name as the call gives it: { roles, tool },
+// or null for a call no role holds. `server` is the call's mcp_server; one that is not an object
+// with a name in text adds no name.
+function roleOf(name, server) {
   const m = /^mcp__(.+)__([^_].*)$/su.exec(name);
   if (!m) return null;
-  const connector = m[1].toLowerCase().replace(/-/gu, "_");
-  const held = ROLES.find((entry) => entry.connector.test(connector));
-  return held ? { role: held.role, tool: m[2] } : null;
+  const tool = m[2];
+  const declared = server !== null && typeof server === "object" && typeof server.name === "string" ? server.name : "";
+  const names = [m[1], declared, tool].flatMap(readingsOf);
+  const own = readingsOf(tool);
+  const roles = ROLES.filter(
+    (entry) => names.some((one) => entry.words.test(one)) || own.some((one) => entry.tools.includes(one)),
+  ).map((entry) => entry.role);
+  return roles.length ? { roles, tool } : null;
 }
 
 // The holds propose_hold accepted within ACCEPTED_FOR_MS of `now`, read from the desk's .celorus/
@@ -291,17 +386,21 @@ function decide(payload, env = process.env, cwd = process.cwd(), now = Date.now(
   if (payload === null || typeof payload !== "object" || Array.isArray(payload)) return "the call could not be read";
   const name = payload.tool_name;
   if (typeof name !== "string") return "the call could not be read";
-  const held = roleOf(name);
+  const held = roleOf(name, payload.mcp_server);
   if (held === null) return null;
   const args = payload.tool_input;
   if (args === null || typeof args !== "object" || Array.isArray(args)) return "the call's input could not be read";
-  if (CONNECTION[held.role].includes(held.tool)) return null;
+  if (held.roles.every((role) => CONNECTION[role].includes(held.tool))) return null;
   const desk = deskOf(payload, env, cwd);
   if (desk.refused !== undefined) return desk.refused;
   if (desk.root === null) return ASIDE;
-  const checks = CHECKS[held.role];
+  if (held.roles.length > 1) {
+    return `${held.tool} is put in both the ${held.roles.join(" and the ")} role by its names, so no one shape holds it`;
+  }
+  const [role] = held.roles;
+  const checks = CHECKS[role];
   if (!Object.hasOwn(checks, held.tool)) {
-    return `${held.tool} is not a ${held.role} tool the desk skills call; they call ${Object.keys(checks).join(", ")}`;
+    return `${held.tool} is not a ${role} tool the desk skills call; they call ${Object.keys(checks).join(", ")}`;
   }
   let addresses = null;
   const known = () => {
