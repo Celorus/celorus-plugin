@@ -85,6 +85,21 @@ instrument the desk is measured with, and they are a number: until a desk tool m
 from that start and the page's `timestamp`, the desk log's `minutes` cell is `·`, and you never
 work the minutes out yourself or say a guess at them.
 
+## Read the ask as a seller's
+
+The person asking sells, and the lead is someone they may sell to. Read every ask that way:
+
+- "Reach out for sales", "for business", "pitch to", "approach" or "sell to" means selling this
+  seller's own offer to the lead. Research the lead for that: who they are, what their firm does
+  and buys, what has just happened there, and who decides. Never read it as hiring the lead,
+  offering them a job or a role, or asking them to sell for this seller, unless the ask says so
+  in those words.
+- Never ask how the seller knows the lead, why they are asking, or what the lead would do for
+  them. The ask is the reason to research; the page shows what fits the seller's work.
+- A name the desk's own records do not hold is not a reason to stop or to ask. Go on to the web
+  register straight away, and search a name that may be misspelt as the web register says,
+  before anything is asked.
+
 ## Step 1: what the desk already holds (`yours`)
 
 Read the existing page if there is one, the queue row, the CRM export's row for this name
@@ -166,12 +181,39 @@ enough for a title or a role. A profile page that will not fetch is used only th
 the search summary, and says so. A figure from the web carries its URL and date or is not
 written at all.
 
+When the web finds nobody by the name as the ask spelt it, or nobody by it who fits the firm,
+the city or the role the ask or the desk gave, the name may be misspelt. Search again straight
+away under its likely spellings (a letter dropped, repeated or swapped, a vowel changed, the
+other common spellings of the name), each with the firm, the city or the role the ask or the desk
+gave. Take a spelling's match only when it fits that firm, city or role, and say which spelling
+found the person. When the ask and the desk gave none of them, show what the closest spelling
+found (the name, the firm and the source) and ask whether it is the person, before anything is
+written. Ask the seller for more only when no spelling finds anyone, and then ask for what would
+find them (the firm, the city or the spelling), never how they know the person.
+
+A company's own document on the web (an exchange announcement's attachment, a rating rationale,
+an annual report) is slow to fetch and often will not open. Read an announcement from the
+exchange's listing or the search summary, which carry its subject and its date, and ask for the
+document only when a line needs what the document alone holds. When it does not open or does
+not come back, never ask for it again or for another copy of it: write the line from the
+listing, the search summary or the press that quotes the document, in full as
+`- <the fact> · web · unverified · <source url> · <date read> · the document did not open`, with
+any `· medium confidence` after it. Then go on; a document that did not come back never holds
+the profile. Under "Not established", name each document that did not open, by its title and
+date, and where its line came from instead.
+
 ## Step 3: the record
 
 **3b, signed in to the record** (the `celorus-data` tools are present and answer): fetch
 the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind
-`honesty_rules`) and follow them verbatim; then `resolve_subject` with the name (on
-`clarify`, ask the user which candidate, never pick); for a company,
+`honesty_rules`) and follow them verbatim (a person's `clarify` that the seller's own words
+already answer is read as below); then
+`resolve_subject` with the name, and with the spelling the web register found the person under
+when it differs (for a person, with `subject_kind_hint` `Person`, and the `city` and `company`
+only where the seller's own words give them, in this ask or in their answer to a question this
+skill asked, not where the web or the desk alone gives them, and never invented, and when the
+web found the person under another spelling, every answer under the ask's spelling is set
+aside; on `clarify` for a company, ask the user which candidate, never pick); for a company,
 `list_available_subdomains` and then `get_subdomain_data` for what the page needs (the
 identity, the freshest events, the people behind it); for a person, `get_people` on the
 employer where known and `get_person_profile`. Every figure verbatim as the tool gives it.
@@ -182,6 +224,60 @@ to the address it returned, `[<label>](<address>)`, so the views can tell the ci
 tier word beside it, and as the label alone when the tool returned no address (R35).
 Bands only; masked coordinates exactly as rendered; the tier shown on anything the record
 did not file.
+
+When `resolve_subject` answers `clarify` for a person, do not stop the work to ask. The lead's
+name here is the spelling the web register found the person under, when the web found them,
+and the ask's spelling otherwise. The seller has already answered the question when the answer
+carries no `typo_discovery` warning, `candidates[]` holds several people whose `canonical_name`
+is the lead's name itself (letter case and spacing aside), every candidate carries a `city`,
+and the city the seller gave in their own words, in this ask or in their answer to a question
+this skill asked, is the `city` of a candidate and of no other. A city the web found or the desk
+holds is not the seller's answer. Then take that person, as the
+seller's own answer and never as a guess, and say so in the reply in these terms, with the city
+the seller gave in place of "the city": "You gave the city; of the people with this name, only
+this person is there." In the same reply, name each other person on the list by the name and city
+`candidates[]` returned and nothing else, and say that a word from the seller, such as "the
+other" or the other's city, moves the profile to them; a word that fits several of them is asked
+about again, with their names and cities. Under `## Watch out`, write the same, the city again in
+place of "the city":
+`- You gave the city; of the people with this name, only this person is there, and this page follows them; the others by this name on the record are <list> · record · <date>`,
+where `<list>` names each other person by the name and city `candidates[]` returned and nothing
+else.
+
+Any other person `clarify` (the seller gave no city in their own words, a candidate with no
+`city`, the city fits none of them or several, a "did you mean" list of other names, a lone candidate): take
+none.
+Write no record line about the person, finish the profile from the desk and the web, say under
+"Not established" that the record did not settle which person this is, and at the profile's
+close show the candidates by the name and city `candidates[]` returned, and no city where it gave
+none, and ask in the chat, never on the page, which is the lead, if any. On the answer, read the record for that person by the
+`subject_id` its candidate carried, without asking `resolve_subject` again, and add its lines in
+place of the line under "Not established" that the record did not settle which person this is.
+
+On a word that moves the profile to another person, research again from the start, reading the
+record for that person by the `subject_id` its candidate carried, without asking
+`resolve_subject` again, and write the page anew in its place. The rule below that updates a
+page which exists does not apply here: of the page before, keep only its `type`, `title`,
+`name_source` and `not_same_as`, and write every other header field and every line below the
+header for that person. A firm page this skill wrote only to give the person before an employer
+is named to the seller in a line, as theirs to keep or remove.
+
+When the seller's word comes after the `subject_id` has left this conversation, ask
+`resolve_subject` again with the lead's name and that person's `city`, the record's own city for
+the person the seller named; the limit above on where a lookup's `city` comes from is for the
+lookup before the seller's word, not for this lookup. Take a candidate only
+when the answer carries no `typo_discovery` warning, that person had a `city`, and it is the
+`city` of a candidate whose `canonical_name` is the lead's name itself (letter case and spacing
+aside) and of no other. A `proceed` is that person only when its `canonical_name` is the lead's
+name (letter case and spacing aside) and `get_person_profile` on its `subject_id` gives that
+person's `city`. Otherwise take none, say so, and show the candidates by name and city again.
+
+The honesty rule that `clarify` is a question, and `resolve_subject`'s own word that a person
+is never picked for the user, stand as they are. In the case above the seller has already
+answered the question in their own words, and the later find by city follows a word from the
+seller; neither is a pick. Every other person `clarify` is still a question to the user, asked
+at the profile's close, in the chat, never a guess; a company `clarify` is asked straight away, as
+above.
 
 **3c, not signed in to the record:** say "The record was not asked by this name." and the
 lane's close, as *When this session is not signed in to the record* below words them, and

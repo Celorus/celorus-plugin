@@ -19,6 +19,10 @@ it is below `demonstrated`.
 Never on the ladder: aggregator previews of figures with no named source, forum posts,
 anonymous listings.
 
+An exchange announcement is read from the exchange's listing or the search summary. Its attached
+document is slow and often will not open: the skill's web register says when it is asked for,
+that it is never asked for again, and what the line says when it does not come back.
+
 ## People and families
 
 | Rung | Source | Yields | Tier | Trust |
