@@ -20,12 +20,18 @@
 // later), so the harness refuses the guarded call instead of letting it pass unchecked. The same
 // field refuses the call when a hook times out, exits with a code other than 0 or 2, or writes a
 // line the harness cannot read; this file does none of those when it runs. The entry's matcher
-// leaves outside only a tool of the record server, named by one of its two prefixes (the plugin's
-// celorus-data server, or the desktop app's directory connector for the same address) and then
-// the tool's own name with no double underscore in it, since those tools are served over the web
-// and need no Node. Every other connector call stays inside, a name with a second double
+// leaves outside only names of the record server, whose tools are served over the web and need no
+// Node. It knows the server two ways. One is by one of its two prefixes (the plugin's
+// celorus-data server, or the desktop app's directory connector for the same address), then any
+// non-empty tool name that neither starts nor ends with an underscore and holds no double one, the app's
+// sign-in tools there included. The other is
+// by an id the desktop app assigns
+// (a UUID in lower case, not the same on every install), then exactly one of the 34 tools the
+// record server declares. Every other connector call stays inside, a name with a second double
 // underscore after either prefix included, because shapes.js's roleOf reads a connector up to the
-// last double underscore and would take such a name for a connector of its own.
+// last double underscore and would take such a name for a connector of its own. The id form has
+// a cost: a call of another connector under an id, whose tool has one of those 34 names, is never
+// checked. No mail or calendar tool the guard checks or lets by has such a name; e11 tests that.
 
 const path = require("path");
 

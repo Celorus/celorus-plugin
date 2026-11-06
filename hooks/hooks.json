@@ -16,7 +16,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^mcp__(?!(?:plugin_celorus_celorus-data|claude_ai_Celorus)__[^_]+(?:_[^_]+)*$).*",
+        "matcher": "^mcp__(?!(?:plugin_celorus_celorus-data|claude_ai_Celorus)__[^_]+(?:_[^_]+)*$|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}__(?:classify_query|desk_make|desk_pull|desk_pulse|desk_seed|front_door_list|front_door_pick_queue|front_door_tray|front_door_unlock|generate_collateral|get_captable|get_cited_sections|get_graph_context|get_input_request|get_knowledge_units|get_lead_contact|get_leads|get_people|get_person_profile|get_presentation|get_semantic_metadata|get_subdomain_data|get_timeline|icp_add_client|icp_make_yours|icp_preview|icp_save|icp_start|is_prepopulated|list_available_subdomains|list_capabilities|research_ask|resolve_subject|select_relevant_sections)$).*",
         "hooks": [
           {
             "type": "command",
