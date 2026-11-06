@@ -8,8 +8,9 @@
 //
 // Five tools: sign_in (answers that this computer is signed in when its kept sign-in is live;
 // otherwise answers the sign-in page for the person to open, and waits for the browser's return
-// on this computer's loopback address), sign_out (removes the kept token), make (one desk tool
-// made on the desk server and written to this desk; offline, queued), pull (a seat's graph
+// on this computer's loopback address), sign_out (removes the kept token and answers the
+// sign-out page for the person to open), make (one desk tool made on the desk server and written
+// to this desk; offline, queued), pull (a seat's graph
 // brought to what its storage holds now) and seed (a seat's converted graph written into its
 // empty storage, in batches). pull and seed are served once the desk server keeps a seat's pages.
 //
@@ -25,6 +26,8 @@ const { pull } = require("./lib/pull.js");
 const { seed } = require("./lib/seed.js");
 const signin = require("./lib/signin.js");
 const token = require("./lib/token.js");
+const { LinkError } = require("./lib/errors.js");
+const { NOW_AT } = require("./lib/origins.js");
 
 const NAME = "celorus-link";
 const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
@@ -73,7 +76,9 @@ const TOOLS = [
   },
   {
     name: "sign_out",
-    description: "Sign out of Celorus on this computer: the link's kept sign-in is removed.",
+    description:
+      "Sign out of Celorus on this computer: the link's kept sign-in is removed, and a sign-in this link is waiting on in the browser is stopped. The answer gives a sign-out link " +
+      "to show the person in full, as a line of its own, for them to open in their own browser; it ends the browser's sign-in at that link's address.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -200,7 +205,7 @@ async function signIn(d) {
   }
   const { verifier, challenge, state } = signin.pkce();
   const url = signin.authorizeUrl({ challenge, state });
-  const { ready, code } = signin.listenForCode({ state, createServer: d.createServer, unref: true });
+  const { ready, code, stop } = signin.listenForCode({ state, createServer: d.createServer, unref: true });
   try {
     await ready;
   } catch (err) {
@@ -208,10 +213,15 @@ async function signIn(d) {
     d.log(`sign_in: ${err.code || "failed"}`);
     return text(err.message, { state: "failed" }, true);
   }
-  const mine = { url };
+  // sign_out stops this sign-in: a code that comes after is turned away, and one whose exchange
+  // was already out is never saved (exchange asks `keep` right before it saves).
+  const mine = { url, stopped: false, stop };
   pending = mine;
   code
-    .then((got) => token.exchange({ code: got, verifier }, { home: d.home, request: d.request, now: d.now }))
+    .then((got) => {
+      if (mine.stopped) throw new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out.");
+      return token.exchange({ code: got, verifier }, { home: d.home, request: d.request, now: d.now, keep: () => !mine.stopped });
+    })
     .then(
       () => d.log("sign_in: signed in"),
       (err) => d.log(`sign_in: ${err && err.code ? err.code : "failed"}`),
@@ -227,14 +237,53 @@ async function signIn(d) {
   );
 }
 
+// DESK-257: the link's sign-in is removed, a sign-in this link is waiting on is stopped (a second
+// session's link keeps its own), and the person is given the pool's own sign-out page, at the
+// address the sign-in was made on, so the browser's sign-in ends too (before, it outlived the
+// sign-out). The page follows the words on a line of its own, as a sign-in's does. The page
+// ends the sign-in at its own address alone: a sign-in renewed by an earlier release still
+// running loses its address word and reads as the Amazon address's, so no line promises more
+// than that. The sign-in page the sign-out then shows is closed, never signed in on: a code from
+// it would carry no PKCE.
+const SIGNED_OUT = "Signed out: the link's sign-in is removed from this computer.";
+const SHOW_SIGN_OUT =
+  "To end the sign-in in the browser too, at the address of the link below, show the person this sign-out link to click, in full, exactly as it is here:";
+const AFTER_SIGN_OUT =
+  "The page ends the browser's sign-in at its own address, then shows a sign-in page: close that page without signing in there. " +
+  "To sign in again, call sign_in.";
+const SIGN_OUT_FAILED =
+  "The link could not remove its sign-in from ~/.celorus/link/ on this computer. Remove the token file there, then call sign_out again.";
+const SIGN_OUT_FOLDER =
+  "The link keeps its sign-in in ~/.celorus/link/, and ~/.celorus or its link folder is a link or not a folder, so nothing was " +
+  "removed through it. Remove that link or file, then call sign_out again.";
+
+// A kept sign-in the link cannot read (not readable, a link in the token file's place, not a
+// token) is still removed, and its page is ours. A removal that fails (a folder in the token
+// file's place, a folder the link may not change, a link on the way to the folder, which is never
+// removed through) keeps it, and says so in fixed words, never a path.
 function signOut(d) {
+  if (pending !== null) {
+    pending.stopped = true;
+    pending.stop();
+    pending = null;
+  }
+  let at = NOW_AT;
+  try {
+    const kept = token.readToken({ home: d.home });
+    if (kept !== null) at = kept.at;
+  } catch {
+    // read below as no sign-in: removed all the same
+  }
+  const url = signin.logoutUrl(at);
   try {
     token.dropToken({ home: d.home });
   } catch (err) {
-    return text(err.message, { state: "failed" }, true);
+    const folder = err instanceof LinkError && err.code === "token_folder";
+    d.log(`sign_out: ${folder ? "token_folder" : "failed"}`);
+    return text(folder ? SIGN_OUT_FOLDER : SIGN_OUT_FAILED, { state: "failed" }, true);
   }
   d.log("sign_out: done");
-  return text("Signed out: the link's sign-in is removed from this computer.", { state: "signed_out" });
+  return text(`${SIGNED_OUT} ${SHOW_SIGN_OUT}\n${url}\n${AFTER_SIGN_OUT}`, { state: "signed_out", url, show_the_person: url });
 }
 
 async function run(name, args, d) {

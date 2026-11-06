@@ -13,7 +13,7 @@
 const crypto = require("node:crypto");
 const http = require("node:http");
 const { LinkError } = require("./errors.js");
-const { AUTHORIZE_URL, CLIENT_ID, REDIRECT_URI, SCOPE } = require("./origins.js");
+const { AUTHORIZE_URL, CLIENT_ID, REDIRECT_URI, SCOPE, signedInAt } = require("./origins.js");
 
 const PORT = 8484;
 const HOSTS = ["127.0.0.1", "::1"];
@@ -42,6 +42,19 @@ function authorizeUrl({ challenge, state }) {
   return `${AUTHORIZE_URL}?${query}`;
 }
 
+// The sign-out page's address, for the person to open, at the address the sign-in was made on
+// (DESK-257). It is the pool's own sign-out in the form that needs only the client's one
+// registered return address: it ends the browser's sign-in there, then shows the sign-in page.
+function logoutUrl(at) {
+  const query = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: "code",
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPE,
+  });
+  return `${signedInAt(at).logout}?${query}`;
+}
+
 function sameState(given, state) {
   if (typeof given !== "string") return false;
   const a = Buffer.from(given, "utf8");
@@ -57,9 +70,11 @@ const HEADERS = {
   Connection: "close",
 };
 
-// Listens for the browser's return. Answers { ready, code }: `ready` settles once the listeners
-// are up (or cannot be), `code` with the code the browser brings. `createServer` stands in for
-// http.createServer in the tests; `unref` lets the process end while the wait is on.
+// Listens for the browser's return. Answers { ready, code, stop }: `ready` settles once the
+// listeners are up (or cannot be), `code` with the code the browser brings, and `stop` ends the
+// wait at once (sign_out), so the listeners close and a code that comes later is turned away.
+// `createServer` stands in for http.createServer in the tests; `unref` lets the process end while
+// the wait is on.
 function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS, port = PORT, unref = false }) {
   const make = createServer || ((handler) => http.createServer(handler));
   const servers = [];
@@ -72,6 +87,7 @@ function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS
     onNotReady = reject;
   });
   ready.catch(() => {});
+  let stop = () => {};
   const code = new Promise((resolve, reject) => {
     const finish = (fn, value) => {
       if (settled) return;
@@ -87,6 +103,7 @@ function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS
       }
       fn(value);
     };
+    stop = () => finish(reject, new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out. Call sign_in to start again."));
     timer = setTimeout(
       () => finish(reject, new LinkError("sign_in_timeout", "The sign-in was not finished within five minutes, so the link stopped waiting. Call sign_in to start again.")),
       timeoutMs,
@@ -160,7 +177,7 @@ function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS
       });
     }
   });
-  return { ready, code };
+  return { ready, code, stop: () => stop() };
 }
 
 // The code the browser brings back, for a sign-in the caller has already answered.
@@ -168,4 +185,4 @@ function waitForCode(options) {
   return listenForCode(options).code;
 }
 
-module.exports = { HOSTS, PORT, WAIT_MS, authorizeUrl, listenForCode, pkce, waitForCode };
+module.exports = { HOSTS, PORT, WAIT_MS, authorizeUrl, listenForCode, logoutUrl, pkce, waitForCode };

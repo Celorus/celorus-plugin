@@ -3,17 +3,21 @@
 // folder in ~/.celorus/link/token.json, never in a desk. The folder is 0700 and the file 0600,
 // written to a new file opened only if it does not exist and never through a link, then renamed
 // into place. ~/.celorus, its link/ folder or the file itself being a link is refused: the token
-// is never read or written through one. Nothing else is kept: no id token, no address, no name.
+// is never read or written through one. Nothing else is kept but the word for the address the
+// sign-in was made on (`at`, lib/origins.js SIGNED_IN_AT; DESK-257): no id token, no address, no
+// name. A file with no word was written by an earlier release, and is read as a sign-in on the
+// Amazon address: that release signed in there, and one still running that renews a sign-in made
+// here drops the word, so that sign-in is then renewed and signed out on the Amazon address.
 //
 // The token is sent only to the desk server (lib/make.js); the refresh token only to the
-// sign-in service's token address. Neither is ever written to a desk, a queued call, an answer
-// or the log.
+// sign-in service's token address the sign-in was made on. Neither is ever written to a desk, a
+// queued call, an answer or the log.
 
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { LinkError, passingStatus } = require("./errors.js");
-const { CLIENT_ID, REDIRECT_URI, TOKEN_URL } = require("./origins.js");
+const { BEFORE_AT, CLIENT_ID, NOW_AT, REDIRECT_URI, SIGNED_IN_AT, signedInAt } = require("./origins.js");
 const { post } = require("./transport.js");
 
 const PARTS = [".celorus", "link"];
@@ -24,7 +28,7 @@ const SKEW_SECONDS = 60;
 const FOLDER_SAID =
   "The link keeps its sign-in in ~/.celorus/link/, and ~/.celorus, its link folder or the " +
   "token file there is a link or not what it should be, so it was neither read nor written. " +
-  "Remove the link, then call sign_in.";
+  "Remove the one that is, then call sign_in.";
 const SIGNED_OUT =
   "You are not signed in to Celorus through the link, or the sign-in has ended. Call sign_in, " +
   "open the page it gives, and sign in; then make the change again. Nothing was written.";
@@ -83,7 +87,8 @@ function shapeOk(kept) {
     typeof kept.access_token === "string" &&
     kept.access_token !== "" &&
     Number.isInteger(kept.expires_at) &&
-    (kept.refresh_token === null || (typeof kept.refresh_token === "string" && kept.refresh_token !== ""))
+    (kept.refresh_token === null || (typeof kept.refresh_token === "string" && kept.refresh_token !== "")) &&
+    (kept.at === undefined || (typeof kept.at === "string" && Object.hasOwn(SIGNED_IN_AT, kept.at)))
   );
 }
 
@@ -107,11 +112,14 @@ function readToken({ home }) {
   } catch {
     return null;
   }
-  return shapeOk(kept) ? { access_token: kept.access_token, refresh_token: kept.refresh_token, expires_at: kept.expires_at } : null;
+  if (!shapeOk(kept)) return null;
+  const at = kept.at === undefined ? BEFORE_AT : kept.at;
+  return { access_token: kept.access_token, refresh_token: kept.refresh_token, expires_at: kept.expires_at, at };
 }
 
 function saveToken(token, { home }) {
   const kept = { access_token: token.access_token, refresh_token: token.refresh_token || null, expires_at: token.expires_at };
+  if (token.at !== undefined) kept.at = token.at;
   if (!shapeOk(kept)) throw new LinkError("token_shape", "The sign-in service's answer was not a token the link can keep.");
   const folder = makeFolder(home);
   const file = path.join(folder, FILE);
@@ -176,26 +184,33 @@ function fromAnswer(out, previous, now) {
 const FORM = { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" };
 
 // The code from the browser, exchanged for the token, which is kept. PKCE: the verifier proves
-// this link started the sign-in; the public client sends no secret.
-async function exchange({ code, verifier }, { home, request, now = nowSeconds }) {
+// this link started the sign-in; the public client sends no secret. `keep` is asked once the
+// answer is in, right before the save: a sign-in stopped while its exchange was out (sign_out)
+// is never saved, so it never lands over a sign-in made after it.
+async function exchange({ code, verifier }, { home, request, now = nowSeconds, keep = () => true }) {
   const form = new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, code, redirect_uri: REDIRECT_URI, code_verifier: verifier });
-  const out = await post(TOKEN_URL, "token", FORM, form.toString(), { request });
-  const token = fromAnswer(out, null, now);
+  const here = signedInAt(NOW_AT);
+  const out = await post(here.token, here.purpose, FORM, form.toString(), { request });
+  const token = { ...fromAnswer(out, null, now), at: NOW_AT };
+  if (!keep()) throw new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out, so it was not kept.");
   saveToken(token, { home });
   return token;
 }
 
-// A new access token from the refresh token, kept. A refused refresh ends the sign-in. The
-// renewal is kept only while the sign-in it renewed is still the one kept: a sign-in saved while
-// it was out (a browser sign-in finishing, another session's link) is used and kept instead, and
-// a sign-out made while it was out stands.
+// A new access token from the refresh token, kept, from the address the sign-in was made on
+// (DESK-257: a sign-in kept from before is renewed on the Amazon address). A refused refresh
+// ends the sign-in. The renewal is kept only while the sign-in it renewed is still the one kept:
+// a sign-in saved while it was out (a browser sign-in finishing, another session's link) is used
+// and kept instead, and a sign-out made while it was out stands.
 async function refresh(token, { home, request, now = nowSeconds, timeoutMs }) {
   if (!token.refresh_token) throw new LinkError("signed_out", SIGNED_OUT);
   const form = new URLSearchParams({ grant_type: "refresh_token", client_id: CLIENT_ID, refresh_token: token.refresh_token });
-  const out = await post(TOKEN_URL, "token", FORM, form.toString(), { request, timeoutMs });
+  const at = token.at === undefined ? BEFORE_AT : token.at;
+  const here = signedInAt(at);
+  const out = await post(here.token, here.purpose, FORM, form.toString(), { request, timeoutMs });
   let fresh;
   try {
-    fresh = fromAnswer(out, token, now);
+    fresh = { ...fromAnswer(out, token, now), at };
   } catch (err) {
     if (err.code === "signed_out") dropTokenIfStill(token, { home }, "refresh_token");
     throw err;
