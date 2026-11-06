@@ -427,6 +427,32 @@ A partial answer is fine when *part* of the question is answerable: answer the
 part you have (with provenance), and mark the rest "not available" with the
 reason. Never let the answerable part smuggle in an unsupported claim.
 
+## When the record is thin, and when the web is asked for
+
+This section is for a session signed in to the record. When it is not, *When this session is
+not signed in to the record* below governs, and a web answer is `research-lead`'s job.
+
+When the record holds none of what was asked, or answers only part of it, the Limitations line
+says so and, in the same line, offers to read the web for the part the record does not hold.
+The offer is part of saying so under *Refusing beyond the data*: make it, then add nothing from
+outside the record until asked; part 4 of the answer below still follows when it applies. When the
+answer is complete and unqualified there is no Limitations line and no offer. Read the web only
+when the person asking says so.
+
+The answer itself stays on the Celorus tools. When the person asking asks for the web, the web
+lines are this session's own search, standing beside the answer as rule 1 allows:
+
+- Each web figure stands on its own line beside the answer, with its link, its date and the mark
+  `web`, and says where it came from: the company's own document, an exchange's listing, the
+  press or a data site, named.
+- A company's own document on the web (its results, its annual report, an exchange
+  announcement's attachment) is slow to fetch and often does not open. When it does not open or
+  does not come back, never fetch it again or fetch another copy of it. Say so in a line, naming
+  the document by its title and date, and say for each figure where it came from instead.
+- When sources give different figures for the same thing, show each with its source and its
+  date, and say that they differ. Never pick one, average them or blend them.
+- The record's "not available" stays as it is; a web line stands beside it, never in its place.
+
 ## Answer shape
 
 Keep answers tight and in this order:
@@ -442,6 +468,18 @@ Keep answers tight and in this order:
    data could not cover ("the cash-flow figure is not available; …"), and any
    `constrained_proceed` caveat. Omit this line only when the answer is complete
    and unqualified.
+4. **For the sale.** Only when the person asking sells something a company would buy, and the
+   desk or the chat names it: the `product` list in `celorus/model/own-words.md`,
+   `celorus/context/notes.md`, or the chat. Then add a few lines that read the answer for
+   selling that to this company: what in the answer bears on the offer, what has just changed at
+   the company, and who is on record there as a director or officer, where the answer above
+   carries them. Never ask the seller to explain their work. These lines add no fact, figure or
+   estimate of their own: each points at a line above and keeps its citation and its caveats,
+   a news event stays "reported", and a web line keeps its link, its date and the mark `web`.
+   Head them as this session's reading for the sale, not the
+   record's. When nothing in the answer bears on the offer, say so in a line and name what the
+   seller could ask next that would. Leave this part out when nothing names what the person
+   asking sells to companies.
 
 ## When this session is not signed in to the record
 
