@@ -437,7 +437,10 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
       <div class="small-k">Ask for</div>
       <p>{{ask_line}}</p><!-- the most specific next step the buyer is ready to take -->
     </div>
-    <!-- One line, last, one specific next step, never blocking; for a pitch: "Do you want a curated pitch?" -->
+    <!-- One line, last, one specific next step, never blocking; for a pitch: "Do you want a curated pitch?"
+         Leave this line out of the page when anything follows the brief in the chat (the "Where this
+         came from" list and the nothing-written line, or what the page-writing step says on a desk):
+         the offer is then said after it, last in the reply, as research-lead's end order says. -->
     <p class="offer" data-part="offer" data-budget="one line, last; one next step; never blocking"><span class="who">Milan</span>{{milan_offer}}</p>
   </section>
 

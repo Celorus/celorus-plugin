@@ -71,9 +71,9 @@ walking up from the working directory that holds a `celorus` entry of any kind: 
 never passes that folder to reach a desk above, a folder whose entry is not a plain desk is
 refused or named by the tools, and only when no such folder exists is there no desk. The seat is
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. A desk is optional: nothing waits
-on it. With no desk, still do the research and show the brief in the conversation, then offer
-`install-desk`; a page is written to disk only inside a desk. Inside a desk without a seat, ask
-which seat this is, as its handle (the name of its page under `celorus/seats/`), never the
+on it. With no desk, still do the research and show the brief in the conversation, and invite
+`install-desk` inside the line that nothing was written to the desk, which is not another offer; a page is written to disk only inside a desk. Inside a desk without a
+seat, ask which seat this is, as its handle (the name of its page under `celorus/seats/`), never the
 person's name, and write nothing until it is known; the brief does not wait for the seat.
 
 If `celorus/desk.md` is missing, the desk is on layout 1: read and write it as
@@ -386,7 +386,8 @@ carries in the template (`data-budget`):
 - **The company that matters here:** why this company, what it does, how it is doing.
 - **What is happening:** why meet now, in dated lines.
 - **Your meeting:** what is in it for you, a line to open with, what to say, be careful, the ask.
-- **Milan's offer:** what Milan can do next, in a line of its own, placed as the end order below says.
+- **Milan's offer:** what Milan can do next, in a line of its own, the reply's last line as the end order below says,
+  and left off the page when anything follows the brief in the chat.
 
 For a company, the person part is replaced by the people who matter here, in a paragraph, and the
 rest of the frame stands. Rules under the frame:
@@ -396,6 +397,12 @@ rest of the frame stands. Rules under the frame:
   page, where it was written, holds them.
 - Figures come only from the record, exactly as the record gives them, and the web gives no figure.
   No web figure appears in any copy of the brief, the desk's page included.
+- Give dates and values as the tools gave them; never write a span of time, an age or a tenure
+  that the writer reckons from them, as the house rules say. A promise the desk's notes leave open
+  is said with the date it was made and as still open, never by how long ago that was or how late
+  it is.
+  Rows a tool returned are given by name: say who the directors are, and never a word such as
+  sole or only about them, nor about the companies or the years the record covers.
 - The company part's tiles hold only values the record gives, each with the record chip; with none,
   leave the tiles out and say so in a plain line. Never a web value, never a tile stamped record
   for something the record did not give.
@@ -412,7 +419,8 @@ rest of the frame stands. Rules under the frame:
   line saying the lead is a handle-with-care row and so is not pitched.
 - The footer says what the brief was built from. It names the company page only where it was
   written, on a desk. With no desk, the sources are given in the chat as a short list under
-  "Where this came from", never on the page, in the place the end order below gives it.
+  "Where this came from", never on the page, in the place the end order below gives it, before the
+  offer line.
 - The page names no report and no product, and gives Milan no pronoun.
 - The template holds the frame to what fits the page: add no part, go past no part's budget, and
   keep depth off the page: it stays behind the company page on a desk; with no desk it is left out
@@ -422,19 +430,22 @@ A pitch ask (or an ask for the mail, the call opener or the meeting brief) retur
 pitch in the same pass, with no later ask. The pitch is a piece beside the brief, a page at most; it
 cites the brief and only the brief; where the brief is thin it says what it rests on and what it
 lacks and never writes a generic pitch; it is a draft and is never sent. When the ask is research
-alone, the meeting part holds the angle and the brief ends with the offer.
+alone, the meeting part holds the angle and the reply ends with the offer.
 
-Every research answer's brief ends with the offer line: one line, one next step it can do now from the
+Every research answer ends with the offer line: one line, one next step it can do now from the
 intent (a curated pitch, the mail, the meeting brief, the introduction path, whichever fits), never
 blocking and never a menu. Offer only a step that will run in this session as it stands: no record
 depth when this session is not signed in to the record, no pack where the flow says nothing of
-it and no pack without credits, and never a verb that promotes the plan.
+it and no pack without credits, and never a verb that promotes the plan. The offer never waits on a
+question: it names a step that can be taken now from what the seller has already said, and asks the
+seller for nothing but a yes, never for a date, a name or a choice.
 
-The end order is set here and nowhere else. The chat shows the brief, and the offer line is the
-brief's last part, and is not repeated. With no desk, or when the desk tools cannot run, the "Where
-this came from" list and the line that nothing was written to the desk follow the brief in the chat.
-For a handle-with-care lead the pitch above is not written and the offer line offers none of it, as
-the rule under the frame says.
+The end order is set here and nowhere else. The reply shows the brief; then, with no desk or when
+the desk tools cannot run, the "Where this came from" list and the line that nothing was written to
+the desk, whose invitation to set up a desk stays inside that line and is not another offer; then
+the offer line, last, and not repeated. Where anything follows the brief in the chat (that list and line, or what the page-writing step
+says on a desk), the offer line is said after it, last, and not inside the brief's page. For a handle-with-care lead the pitch
+above is not written and the offer line offers none of it, as the rule under the frame says.
 
 ## Step 4: write the page
 
@@ -626,4 +637,4 @@ sees what was written. Follow these as they say:
 - Never fill from memory or general knowledge; "Not established" is the honest line.
 - Never send anything.
 
-**Next:** after the brief, which ends with the offer line as *The brief* sets out, comes `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to the record, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.
+**Next:** after the brief, and the reply's last line, the offer line, as *The brief* sets out, comes `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to the record, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.
