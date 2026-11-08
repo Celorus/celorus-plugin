@@ -30,9 +30,14 @@ const AMAZON_TOKEN_URL = "https://celorus-mcp.auth.ap-south-1.amazoncognito.com/
 const AMAZON_LOGOUT_URL = "https://celorus-mcp.auth.ap-south-1.amazoncognito.com/logout";
 const CLIENT_ID = "3c77g9j943h4bn7js75e4nga6u";
 const REDIRECT_URI = "http://localhost:8484/callback";
-// The one scope the desk server needs. Nothing else is asked for: no openid, no email, no
-// profile, and never a scope of any mail, calendar or file service.
-const SCOPE = "celorus-mcp/invoke";
+// What the sign-in asks for: the desk server's own access (`celorus-mcp/invoke`), and who is
+// signing in (`openid email`), so the sign-in's answer carries an id token with the address. The
+// address is shown once, on the page that ends the sign-in, and kept nowhere (lib/token.js). The
+// plugin never asks for it again, though the tokens it keeps would let it (a renewal brings a new
+// id token, dropped unread; the access token could ask the pool's userInfo page). The client
+// allows exactly these three. Nothing else is asked for: no profile, and
+// never a scope of any mail, calendar or file service.
+const SCOPE = "openid email celorus-mcp/invoke";
 const SETUP_PAGE = "https://app.celorus.com/dashboard/setup";
 
 const PINNED = Object.freeze({ make: MAKE_URL, token: TOKEN_URL, amazon_token: AMAZON_TOKEN_URL });

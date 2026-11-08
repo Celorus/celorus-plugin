@@ -181,6 +181,21 @@ function fromAnswer(out, previous, now) {
   return { access_token: body.access_token, refresh_token: refresh, expires_at: now() + body.expires_in };
 }
 
+// The address an id token claims, for the sign-in page to name who signed in (DESK-305). The token
+// is read, never verified, and only for display: nothing is decided or kept from it. Anything that
+// is not a token with an address in it answers { email: null }.
+function claimsOf(idToken) {
+  try {
+    const part = String(idToken).split(".")[1];
+    if (!part) return { email: null };
+    const claims = JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
+    const email = claims !== null && typeof claims === "object" ? claims.email : null;
+    return { email: typeof email === "string" && email !== "" ? email : null };
+  } catch {
+    return { email: null };
+  }
+}
+
 const FORM = { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" };
 
 // The code from the browser, exchanged for the token, which is kept. PKCE: the verifier proves
@@ -194,7 +209,14 @@ async function exchange({ code, verifier }, { home, request, now = nowSeconds, k
   const token = { ...fromAnswer(out, null, now), at: NOW_AT };
   if (!keep()) throw new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out, so it was not kept.");
   saveToken(token, { home });
-  return token;
+  // The id token, if the answer carried one, is read for the address alone and dropped.
+  let idToken = null;
+  try {
+    idToken = JSON.parse(out.text).id_token;
+  } catch {
+    idToken = null;
+  }
+  return { ...token, email: claimsOf(idToken).email };
 }
 
 // A new access token from the refresh token, kept, from the address the sign-in was made on
@@ -230,4 +252,4 @@ async function current({ home, request, now = nowSeconds, timeoutMs }) {
   return refresh(token, { home, request, now, timeoutMs });
 }
 
-module.exports = { SIGNED_OUT, current, dropToken, dropTokenIfStill, exchange, folderThere, makeFolder, readToken, refresh, saveToken, tokenFile, tokenFolder };
+module.exports = { SIGNED_OUT, claimsOf, current, dropToken, dropTokenIfStill, exchange, folderThere, makeFolder, readToken, refresh, saveToken, tokenFile, tokenFolder };

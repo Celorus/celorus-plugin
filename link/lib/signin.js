@@ -14,6 +14,7 @@ const crypto = require("node:crypto");
 const http = require("node:http");
 const { LinkError } = require("./errors.js");
 const { AUTHORIZE_URL, CLIENT_ID, REDIRECT_URI, SCOPE, signedInAt } = require("./origins.js");
+const { signinPage } = require("./signin_page.js");
 
 const PORT = 8484;
 const HOSTS = ["127.0.0.1", "::1"];
@@ -74,11 +75,20 @@ const HEADERS = {
 // listeners are up (or cannot be), `code` with the code the browser brings, and `stop` ends the
 // wait at once (sign_out), so the listeners close and a code that comes later is turned away.
 // `createServer` stands in for http.createServer in the tests; `unref` lets the process end while
-// the wait is on.
-function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS, port = PORT, unref = false }) {
+// the wait is on. `onCode(code)` is the exchange, answering { email } (DESK-305): the page the
+// browser shows is written after it, naming who signed in, or saying the sign-in did not finish
+// when it fails; the wait ends with the code either way, so the caller is told. With no `onCode`
+// the page is the plain signed-in one, at once.
+function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS, port = PORT, unref = false, onCode = null }) {
   const make = createServer || ((handler) => http.createServer(handler));
   const servers = [];
   let settled = false;
+  // a code has come and its exchange is out: no second code is taken. `takenCode` is the code that
+  // was taken, and `waiting` the responses held for the page it ends with: the first request's, and
+  // a reload's of the same state and code (a reload of the only tab must not lose the result).
+  let taken = false;
+  let takenCode = null;
+  const waiting = [];
   let timer = null;
   let onReady;
   let onNotReady;
@@ -116,6 +126,14 @@ function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS
         res.writeHead(status, HEADERS);
         res.end(text);
       };
+      // The page goes to every response held for it, the first request's and any reload's.
+      const answerPage = (html) => {
+        for (const held of waiting.splice(0)) {
+          held.writeHead(200, { ...HEADERS, "Content-Type": "text/html; charset=utf-8" });
+          held.end(html);
+        }
+      };
+      const firstTab = () => answer(410, "This sign-in is being completed in your first tab. You can close this one.");
       if (settled) return answer(410, "This sign-in has ended. Start again from your assistant.");
       let url;
       try {
@@ -126,17 +144,57 @@ function listenForCode({ state, createServer, timeoutMs = WAIT_MS, hosts = HOSTS
       if (url.pathname !== "/callback") return answer(404, "Not found.");
       if (req.method !== "GET") return answer(405, "This address takes the browser's return from the sign-in only.");
       if (!LOOPBACK_HOSTS.has(String(req.headers.host || ""))) return answer(400, "This is not a sign-in address.");
-      if (!sameState(url.searchParams.get("state"), state)) {
+      const rightState = sameState(url.searchParams.get("state"), state);
+      const got = url.searchParams.get("code");
+      // While the exchange is out, the one request that carries this sign-in's state and the code
+      // that was taken (the first tab, reloaded) waits for the same page; any other is turned away.
+      // The state is kept: it is never used up by its first use.
+      if (taken) {
+        if (rightState && got === takenCode) {
+          waiting.push(res);
+          return undefined;
+        }
+        return firstTab();
+      }
+      if (!rightState) {
         return answer(400, "This sign-in is not the one Celorus started. Start again from your assistant.");
       }
       if (url.searchParams.get("error") !== null) {
         answer(200, "The sign-in did not finish. You can close this tab, and start again from your assistant.");
         return finish(reject, new LinkError("sign_in_refused", "The sign-in was not finished in the browser. Call sign_in to start again."));
       }
-      const got = url.searchParams.get("code");
       if (got === null || !CODE.test(got)) return answer(400, "The sign-in came back without a code. Start again from your assistant.");
-      answer(200, "Signed in to Celorus. You can close this tab.");
-      return finish(resolve, got);
+      if (onCode === null) {
+        waiting.push(res);
+        answerPage(signinPage({ email: null }));
+        return finish(resolve, got);
+      }
+      // The wait is closed to any other request while the exchange is out (a reload of the same
+      // state and code waits for the same page), and the five minutes no longer apply: the timeout cannot end a wait whose exchange is running (the transport's own
+      // timeout still bounds the exchange).
+      taken = true;
+      takenCode = got;
+      waiting.push(res);
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      let exchanged;
+      try {
+        exchanged = Promise.resolve(onCode(got));
+      } catch (err) {
+        exchanged = Promise.reject(err);
+      }
+      return exchanged.then(
+        (who) => {
+          answerPage(signinPage({ email: who && typeof who.email === "string" ? who.email : null }));
+          finish(resolve, got);
+        },
+        () => {
+          answerPage(signinPage({ failed: true }));
+          finish(resolve, got);
+        },
+      );
     };
 
     let up = 0;

@@ -456,7 +456,7 @@ ${RECORD_LINE}"
   exit 0
 elif [ "$found" -ne 0 ]; then
   if link_signed_in; then
-    emit "${NAME} here. Say '${NAME}, open my day' and I will set up this machine first.${node_note}
+    emit "${NAME} here. Say '${NAME}, open my day' to set up your desk and start, or '${NAME}, what can you do?' first.${node_note}
 ${RECORD_LINE}"
   else
     emit "${NAME} here. Celorus is installed. Sign in (it is free) and say '${NAME}, set up my desk'.${node_note}

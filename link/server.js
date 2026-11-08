@@ -71,7 +71,8 @@ const TOOLS = [
       "otherwise, and the desk " +
       "server still checks every change made through make. Otherwise answers a sign-in link to show the person in " +
       "full, as a line of its own, for them to open in their own browser; the link waits five minutes on this computer for the sign-in to finish, and keeps the sign-in " +
-      "under the home folder, never in the desk. Asks only for the desk server's own access.",
+      "under the home folder, never in the desk. " +
+      "Asks for the desk server's own access and for who is signing in (openid and email). The address is shown once, on the page that ends the sign-in, and kept nowhere. The plugin never asks for it again, though the tokens it keeps would let it.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -205,7 +206,22 @@ async function signIn(d) {
   }
   const { verifier, challenge, state } = signin.pkce();
   const url = signin.authorizeUrl({ challenge, state });
-  const { ready, code, stop } = signin.listenForCode({ state, createServer: d.createServer, unref: true });
+  // The exchange runs when the browser comes back (listenForCode's onCode), so the page it shows
+  // can name who signed in. `outcome` carries how it went to the log line below.
+  const mine = { url, stopped: false, stop: () => {} };
+  let outcome = null;
+  const onCode = async (got) => {
+    try {
+      if (mine.stopped) throw new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out.");
+      const kept = await token.exchange({ code: got, verifier }, { home: d.home, request: d.request, now: d.now, keep: () => !mine.stopped && pending === mine });
+      outcome = null;
+      return { email: kept.email };
+    } catch (err) {
+      outcome = err;
+      throw err;
+    }
+  };
+  const { ready, code, stop } = signin.listenForCode({ state, createServer: d.createServer, unref: true, onCode });
   try {
     await ready;
   } catch (err) {
@@ -215,17 +231,14 @@ async function signIn(d) {
   }
   // sign_out stops this sign-in: a code that comes after is turned away, and one whose exchange
   // was already out is never saved (exchange asks `keep` right before it saves).
-  const mine = { url, stopped: false, stop };
+  mine.stop = stop;
   pending = mine;
   code
-    .then((got) => {
-      if (mine.stopped) throw new LinkError("sign_in_stopped", "The sign-in was stopped by sign_out.");
-      return token.exchange({ code: got, verifier }, { home: d.home, request: d.request, now: d.now, keep: () => !mine.stopped });
+    .then(() => {
+      if (outcome !== null) throw outcome;
+      d.log("sign_in: signed in");
     })
-    .then(
-      () => d.log("sign_in: signed in"),
-      (err) => d.log(`sign_in: ${err && err.code ? err.code : "failed"}`),
-    )
+    .catch((err) => d.log(`sign_in: ${err && err.code ? err.code : "failed"}`))
     .finally(() => {
       if (pending === mine) pending = null;
     });
