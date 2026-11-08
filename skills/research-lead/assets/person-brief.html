@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="celorus-surface" content="collateral">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Vp8EI661lrisfGGnTZk1tRwFtnvf97L/rMj2liWiz2M='; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Meeting brief: {{person_name}}</title>
 <script>
 (function(){var r=document.documentElement;
@@ -25,8 +26,8 @@
     2. celorus-design/assets/foundation-block.css  the tokens, the reset and the type baseline, both themes.
     3. celorus-design/assets/collateral.css        the masthead, the eyebrow and the figure styles.
   The brief uses none of the cite-chip, the cite icon or the bottom-line styles in that sheet.
-  Wordmarks: the three img tags in the masthead name the skill's own files. Where the host
-  cannot load a file, embed that file's own bytes in the img when rendering.
+  Wordmarks: the three img tags in the masthead name the skill's own files. The page's policy
+  loads only data: images and fonts, so embed each file's own bytes in its img as a data: URI.
 -->
 <style data-inline="embedded-fonts.css"></style>
 <style data-inline="foundation-block.css"></style>
@@ -314,6 +315,7 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
     <span class="src">record</span>
     <span class="src">desk</span>
     <a class="src" href="{{web_url}}">web · {{web_site_name}}</a>
+    <span class="src">web · {{web_site_name}}</span>   (no link: for a web link that does not begin with https:// or http://)
   No document names, form numbers, page numbers or dates read on the page: the sources are not on it.
 
   REPEATING ROWS: a row marked "repeat" is copied once per line, up to the count in its part's data-budget.

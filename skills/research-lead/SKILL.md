@@ -358,6 +358,21 @@ be read, make the brief from the frame below and say so in a line. On a seat's g
 page-writing step below writes no page, the brief is what the chat shows, and the long profile that
 step describes is added beside it only when the person asks for it.
 
+These rules hold for every copy of the brief: the page filled from the template, the artifact shown
+in the chat, and any page built from the frame below. Some values come from the web and the page
+opens in the seller's browser. Every value put in the brief is escaped for HTML (`&`, `<`, `>`, `"`
+and `'` as entities) and is never written as markup. Every slot is text except the chip slot, which
+takes only a chip shape the template's comment on source chips shows; the link and the site's name inside a chip are values like any other, escaped. A link from the web is trimmed
+of spaces at both ends and compared without regard to case, and goes into an href only when it then
+begins with `https://` or `http://`. Any other link, such as `javascript:`, `data:` or `vbscript:`, or
+a link that opens with a tab or another control character, gets the template's chip with no link: a
+span of class `src` holding `web ·` and the site's name, escaped. Web text never goes
+inside a tag, an attribute other than that href, a style or a script. Each mark goes into its img as a
+`data:` URI of the file's own bytes, because the page loads nothing from outside. The CSP line and the
+script under it are copied exactly as they are. The page's policy guards only a page that opens as its
+own document. In a chat artifact the host puts the page inside its own frame and the policy does not
+apply, so the escaping rule above is the guard there, and it is never skipped.
+
 The reader is a salesperson who gives the page a minute before a meeting. The frame is fixed and the
 fill adapts to what is known: a person's full work history, another person's directorships over
 time. The parts, in this order, each answering a question and holding to the budget its section
