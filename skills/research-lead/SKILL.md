@@ -160,14 +160,48 @@ them" strip of the person part and the meeting part of the brief.
 
 The server judges whether this seat may have a research pack; this skill never reads a plan.
 When `research_ask` is among this session's tools and the desk is a seat's graph, by the test
-*Where the desk's pages are* gives, ask it for this lead before the web register, with these
-arguments and no others:
+*Where the desk's pages are* gives, ask it for this lead's quote before the web register: the
+call with `quote: true` and these arguments, and no others:
 
 - `about`: the stem of the lead's page on the desk, or, when the lead has no page yet, the slug
   its page would take, as the page-writing step below says.
 - `name`: the lead's name as the desk writes it.
 - `context`: only when the person gave a note on who the lead is, and only that note, with no
   contact detail and no personal identifier in it. With no such note, leave `context` out.
+
+Send the quote only when the tool's published input lists `quote`; where it does not, offer no
+pack, say nothing of it, and run the web register and every step after it as they stand below.
+A quote asks nothing and charges nothing; it says what a pack would cost this seat now. Go by
+the quote's answer:
+
+- **`quote`:** before anything is ordered, say "A research pack on {name} costs {credits}
+  credits, charged once, when its page is written. This seat can spend {balance} credits now.",
+  with the lead's name as `name` gave it and the reply's `credits` and `balance` in their places.
+  Where the reply carries no whole `balance`, leave out the sentence that begins "This seat".
+  Only when the reply's `needed` is whole and more than its `credits`, add "With this seat's
+  packs still being made, {needed} credits are needed in all." Then ask "Shall I order it?" That
+  is the only question about the pack in this pass; wait for its answer before the web register
+  runs. Say these words as they stand and nothing more around the cost: no price in money, no
+  link, no plan's name, no word that sells the pack or a plan, nothing the reply did not give,
+  and never that the price is held or the credits are set aside. Where the reply carries no
+  whole `credits`, the cost cannot be said: ask nothing, say nothing of the pack, and run the
+  web register and every step after it as they stand below.
+  - On the person's yes: make the order, the same call with `quote` left out, and go by its
+    answer below. The order runs every check anew: say its answer as below, and nothing more
+    from the quote. A refusal of the order is never passed over in silence, `not_offered` and
+    `no_account` included: say its `message` as it came, then run the web register and every
+    step after it as they stand below.
+  - On a no, or a reply that is not a clear yes: say nothing more of the pack, and run the web
+    register and every step after it as they stand below.
+- **`asked` or `unsettled`, as the quote's answer:** a pack was ordered, or may have been,
+  without the person's answer. Before anything else, say "This research pack may have been
+  ordered already, before you were asked. If it was, its credits are charged once, when its
+  page is written." Then go by that state's bullet below, as it stands: it says the folder its
+  `appears_at` names and, for `unsettled`, its `message`. Order nothing more, and call
+  `research_ask` no more in this pass. Any later ask for this lead, made when the person asks for
+  it, is a new pass and starts with the quote, never with the order straight away.
+- **Any other answer to the quote:** nothing was asked, and it is the answer the order would
+  give. Go by it below, as it stands, and make no order after it.
 
 Then go by the answer's `state`, and for a refusal by its `reason`:
 
@@ -209,7 +243,10 @@ Then go by the answer's `state`, and for a refusal by its `reason`:
 
 No answer of `research_ask` says whether this session is signed in to the record: the record
 step's own calls decide that, as that step says. Never ask `research_ask` again on your own,
-after any answer: another ask can make and charge another pack.
+after any answer: another ask can make and charge another pack. The quote is not an ask, since
+it makes nothing and charges nothing, and the rule holds for it too: in a pass, `research_ask`
+is sent the quote and, when the person says yes to its question, the order, and nothing
+besides. After any answer to the quote but `quote`, call `research_ask` no more in this pass.
 
 ## Step 2: the web register
 
@@ -556,9 +593,10 @@ about a person.
 
 ## While you work
 
-One plain progress line per step ("Reading what the desk already holds", "Asking for a
-research pack", "Searching the web for the company", "Reading the record", "Writing the page", or on a hosted desk
-"Showing the profile here").
+One plain progress line per step ("Reading what the desk already holds", "Checking what a
+research pack would cost", "Asking for a research pack", "Searching the web for the company", "Reading the record", "Writing the page", or on a hosted desk
+"Showing the profile here"). "Checking what a research pack would cost" is the quote's line;
+"Asking for a research pack" is said only for the order, after the person says yes.
 Never name a tool, a stream or a path to the user, except the folder a research pack appears
 in and the link's pull that brings it.
 
