@@ -246,6 +246,9 @@ const STALE = "stale_base";
 // Another call to the seat's storage under way, its one write at a time or its Drive calls in
 // flight: nothing was kept, and the call passes.
 const DESK_BUSY = "desk_busy";
+// The signed-in person's account could not be read just now (the desk server's own words: try
+// again in a minute): nothing was kept, and the call passes.
+const ACCOUNT_UNREAD = "account_unread";
 const isStale = (made) => made.state === "not_kept" && made.reason === STALE;
 
 // What a server's answer other than proceed says, and its structured part.
@@ -459,6 +462,11 @@ async function drain(root, d) {
       // another call to the seat's storage was under way (a write, or its Drive calls in
       // flight): nothing was kept, and it passes
       return wait(say(one.made.message) || "Another call to this desk was under way, and nothing was kept.", { state: "busy" });
+    }
+    if (one.made.state === "not_kept" && one.made.reason === ACCOUNT_UNREAD) {
+      // the account could not be read just now: nothing was kept, never set aside and never
+      // counted as a stop, it is made again once the account reads
+      return wait(say(one.made.message) || "Your account could not be read just now, and nothing was kept. Try again in a minute.", { state: "waiting", reason: ACCOUNT_UNREAD });
     }
     if (isStale(one.made) && entry.sent === "maybe") {
       return setAside(
