@@ -118,6 +118,11 @@ row carries; the source from `source`; the page from `page_as_of`, or, where `no
 `true`, the words the row shape below gives a lead with no page. Where `no_clock` or
 `clock_not_listed` holds words, say them as they came.
 
+Where `research_care` holds a line, say it as it came, beside the row's reason, with its web
+label, link and date, and say it comes from the pack's page, named by `research_care_page`. The
+line does not move the row and does not stop the pitch: whether and how to approach is the
+salesperson's call. A row is a handle-with-care row by its `clock` alone.
+
 `cap_calls_per_day` in `motion-spec.md` is the desk's cap on a day's calls, and the tool makes
 the cut there: `cap` is the cap it read. Where the desk sets no cap the tool can use, `cap`
 is `null`, `later_today` is empty and `no_cut` holds a sentence: say that sentence as it

@@ -456,6 +456,9 @@ rest of the frame stands. Rules under the frame:
   are listed in `motion-spec.md`, which is where triage reads it) gets the person, company and event
   parts only: no opener, no ask and no pitch, no offer of a pitch, a draft or an opener, and a plain
   line saying the lead is a handle-with-care row and so is not pitched.
+- A "Handle with care" line the pack itself carries also shows on triage's row for the lead, as the
+  pack wrote it, but only the lead's newest pack is read: an older pack's line shows nothing. It does
+  not make the lead a handle-with-care row: that stays `clock`'s alone.
 - The footer says what the brief was built from. It names the company page only where it was
   written, on a desk. With no desk, the sources are given in the chat as a short list under
   "Where this came from", never on the page, in the place the end order below gives it, before the

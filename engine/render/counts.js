@@ -1673,7 +1673,7 @@ function callRow(desk, lead, kinds, order, careLines) {
   else if (order.includes(onPage)) clock = onPage;
   else if (onPage) notListed = `The page's clock is ${JSON.stringify(onPage)}, which is not in the day's order of clocks, so the row is placed as ${REASON_TO_CALL}.`;
   else noClock = page ? NO_CLOCK_ON_PAGE : NO_PAGE_YET;
-  const said = { lead, title, clock, kinds: kindsHeld, no_clock: noClock, clock_not_listed: notListed };
+  const said = { lead, title, clock, kinds: kindsHeld, no_clock: noClock, clock_not_listed: notListed, ...researchCare(desk, lead) };
   for (const k of kindsHeld) said[CALL_KIND_KEYS[k]] = kinds.get(k).map((r) => r.fields);
   said.source = first === "supplied" ? `supplied-${kinds.get(first)[0].fields.list}` : first === "book moment" ? "book" : "follow-up";
   if (page) said.page_as_of = headerValue(page, "timestamp");
@@ -1853,3 +1853,69 @@ module.exports = {
   SEAM_WORDS,
   FUNNEL_KEYS,
 };
+
+// A list line of a research page that opens with the words "handle with care", in any letter case,
+// after a list marker (`-`, `*`, `+`, `1.` or `1)`) and, where the line has one, a bold mark (`**`
+// or `__`): followed by the end of the line, a space, ":" or the closing bold mark. A line that only
+// mentions the words later, that runs them into a longer word, or that is no list line, is not one.
+// The shown text is the line from the bold mark or the words on, as written.
+const CARE_LINE = /^\s*(?:[-*+]|\d+[.)])\s+((?:\*\*|__)?handle\s+with\s+care(?=$|[\s:]|\*\*|__).*)$/iu;
+// the line that opens or closes a fenced block of a page
+const FENCE = "\u0060\u0060\u0060";
+
+// A header's time as an instant in milliseconds, or null where it is missing or not a time with its
+// offset as a pack writes it (OFFSET_TIME): never a lenient reading of some other form.
+function instantOrNull(value) {
+  return offsetTime(value) ? Date.parse(value) : null;
+}
+
+// Whether a research page is a pack: a signal page carries `engine` and `engine_label`, a pack's
+// header holds neither (pack.py: type, title, description, about, as_of, timestamp).
+function isPack(page) {
+  return !Object.hasOwn(page.header, "engine") && !Object.hasOwn(page.header, "engine_label");
+}
+
+// Two research pages as a sort reads them, newest first: by `as_of`, then by the header's
+// `timestamp` as an instant. Never by file name or file order. A page with no readable time reads
+// as the oldest, and two such pages tie.
+function byNewestResearch(desk, a, b) {
+  const asOf = (page) => desk.get(page, "as_of").trim();
+  const [x, y] = [asOf(a), asOf(b)];
+  if (x !== y) return x < y ? 1 : -1;
+  const [ta, tb] = [instantOrNull(a.header.timestamp), instantOrNull(b.header.timestamp)];
+  if (ta === tb) return 0;
+  if (ta === null) return 1;
+  if (tb === null) return -1;
+  return tb - ta;
+}
+
+// The first care line of a page's body, outside any fenced block, as written, or null.
+function careLineOf(body) {
+  let fenced = false;
+  for (const line of String(body).split(/\r\n|\r|\n/)) {
+    if (line.trimStart().startsWith(FENCE)) {
+      fenced = !fenced;
+      continue;
+    }
+    const found = fenced ? null : CARE_LINE.exec(line);
+    if (found) return found[1].trim();
+  }
+  return null;
+}
+
+// The care line of the lead's newest research pack, as the pack wrote it, and the page's slug, or
+// nulls. Only packs count (a signal page, which carries `engine`, is read past), and only the
+// newest: where `as_of` and `timestamp` both tie, the first of the tied pages (by slug) that holds
+// a care line is read. This only shows the line; the row's clock, place and pitch are never read
+// from it (D-IND-36: the chip changes nothing else).
+function researchCare(desk, lead) {
+  const pages = desk.of("research").filter((page) => isPack(page) && desk.get(page, "about") === lead);
+  if (!pages.length) return { research_care: null, research_care_page: null };
+  pages.sort((a, b) => byNewestResearch(desk, a, b) || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
+  const newest = pages.filter((page) => byNewestResearch(desk, pages[0], page) === 0);
+  for (const page of newest) {
+    const line = careLineOf(page.body);
+    if (line !== null) return { research_care: line, research_care_page: page.slug };
+  }
+  return { research_care: null, research_care_page: null };
+}
