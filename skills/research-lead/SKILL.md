@@ -208,16 +208,18 @@ Then go by the answer's `state`, and for a refusal by its `reason`:
 - **No `research_ask` in this session, a desk that is not a seat's graph or no desk, or a refusal
   for `not_offered` or `no_account`:** run the web register and every step after it as they
   stand below, and say nothing of the ask.
-- **`asked`:** say that the research pack is being made, that its page will appear in the
-  folder the answer's `appears_at` names (`celorus/shared/research/`), and that the link's
+- **`asked`:** say that the research pack is being made, that its page will appear in this
+  seat's own desk, in the folder the answer's `appears_at` names (`celorus/shared/research/`;
+  on a hosted desk that is under the seat's own folder, `seats/<seat>/`, so `shared` there never
+  means the firm's common folder), and that the link's
   `pull` brings it to this desk after the research run has written it. Write nothing by hand for
   this lead: no page, no desk-log row and no line in `log.md`. The brief is still made in the same pass,
   with the web register and the record. On a hosted desk the pack is kept on the desk, in that
   folder.
-- **`unsettled`:** say its `message` as it came, with the folder its `appears_at` names, then run
-  the web register and every step after it as they stand below. Before this lead is asked for
-  again, call `celorus-link`'s `pull` and look in that folder for its page; ask again only on the
-  person's word, after that look.
+- **`unsettled`:** say its `message` as it came, with the folder in this seat's own desk
+  that its `appears_at` names, then run the web register and every step after it as they stand
+  below. Before this lead is asked for again, call `celorus-link`'s `pull` and look in that
+  folder for its page; ask again only on the person's word, after that look.
 - **`payment_required`:** say these, in this order:
   - "Nothing was asked and nothing was charged: this research pack needs more credits than this
     seat can spend now."
@@ -296,9 +298,9 @@ date, and where its line came from instead.
 ## Step 3: the record
 
 **3b, signed in to the record** (the `celorus-data` tools are present and answer): fetch
-the honesty rules once with `get_semantic_metadata` (product `aoc4`, kind
-`honesty_rules`) and follow them verbatim (a person's `clarify` that the seller's own words
-already answer is read as below); then
+the honesty rules once with
+`get_semantic_metadata(product_id="aoc4", kind="honesty_rules")` and follow them verbatim
+(a person's `clarify` that the seller's own words already answer is read as below); then
 `resolve_subject` with the name, and with the spelling the web register found the person under
 when it differs (for a person, with `subject_kind_hint` `Person`, and the `city` and `company`
 only where the seller's own words give them, in this ask or in their answer to a question this
