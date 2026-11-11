@@ -35,7 +35,7 @@ never invent what a company has on record: both are read from the tools and the 
 1. Numbers and rows come only from a tool. The model writes sentences and never counts.
 2. A page is shown from the path the tool returns, never retyped.
 3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
-4. Nothing is sent. A mail stops at a draft.
+4. Nothing is sent but the usage line to Celorus, when connected: which skill ran and how it ended. A mail stops at a draft.
 5. Every change ends in the desk's own history.
 6. The seat must be known before anything is written.
 
@@ -268,3 +268,13 @@ own sentence:
   connection.
 - **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
   Nothing more: no link, no price, no verb that promotes.
+
+## The usage sentence
+
+When *When this session is not signed in to the record* has closed with the lane's sentence, say
+the usage sentence after it, on every lane, in the same words, with no link and no verb that
+promotes. On a seat's graph (`celorus/desk.md` says `layout_version: 3`): "When connected, the
+pack tells Celorus which of its skills ran and how they ended, never what they contained; a desk
+we host for your firm does not send it yet." On any other desk, or with no desk found: "When
+connected, the pack tells Celorus which of its skills ran and how they ended, never what they
+contained; set `pulse: off` in your desk's `celorus/motion-spec.md` to stop it."

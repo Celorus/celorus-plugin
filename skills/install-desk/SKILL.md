@@ -35,7 +35,7 @@ Where a section below seems to ask for something they forbid, they win.
 1. Numbers and rows come only from a tool. The model writes sentences and never counts.
 2. A page is shown from the path the tool returns, never retyped.
 3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
-4. Nothing is sent. A mail stops at a draft.
+4. Nothing is sent but the usage line to Celorus, when connected: which skill ran and how it ended. A mail stops at a draft.
 5. Every change ends in the desk's own history.
 6. The seat must be known before anything is written.
 
@@ -52,7 +52,7 @@ Where a section below seems to ask for something they forbid, they win.
 - **"update my desk"** moves a desk to the newest model, after a preview and one yes, and
   records `none on this desk` for a system the person says the firm has none of. It never deletes
   a page.
-- **On a seat's graph** (`celorus/desk.md` says `layout_version: 3`), the desk was made by its conversion or on the set-up page, and came to this computer by the link's `pull`, never by this skill: set nothing up and update nothing. "Check my desk setup" there reads `celorus/desk.md` only, and says the rest is the desk server's.
+- **On a seat's graph** (`celorus/desk.md` says `layout_version: 3`), the desk was made by its conversion or on the set-up page, and came to this computer by the link's `pull`, never by this skill: set nothing up and update nothing. In set-up and refresh mode the reply still says the usage sentence, as *Last step: the usage line* says. "Check my desk setup" there reads `celorus/desk.md` only, and says the rest is the desk server's.
 
 ## Where the desk lives: the one path convention
 
@@ -143,16 +143,18 @@ and `reason`:
 - "The desk server could not be reached": say so and set nothing up. The desk may be in the
   storage already, so try again once online.
 - `refused`, where the answer's words begin "The pull is for a seat's graph" (the answer has no
-  `reason`, so the words are what tells it apart): the folder the AI is in holds a desk made on
-  this computer with the five seat questions. Say "Your desk is already on this computer.
-  There is nothing more to set up: say 'Milan, open my day' to start." and set nothing up. Never say the answer's own words.
+  `reason`, so the words are what tells it apart): the folder the AI is in holds a desk that is
+  not a seat's graph. Say "Your desk is already on this computer.
+  There is nothing more to set up: say 'Milan, open my day' to start." and set nothing up. Never say the answer's own words. The reply still says
+  the usage sentence before that sentence, as *Last step: the usage line* says.
 - Any other answer: say it as it came, and set nothing up.
 
 **When the desk is on this computer.** The workday skills find the desk from the folder the AI
 is opened in. Tell the person to open their AI in the desk's folder: in the Claude desktop app, a
 new session in the Code tab with that folder chosen; in a terminal, go to that folder and start
 `claude` or `codex` there. Then tell them the first thing to ask there: "Open my day".
-Nothing else is set up on this path, and `scaffold_desk` is never called.
+Nothing else is set up on this path, and `scaffold_desk` is never called. The reply still says
+the usage sentence before that first ask, as *Last step: the usage line* says.
 
 ## Seat mode: ask only what is missing
 
@@ -246,7 +248,9 @@ skill.
    sets each out as a proposal in `celorus/learnings/` and lists them in the rulebook; tell
    the operator the desk accepts, rewrites or strikes each one there.
 3. Write `motion-spec.md` from the bundle (its `charter_version` and `bundle_version`
-   copied from the bundle); seed `register.md` with the Charter's signals, each with
+   copied from the bundle), keeping the `pulse:` line and the comment line above it as the
+   desk had them, so a refresh never turns the usage line back on; seed `register.md` with
+   the Charter's signals, each with
    `build: unbuilt` and `compliance: unreviewed` unless the bundle says otherwise; seed
    `context/never-say.md` with the compliance lines. Write one line to `log.md`, under the
    day's heading, saying the bundle was applied.
@@ -275,6 +279,8 @@ than make its stamps up. Otherwise:
 - `index.md` has a header holding only `okf_version: "0.2"`; `log.md` has no header: it
   holds `# Log`, then `## YYYY-MM-DD` day headings with lines `* HH:MM · ...` under them;
 - `desk.md` carries `layout_version: 2`, a `model_version`, and a non-empty `desk` and `desk_id`;
+- `motion-spec.md` says `pulse: on` or `pulse: off`, said as it reads; a desk set up before the
+  line has none, and that reads as on;
 - every other markdown file under `celorus/` opens with a header that has a non-empty `type`,
   and a `timestamp` outside `model/` and `views/`;
 - outside `model/`, `views/` and `merges/`, every `type` is a kind named by a
@@ -325,7 +331,8 @@ the desk, so it is theirs to run.
 
 Follow `update.md` in this skill's folder exactly: take a commit or a dated copy first, show
 the preview, change nothing until the person says yes, then run the steps in order. It never
-deletes a page, and sends nothing but what `make` sends the desk server. If a step stops, name the step and say the desk is
+deletes a page, and sends nothing but what `make` sends the desk server and the usage line
+that *Last step: the usage line* sends Celorus. If a step stops, name the step and say the desk is
 as it was.
 
 ## Say at the end (set-up and refresh)
@@ -341,6 +348,8 @@ From `scaffold_desk`'s answer, never from a count of your own:
 - What to ask first, on a line of its own, in these words: "Ask this first: Milan, open my day".
   Then one line: on this desk's first day it shows a made-up sample morning, so they see how a
   day looks before their own leads are on it.
+- The usage sentence, on a line of its own, as *Last step: the usage line* says, picked by what
+  `celorus/desk.md` says.
 
 In seat mode, a person setting the desk up on their own, say what they can do next, as this
 list, in these words, and nothing about anyone else doing the set-up for them:
@@ -482,6 +491,41 @@ sees what was written. Follow these as they say:
 - "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
 - Any other answer: say it as it came; where it says nothing was written, stop that change.
 
+## Last step: the usage line
+
+When this skill's work is done, and before the reply's last line, send Celorus the usage line, or
+skip it, as below. It is never a reason this skill cannot finish, and the reply says nothing of
+the call.
+
+In set-up and refresh mode, read `celorus/desk.md` in the desk's folder (after a pull, the folder
+its answer named), then say the usage sentence as a line of its own, whatever the call does. The
+kind of desk is what that file says, never what a tool's answer suggests. On a seat's graph
+(`celorus/desk.md` says `layout_version: 3`): "When connected, the pack tells Celorus which of its
+skills ran and how they ended, never what they contained; a desk we host for your firm does not
+send it yet." On any other desk, or with no desk found: "When connected, the pack tells Celorus
+which of its skills ran and how they ended, never what they contained; set `pulse: off` in your
+desk's `celorus/motion-spec.md` to stop it."
+
+- On a seat's graph (`celorus/desk.md` says `layout_version: 3`), skip the call: a desk we host for
+  the firm does not send the usage line yet.
+- Read `pulse:` in `celorus/motion-spec.md`. When it says `pulse: off`, skip the call. A motion spec
+  with no `pulse:` line reads as on.
+- `desk_pulse` is served by the same server as the record's other tools (on Claude Code,
+  `celorus-data`), never by the desk tools' server (`celorus-desk`). A `desk_pulse` listed by its
+  name only, to be loaded when it is used, is present: load it before the call. When this session
+  has no `desk_pulse` tool, or a call to the record in this run was refused as not signed in,
+  skip the call.
+- When this run has no `check_desk` answer, call `check_desk` for it, read-only (leave `record`
+  out). When that refuses or cannot run, or its answer has no `desk_id`, skip the call.
+- Otherwise call `desk_pulse` with these fields and no others: `skill`, `outcome_class`, `desk_id`,
+  `pack_version`. `skill` is `install-desk`. `outcome_class` is `completed` when the work was done,
+  `stopped_by_user` when the person stopped it, `nothing_to_do` when there was nothing to do,
+  `refused` when a refusal ended it, and `error` when a tool could not run. `desk_id` and
+  `pack_version` are the `desk_id` and `plugin_version` of this run's `check_desk` answer, as they
+  came. Never send `duration_bucket`: no desk tool gives this run's time.
+- Whatever it answers, or if it fails, say nothing about it, never ask the person to sign in for it,
+  and never call it again in this run.
+
 ## Never
 
 - Never ask for, copy or store the client master list; the CRM is an export the desk
@@ -490,6 +534,6 @@ sees what was written. Follow these as they say:
 - Never write outside the desk folder; the one seat pointer is the tool's to write.
 - Never overwrite a data file on refresh; never delete anything in verify.
 - Never send anything anywhere but through `make`, which sends the desk server only what the
-  change it makes needs.
+  change it makes needs, and the usage line that *Last step: the usage line* sends Celorus.
 
 **Next:** `day-open`. When this skill is done the scaffold exists and `log.md` has its first line; or, for a desk the server keeps, the desk is on this computer and the person knows the folder to open their AI in.

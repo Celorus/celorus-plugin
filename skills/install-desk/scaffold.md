@@ -143,6 +143,8 @@ crm_field_owner: Owner
 crm_field_last_touch: Last Activity
 charter_version: 0
 bundle_version: 0
+# pulse: the usage line's switch on a desk on this computer, on or off. When connected, it tells Celorus which workday skill ran and how it ended, never what it held. A desk Celorus hosts does not send it yet.
+pulse: on
 ---
 
 # Motion spec

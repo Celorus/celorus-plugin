@@ -27,7 +27,7 @@ the end, plainly, because that list is the honest close and it is what the recor
 1. Numbers and rows come only from a tool. The model writes sentences and never counts.
 2. A page is shown from the path the tool returns, never retyped.
 3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
-4. Nothing is sent. A mail stops at a draft.
+4. Nothing is sent but the usage line to Celorus, when connected: which skill ran and how it ended. A mail stops at a draft.
 5. Every change ends in the desk's own history.
 6. The seat must be known before anything is written.
 
@@ -669,6 +669,31 @@ sees what was written. Follow these as they say:
 - "This seat's storage holds no desk yet" (a seat's graph): call `celorus-link`'s `seed`, then make the change again.
 - Any other answer: say it as it came; where it says nothing was written, stop that change.
 
+## Last step: the usage line
+
+When this skill's work is done, and before the reply's last line, send Celorus the usage line, or
+skip it, as below. It is never a reason this skill cannot finish, and the reply says nothing of it.
+
+- On a seat's graph, as *Where the desk's pages are* says, skip the call: a desk we host for the
+  firm does not send the usage line yet.
+- Read `pulse:` in `celorus/motion-spec.md`. When it says `pulse: off`, skip the call. A motion spec
+  with no `pulse:` line reads as on.
+- `desk_pulse` is served by the same server as the record's other tools (on Claude Code,
+  `celorus-data`), never by the desk tools' server (`celorus-desk`). A `desk_pulse` listed by its
+  name only, to be loaded when it is used, is present: load it before the call. When this session
+  has no `desk_pulse` tool, or a call to the record in this run was refused as not signed in,
+  skip the call.
+- When this run has no `check_desk` answer, call `check_desk` for it, read-only (leave `record`
+  out). When that refuses or cannot run, or its answer has no `desk_id`, skip the call.
+- Otherwise call `desk_pulse` with these fields and no others: `skill`, `outcome_class`, `desk_id`,
+  `pack_version`. `skill` is `research-lead`. `outcome_class` is `completed` when the work was done,
+  `stopped_by_user` when the person stopped it, `nothing_to_do` when there was nothing to do,
+  `refused` when a refusal ended it, and `error` when a tool could not run. `desk_id` and
+  `pack_version` are the `desk_id` and `plugin_version` of this run's `check_desk` answer, as they
+  came. Never send `duration_bucket`: no desk tool gives this run's time.
+- Whatever it answers, or if it fails, say nothing about it, never ask the person to sign in for it,
+  and never call it again in this run.
+
 ## Never
 
 - Never state a web figure as a record figure, or blend the two in one line.
@@ -678,6 +703,6 @@ sees what was written. Follow these as they say:
 - Never infer a family relationship, a community or anything protected from a surname, a
   locality or a co-appearance; never name or profile a minor.
 - Never fill from memory or general knowledge; "Not established" is the honest line.
-- Never send anything.
+- Never send anything but the usage line, as *Last step: the usage line* says.
 
 **Next:** after the brief, and the reply's last line, the offer line, as *The brief* sets out, comes `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to the record, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.

@@ -18,7 +18,7 @@ each family, then the question as the tool read it, so the person can check it.
 1. Numbers and rows come only from a tool. The model writes sentences and never counts.
 2. A page is shown from the path the tool returns, never retyped.
 3. A refusal names its valid values. A tool that cannot run says so in one sentence, and the skill stops.
-4. Nothing is sent. A mail stops at a draft.
+4. Nothing is sent but the usage line to Celorus, when connected: which skill ran and how it ended. A mail stops at a draft.
 5. Every change ends in the desk's own history.
 6. The seat must be known before anything is written.
 

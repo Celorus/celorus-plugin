@@ -142,9 +142,9 @@ grievance@celorus.com.
   tool's change sends: the link sends the Celorus desk server the desk pages that change
   needs and the change's own details, such as a brief's notes, over your signed-in
   connection, and writes back the pages it answers, keeping no copy of them. Reading the
-  desk sends nothing, and
-  neither does a page written by hand. The
-  record tools send the question you ask over your signed-in connection. The plugin carries no tracker and reports no usage.
+  desk sends nothing, and neither does a page written by hand. The record tools send the
+  question you ask over your signed-in connection. The plugin carries no tracker. With your Celorus account connected, the workday skills on a desk on your own computer send one line as each run ends: which skill ran, how it ended, the desk's id and the plugin version, never what the run read or wrote.
+  Set `pulse: off` in your desk's `celorus/motion-spec.md` to stop it. A desk we host for your firm does not send it yet.
 - **What reaches Claude.** Whatever a skill reads to answer you goes to Claude as any
   conversation does: your desk pages, and your mail, calendar and CRM once you connect
   them. The plugin adds no processor of its own.
