@@ -161,7 +161,8 @@ them" strip of the person part and the meeting part of the brief.
 The server judges whether this seat may have a research pack; this skill never reads a plan.
 When `research_ask` is among this session's tools and the desk is a seat's graph, by the test
 *Where the desk's pages are* gives, ask it for this lead's quote before the web register: the
-call with `quote: true` and these arguments, and no others:
+call with `quote: true` and these arguments, and no others but what the `already_made` bullet
+below adds:
 
 - `about`: the stem of the lead's page on the desk, or, when the lead has no page yet, the slug
   its page would take, as the page-writing step below says.
@@ -220,6 +221,21 @@ Then go by the answer's `state`, and for a refusal by its `reason`:
   that its `appears_at` names, then run the web register and every step after it as they stand
   below. Before this lead is asked for again, call `celorus-link`'s `pull` and look in that
   folder for its page; ask again only on the person's word, after that look.
+- **`already_asked`:** say its `message` as it came, with the folder in this seat's own desk
+  that its `appears_at` names. A research pack for this lead is already being made there, so
+  write nothing by hand for this lead: no page, no desk-log row and no line in `log.md`. The
+  brief is still made in the same pass, with the web register and the record.
+- **`already_made`:** say its `message` as it came, with the folder in this seat's own desk
+  that its `appears_at` names; its `made_on` is the date of the page there. A research page for
+  this lead is already in that folder, so write nothing by hand for this lead: no page, no
+  desk-log row and no line in `log.md`. The brief is still made in the same pass, with the web
+  register and the record. Order nothing in this pass. Only when the person, having heard that
+  date in this conversation, asks for a new research pack for this lead, start a new pass with
+  the quote, sent with `again: true`; after their yes to its question, the order is sent with
+  `again: true` too. Send `again` in that new pass alone. Never send `again` on your own or on a
+  lead's opening ask, and never in a pass that does not follow this answer in this same
+  conversation. Offer no new research pack after this answer, in the offer line or anywhere
+  else: a yes to an offer this skill made is not the person's ask.
 - **`payment_required`:** say these, in this order:
   - "Nothing was asked and nothing was charged: this research pack needs more credits than this
     seat can spend now."
