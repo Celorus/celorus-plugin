@@ -118,6 +118,23 @@ row carries; the source from `source`; the page from `page_as_of`, or, where `no
 `true`, the words the row shape below gives a lead with no page. Where `no_clock` or
 `clock_not_listed` holds words, say them as they came.
 
+A lead the nightly placement put on the list for the firm's ideal client profile carries
+`tier`, `icp_persona` and `icp_version`: its tier, the persona it was placed under by its
+ordinal, and the profile's version. Write them after the source as the row shape below gives
+them, the persona by its ordinal alone and never by a name. A row without them shows no tag
+part. The tool leaves them off when the lead was given by hand or came before the profile, when
+the placement withdrew it and a later row gave it again, when any of them is missing from both
+its row and its page, and whenever the nightly removal check could no longer reach the lead's
+row: for example,
+the row holds an id that is not its page's, the row holds no id and a seat edited the page, the
+row's cells no longer line up with the list's columns, or the desk keeps no common list.
+Write the row without them, and never supply a tag yourself.
+Inside each clock the tool puts follow-ups and replies ahead of the supplied names, the
+supplied names by tier from the top tier down, the untagged after them, and each tier by date;
+write the order as it came. The tags show on the desk head's day while a placed name is not
+yet given out. A seat it was given to sees them only where the list's row holds the lead's id
+and the lead's page has reached that seat's desk; elsewhere the seat sees the row without them.
+
 Where `research_care` holds a line, say it as it came, beside the row's reason, with its web
 label, link and date, and say it comes from the pack's page, named by `research_care_page`. The
 line does not move the row and does not stop the pitch: whether and how to approach is the
@@ -139,10 +156,15 @@ and no opener.
 ## Every row
 
 ```markdown
-- **<Name>** · <clock in words> · <the reason: what happened, when, and why that puts them here today> · Source: <supplied-<list id> | book | follow-up | inbound> · <no page yet; research first | page as of <date>>
+- **<Name>** · <clock in words> · <the reason: what happened, when, and why that puts them here today> · Source: <supplied-<list id> | book | follow-up | inbound> · <tier> · persona `icp_persona`, version `icp_version` · <no page yet; research first | page as of <date>>
 ```
 
-Rows are in order from the top, one bullet each, with no position number.
+Rows are in order from the top, one bullet each, with no position number. In the tag part,
+`<tier>` is the row's `tier`, and `icp_persona` and `icp_version` stand for the row's values of
+those fields, each written as it came. The tag part is there only for a row that carries all
+of them; any other row goes straight from the source to the page. On a desk that is not a
+seat's graph, the rows written into the board leave the tag part out: it is shown in the chat
+only.
 
 The reason is words, never a score. A supplied name with no page reads "no page yet;
 research first" and stays on the list: research is the first call's preparation.

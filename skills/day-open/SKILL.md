@@ -58,9 +58,10 @@ they forbid, they win.
 - A tool that refuses says what is wrong and what the valid values are. Read the refusal,
   correct the call and try again. Never work around a refusal, never invent a value it did not
   list, and never write the change some other way.
-- No desk tool yet counts the new names on a supplied list, the follow-ups due, or the day's
-  events for a desk without family pages. Until one does, name those rows in words and give
-  no number for them: never count them yourself.
+- `desk_count` with `count` `new_supplied` answers the new names on a supplied list, each list
+  with its newest date: say its answer as it came. No desk tool yet counts the follow-ups due
+  or the day's events for a desk without family pages. Until one does, name those rows in
+  words and give no number for them: never count them yourself.
 
 ## Find the desk
 
@@ -270,6 +271,12 @@ unreadable and so in `sources_missing`, and no CRM on this desk, in neither list
 Every line under "Moved overnight", "Due today" and "On the clock" is the desk's own
 knowledge and carries the register label `yours` with the date. A reply is a fact about
 the desk's mailbox, not about the subject.
+
+On a seat's graph, the desk head's board can also carry the pool lines: what the night's
+placement found for each persona of the firm's ideal client profile, a full tray, a draft of
+the profile waiting, or the day names were last placed. Only the overnight writes them. Show
+each line as it came. Never write a pool line on any other desk or change its words, and
+never name a persona in any other way than the line does.
 
 Then:
 

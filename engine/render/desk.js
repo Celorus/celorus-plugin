@@ -42,17 +42,19 @@ function cells(line) {
 
 // A register's rows: the first table line names the columns, a rule line is passed over, a
 // short row is read with its missing cells empty, and a blank cell is null.
-function readTable(text) {
+// `cut` cuts a line into its cells (cells, or a reader that strips as another reader does: the
+// rows are the same rows, in the same order, whatever cuts them).
+function readTable(text, cut = cells) {
   const rows = [];
   let columns = null;
   for (const line of text.split(/\r\n|\r|\n/)) {
     if (!line.startsWith("|")) continue;
     if (columns === null) {
-      columns = cells(line);
+      columns = cut(line);
     } else if ([...line.replace(/\|/g, "").trim()].every((ch) => "-: ".includes(ch))) {
       continue;
     } else {
-      const got = cells(line);
+      const got = cut(line);
       while (got.length < columns.length) got.push(BLANK);
       const row = {};
       columns.forEach((column, i) => {

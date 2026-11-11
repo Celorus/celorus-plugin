@@ -13,7 +13,7 @@ const { linkSpans } = require("../check/text.js");
 const PY_SPACE =
   "\\t\\n\\u000b\\u000c\\r\\u001c-\\u001f \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
 const SPACE_RUN = new RegExp(`[${PY_SPACE}]+`, "gu");
-const EDGE_SPACE = new RegExp(`^[${PY_SPACE}]+|[${PY_SPACE}]+$`, "gu");
+const EDGE_SPACE = new RegExp(`^[${PY_SPACE}]$`, "u"); // one such character, as pyStrip walks an edge
 // The characters besides "\n" and "\r" that Python's str.splitlines() reads as a line break,
 // each by its name. A register holding one is refused, as one with "\r" is (pages.js), so a
 // row that holds one is never torn in two.
@@ -43,8 +43,15 @@ const DOT = ` ${BLANK} `;
 // case-folding disk would read "Kabir" as kabir.md, and "../" would leave the folder.
 const HANDLE = /^[a-z0-9][a-z0-9-]*$/u;
 
+// Python's str.strip(): walked from each end by index (each PY_SPACE character is one UTF-16 unit),
+// so a long run of spaces inside the text costs one pass; a pattern anchored at the end would try
+// again from each space in the run.
 function pyStrip(text) {
-  return text.replace(EDGE_SPACE, "");
+  let start = 0;
+  let end = text.length;
+  while (start < end && EDGE_SPACE.test(text[start])) start += 1;
+  while (end > start && EDGE_SPACE.test(text[end - 1])) end -= 1;
+  return text.slice(start, end);
 }
 
 function pySplit(text) {

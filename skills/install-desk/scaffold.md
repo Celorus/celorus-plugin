@@ -128,7 +128,6 @@ type: motion-spec
 title: Motion spec
 description: What a lead is on this desk, the clocks, the caps, the roles
 timestamp: {{now}}
-lead_definition: a person or family we could open a conversation with this quarter
 clocks: [money-in-motion, reason-to-call, handle-with-care]
 cap_calls_per_day: 8
 cap_openers_per_day: 3
@@ -149,8 +148,8 @@ pulse: on
 
 # Motion spec
 
-A lead here is a person or family we could open a conversation with this quarter. The
-three clocks order the day: money in motion first, then a reason to call; handle with care
+A lead here is a person or family who fits the firm's ideal client profile: who the firm
+serves, in its own words. The three clocks order the day: money in motion first, then a reason to call; handle with care
 is listed last and never gets a pitch. Caps are the desk's own. Role profiles name where
 each role's day starts. Edit this file by hand or refresh it from the desk bundle.
 ```

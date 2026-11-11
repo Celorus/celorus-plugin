@@ -384,6 +384,13 @@ function notGraphSaid(celorus, head, present) {
   );
 }
 
+// The seat the firm's common space at `dir` names as its desk head (common.md's desk_head:), or ""
+// when it names none.
+function deskHeadNamed(dir) {
+  const head = readPage(dir, COMMON_STAMPS).head;
+  return head !== null && typeof head === "object" && !Array.isArray(head) && typeof head.desk_head === "string" ? pyStrip(head.desk_head) : "";
+}
+
 // The firm's common space beside the seat's graph at `root` (the desk folder), for a write there
 // of `page` (its path in the common space) by `seat`: its folder, which only the desk head writes
 // (the base's ruling K8, c/6212179305), as common.md's desk_head: names. Every other case is
@@ -393,8 +400,7 @@ function notGraphSaid(celorus, head, present) {
 // head, and a seat that is not the desk head.
 function commonFor(root, desk, seat, page, done) {
   const dir = commonBeside(root, desk, page, done);
-  const head = readPage(dir, COMMON_STAMPS).head;
-  const named = head !== null && typeof head === "object" && !Array.isArray(head) && typeof head.desk_head === "string" ? pyStrip(head.desk_head) : "";
+  const named = deskHeadNamed(dir);
   if (!named) {
     throw new Refusal(`The firm's common space names no desk head (its common.md says no desk_head:), so no seat writes ${page} there. ${done}`);
   }
@@ -493,5 +499,6 @@ module.exports = {
   familyPeople,
   notGraphSaid,
   commonFor,
+  deskHeadNamed,
   namesFor,
 };

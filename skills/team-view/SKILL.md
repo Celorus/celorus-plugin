@@ -74,7 +74,11 @@ until it is known. This view is the desk head's: the seat is the desk head, foun
    whose `role` in `celorus/seats/<handle>.md` is `desk-head`. If the seat that asked is not the
    desk head, say so in one line, "Only the desk head hands out leads, and this seat is not the
    desk head.", write nothing, and stop.
-2. Through `make`, `assign_lead(at=<now, with its offset>, by_seat=<the handle of the seat that asked>, family=<the family's page name>, to_seat=<the seat's handle>, list_name="new signals")`.
+2. Through `make`, `assign_lead(at=<now, with its offset>, by_seat=<the handle of the seat that asked>, family=<the family's page name>, to_seat=<the seat's handle>, list_name=<the lead's list>)`.
+   The lead's list is the one its row already names: for a name the board lists as new on a
+   list ("New names on list icp-record ..."), that list, as it is written there; for a family
+   the team view shows as unassigned with a signal, `new signals`. Never put a lead that came
+   on a list under another list's name.
    The assignment is recorded under the seat that asked, never under another seat's handle.
 3. `desk_sync(...)`, as "Save to the desk's history" says.
 4. Through `make`, `render_view(view="lead-gen")` again and show it: the page counts afresh as it renders, so

@@ -1,5 +1,5 @@
 "use strict";
-// The desk check, rules C01 to C20. It lists; it never blocks. It reads the desk's own model
+// The desk check, rules C01 to C22. It lists; it never blocks. It reads the desk's own model
 // pages under celorus/model/, so a desk one model version behind is checked against its own
 // words. A finding is { page, rule, message }: the page under celorus/, the rule's id, and what
 // is wrong, in words the person can act on.
@@ -41,6 +41,8 @@ const RULES = {
   C18: "soul text that is not read",
   C19: "assistant name the pages cannot say",
   C20: "lead id that is not ours",
+  C21: "two personas match the same leads",
+  C22: "a part of the profile that finds no one",
 };
 // C20 (Track G, row G1): a store lead id is the lead store's own id for one listing, the
 // SHA-256 hex of its source (people/leads.py lead_id): exactly 64 characters of 0 to 9 and a to f.
@@ -100,6 +102,93 @@ function leadIdsNotOurs(body) {
   }
   return out;
 }
+// C21 and C22 (Track G, row G10): the ideal client profile as the nightly placement found it, on
+// the desk head's graph. Both list on the placement's status page (write/writers.js PLACE_STATUS),
+// which stays a generated page no rule checks: it is read here as data, as C20 reads the list.
+// A persona is named by its ordinal and the profile's version, never by a name (8.1-I). Neither
+// reads the profile page under context/.
+const STATUS_PAGE = "views/icp-placement.md";
+const PROFILE_TIERS = ["P0", "P1", "P2"];
+// Seven mornings in a row: the morning a persona's pool first read dry, and six more.
+const DRY_MORNINGS = 7;
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const ordinal = (value) => (/^[1-9][0-9]{0,5}$/u.test(String(value === null || value === undefined ? "" : value).trim()) ? Number(String(value).trim()) : null);
+const dayOf = (value) => {
+  const text = String(value === null || value === undefined ? "" : value).trim().slice(0, 10);
+  return /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(text) && !Number.isNaN(Date.parse(`${text}T00:00:00Z`)) ? text : null;
+};
+const dayWords = (iso) => `${Number(iso.slice(8, 10))} ${SHORT_MONTHS[Number(iso.slice(5, 7)) - 1]}`;
+const daysFrom = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+
+// C21: the leads placed under one persona that matched another too (the placement's also_matched
+// on each lead page, R2's overlap), of the version the status page was placed from alone, so a
+// pair from an older version is not listed for good: one finding a pair of personas, never one a
+// lead.
+const headOf = (page) => (page.head !== null && typeof page.head === "object" && !Array.isArray(page.head) ? page.head : {});
+function overlapsOf(pages, statusPage) {
+  const version = ordinal(headOf(statusPage).icp_version);
+  if (version === null) return [];
+  const pairs = new Map();
+  for (const page of pages) {
+    const head = page.head;
+    if (head === null || typeof head !== "object" || Array.isArray(head) || head.role !== "lead") continue;
+    const placedUnder = ordinal(head.persona);
+    const tier = typeof head.tier === "string" && PROFILE_TIERS.includes(head.tier.trim()) ? head.tier.trim() : null;
+    if (placedUnder === null || ordinal(head.icp_version) !== version || tier === null || !Array.isArray(head.also_matched)) continue;
+    for (const other of new Set(head.also_matched.map(ordinal).filter((n) => n !== null && n !== placedUnder))) {
+      const [a, b] = placedUnder < other ? [placedUnder, other] : [other, placedUnder];
+      const key = `${a}\n${b}`;
+      if (!pairs.has(key)) pairs.set(key, { a, b, leads: 0, under: new Set(), tiers: new Set() });
+      const pair = pairs.get(key);
+      pair.leads += 1;
+      pair.under.add(placedUnder);
+      pair.tiers.add(tier);
+    }
+  }
+  return [...pairs.values()]
+    .sort((x, y) => x.a - y.a || x.b - y.b)
+    .map((pair) => {
+      const one = pair.under.size === 1 && pair.tiers.size === 1;
+      const placed = one ? `each was placed under persona ${[...pair.under][0]} (${[...pair.tiers][0]})` : "each was placed under one of the two";
+      return (
+        `Personas ${pair.a} and ${pair.b} of version ${version} both matched ${pair.leads} of the leads placed; ${placed}. ` +
+        "The next revision of your ideal client profile can draw the two apart."
+      );
+    });
+}
+
+// C22: (a) a persona of the version the status page was placed from whose pool on our record reads
+// dry with a dry_since at least six days before the page's own run: seven days spanned, not seven
+// runs. The night job carries dry_since from one written status page to the next while the
+// persona's ordinal reads dry, across a night with no run and across a new version, so the words
+// claim only that every run since that day found the pool dry, under this version or an earlier
+// one; (b) a tier with no persona in that version. A pool that is not available (a persona outside
+// India among them) or whose room went to another is never dry, so never listed here.
+function gapsOf(page) {
+  const head = headOf(page);
+  const version = ordinal(head.icp_version);
+  const runOn = dayOf(head.run_on);
+  if (version === null || runOn === null || typeof page.body !== "string") return [];
+  const rows = readTable(page.body).filter((row) => ordinal(row.persona) !== null);
+  if (!rows.length) return [];
+  const out = [];
+  for (const row of rows) {
+    const since = dayOf(row.dry_since);
+    const tier = typeof row.tier === "string" ? strip(row.tier) : "";
+    if (typeof row.record !== "string" || strip(row.record) !== "dry" || since === null || daysFrom(since, runOn) < DRY_MORNINGS - 1) continue;
+    out.push(
+      `Persona ${ordinal(row.persona)} of version ${version} (${tier}): every run since ${dayWords(since)}, under this version or an earlier one, ` +
+        `found our record dry for persona ${ordinal(row.persona)}, over seven days or more. ` +
+        "The next revision of your ideal client profile can widen its lines or its geography line.",
+    );
+  }
+  const held = new Set(rows.map((row) => (typeof row.tier === "string" ? strip(row.tier) : "")));
+  for (const tier of PROFILE_TIERS.filter((t) => !held.has(t))) {
+    out.push(`Version ${version} of your ideal client profile has no persona in ${tier}, so nothing is placed as ${tier}. The next revision can add one.`);
+  }
+  return out;
+}
+
 // C18 (DESK-156, F7): the page the soul's written copy is on, and what the check says when its text
 // is not the soul the assistant speaks from. `name` is the desk's assistant name as lib/persona.js
 // answers it. The founder's words (c/5908751152).
@@ -695,6 +784,12 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
   const suppliedPage = graph ? (common ? common.pages.find((p) => p.rel === SUPPLIED) : null) : readPages.find((p) => p.rel === SUPPLIED);
   if (suppliedPage && typeof suppliedPage.body === "string") {
     for (const message of leadIdsNotOurs(suppliedPage.body)) add("C20", graph ? `common/${SUPPLIED}` : SUPPLIED, message);
+  }
+  // C21 and C22 (Track G, row G10): on the graph that holds the placement's status page.
+  const statusPage = readPages.find((p) => p.rel === STATUS_PAGE && p.problem !== PAGE_UNREAD);
+  if (statusPage) {
+    for (const message of overlapsOf(pages, statusPage)) add("C21", STATUS_PAGE, message);
+    for (const message of gapsOf(statusPage)) add("C22", STATUS_PAGE, message);
   }
 
   // One hop: the pages a page links, read when a scope asks. A page no rule reads (under views/

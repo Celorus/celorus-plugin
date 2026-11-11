@@ -9,9 +9,16 @@
 // real connector, `live`) are row E11's and are not here. The kit's shared list of real leads
 // is not here either: the product carries none, so a rep's real leads are always none.
 
+const fs = require("node:fs");
+const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
-const { linkSpans, linkName } = require("../check/text.js");
+const { linkSpans, linkName, bareLinkNames } = require("../check/text.js");
+const { sha256 } = require("../update/digest.js");
+const { pyStrip } = require("../write/text.js");
+const { deskHeadNamed } = require("../write/facts.js");
 const { unlink, readTable } = require("./desk.js");
+const { splitPage } = require("../lib/desk.js");
+const { withGeneratedBy } = require("../write/pages.js");
 const { crmExport, nameKey } = require("./export.js");
 const S = require("./systems.js");
 const { asDate, daysBetween, addDays, dateLabel, shortDate } = require("./words.js");
@@ -431,6 +438,306 @@ function suppliedLeads(desk) {
   return LEADS.get(desk);
 }
 
+// Track G G10: a placed lead's three tags, its tier (P0, P1 or P2), the ordinal of the ideal
+// client profile's persona it was placed under (`icp_persona`: "persona" in the engine is the
+// assistant's own, lib/persona.js) and the profile's version, each read from the row's cell where
+// its table has the column and the cell is filled, else from the lead page's header (the
+// placement's PLACED_KEYS; one-desk's Q1 = A: on our own desks the tags are on the page). Null
+// unless all three read: an absent tag is "not placed", never a fault. The inputs are those three
+// keys alone (pay's Q-P1: the firm's own profile data; never a field an unlock reveals).
+const ICP_TIERS = ["P0", "P1", "P2"];
+const ICP_TAG_KEYS = ["persona", "tier", "icp_version"];
+function ordinalOf(value) {
+  const text = value === null || value === undefined ? "" : String(value).trim();
+  return /^[1-9][0-9]{0,5}$/u.test(text) ? Number(text) : null;
+}
+function icpTags(row, head) {
+  const header = head !== null && typeof head === "object" && !Array.isArray(head) ? head : {};
+  const read = (key) => {
+    const cell = row && Object.hasOwn(row, key) && row[key] !== null ? clean(row[key]) : "";
+    return cell !== "" ? cell : header[key];
+  };
+  const persona = ordinalOf(read("persona"));
+  const tierText = read("tier");
+  const tier = typeof tierText === "string" && ICP_TIERS.includes(tierText.trim()) ? tierText.trim() : null;
+  const version = ordinalOf(read("icp_version"));
+  return persona === null || tier === null || version === null ? null : { tier, icp_persona: persona, icp_version: version };
+}
+
+// The latest row of each lead on a names-supplied list, as every count reads it: by its date, then
+// its place, a later row replacing an earlier one; keyed by the lead its `lead` cell links.
+function latestSupplied(rows) {
+  const latest = new Map();
+  rows.forEach((r, i) => {
+    const lead = unlink(r.lead);
+    const key = [String(r.date === undefined || r.date === null ? "" : r.date), i];
+    const had = latest.get(lead);
+    if (!had || S.compareKeys(key, had.key) >= 0) latest.set(lead, { key, row: r });
+  });
+  return latest;
+}
+
+// The lead pages a withdrawn row names anywhere in its `lead` cell: the placement's withdrawal
+// turns that cell to its notice, which names the page by its link when the page is kept as a seat
+// edited it (storage/interface.py place_notice_kept), and keeps a cell a seat edited.
+const WITHDRAWN = "withdrawn";
+// The lead pages the night reads as kept off rows it reads as withdrawn, each row as the door cuts
+// it (icp/withdrawal.py kept_pages: every link of a placed page's shape in the row's lead cell, a
+// stray "[" before it or not); the night asks the removal check about none of them.
+const DOOR_KEPT_NAME = /lead-[a-z]{16}/u;
+function doorKept(rows) {
+  const out = new Set();
+  for (const row of rows) {
+    if (!row || row.state !== WITHDRAWN || typeof row.lead !== "string") continue;
+    for (const name of bareLinkNames(row.lead, DOOR_KEPT_NAME)) out.add(name);
+  }
+  return out;
+}
+function withdrawnPages(rows) {
+  const out = new Set();
+  for (const r of rows) {
+    if (clean(r.state) !== WITHDRAWN) continue;
+    for (const span of linkSpans(String(r.lead === null || r.lead === undefined ? "" : r.lead))) out.add(span.name);
+  }
+  return out;
+}
+
+// The lead's latest row while the firm's list holds it as live (the base's Q-TG2, and the ruling on
+// a kept page a later row links), else null; liveAt gives its place among the rows, else -1. Live:
+// its latest row is there and is not withdrawn, and no withdrawn row names its page. A lead
+// withdrawn for a removal whose page was kept stays not live even when a later row, which the
+// withdrawal never reaches (it judges only rows with the placement's mark), links the same page. A
+// lead marked "no longer on that list" keeps its row's state (the mark is on its page, never in the
+// row), so it stays live and keeps its place on the day.
+function liveRow(rows, lead) {
+  const at = liveAt(rows, lead);
+  return at === -1 ? null : rows[at];
+}
+function liveAt(rows, lead) {
+  const got = latestSupplied(rows).get(lead);
+  return got !== undefined && clean(got.row.state) !== WITHDRAWN && !withdrawnPages(rows).has(lead) ? got.key[1] : -1;
+}
+
+// A list line's cells as the door cuts them (storage/interface.py _py_cells): the line and each
+// cell stripped as Python strips, so a cell the engine's own reader trims to a store id but the
+// door does not (a U+FEFF at its edge) is read as the door reads it. readTable(text, doorCells)
+// gives the same rows as readTable(text), in the same order.
+function doorCells(line) {
+  return pyStrip(line)
+    .split(/(?<!\\)\|/)
+    .slice(1, -1)
+    .map((cell) => pyStrip(cell).replace(/\\\|/g, "|"));
+}
+
+// Whether the door reads `text`, the body of the firm's list, as a list at all (storage/interface.py
+// table_rows and placed_list): one unbroken table, its columns each named once and holding lead,
+// list and state. Else the night stops before any withdrawal (icp/placement_job.py, list_unread),
+// so it reaches no row on the list. And the table's second line a rule line: the door passes over
+// that line whatever it holds, so a list without one loses its first row to the night.
+const DOOR_COLUMNS = Object.freeze(["lead", "list", "state"]);
+function doorReadsList(text) {
+  const lines = text.replace(/\n+$/u, "").split("\n");
+  const table = [];
+  lines.forEach((line, at) => {
+    if (line.startsWith("|")) table.push(at);
+  });
+  if (table.length < 2 || table[table.length - 1] - table[0] !== table.length - 1) return false;
+  const columns = doorCells(lines[table[0]]);
+  if (new Set(columns).size !== columns.length || DOOR_COLUMNS.some((c) => !columns.includes(c))) return false;
+  return [...lines[table[0] + 1].replace(/\|/g, "").trim()].every((ch) => "-: ".includes(ch));
+}
+
+// The line breaks the door refuses in a list it rewrites (storage/interface.py _LINE_BREAKS): the
+// engine's reader makes "\r" a "\n" and reads the rest as text, so only the list's bytes show them.
+const DOOR_LINE_BREAKS = /[\r\u000b\u000c\u001c\u001d\u001e\u0085\u2028\u2029]/u;
+
+// The most bytes the list may hold for the night to write its removals back on a night that
+// places leads. That write carries at most the server's MAX_FILE_BYTES per file, measured on the
+// list after the removal has written its rows again, and a row written again can grow (a kept
+// page's notice in its lead cell, "withdrawn" in its state, its cells spaced), so the list keeps
+// DOOR_FILE_ROOM of that limit free for the rows one night withdraws. Past it the write is
+// refused, and the removal with it.
+const DOOR_FILE_ROOM = 64 * 1024;
+const DOOR_FILE_BYTES = 512 * 1024 - DOOR_FILE_ROOM;
+
+// The text of the list held at `file`, as the door would write it again: at most DOOR_FILE_BYTES,
+// its bytes UTF-8 (the night stops at any other, not_text) and no line break but "\n"
+// (place_extends refuses the removal's write); null else.
+function doorText(file) {
+  const bytes = typeof file === "string" ? pageBytes(file) : null;
+  if (bytes === null || bytes.length > DOOR_FILE_BYTES) return null;
+  try {
+    const text = STRICT_TEXT.decode(bytes);
+    return DOOR_LINE_BREAKS.test(text) ? null : text;
+  } catch {
+    return null;
+  }
+}
+
+// The list's rows as the door cuts them (doorCells), at the places the engine's own reader gives
+// them (readTable), so the day row and the brief read one row the same way: none on a list the
+// door cannot read (doorReadsList) or would not write again (doorText, the list's file at
+// `file`), none unless `body` is that file's own body (split as the engine's reader splits a
+// page), and null for a row whose cells do not line up with the columns, which the night sets
+// aside and never withdraws (storage/interface.py misshapen_rows).
+function doorRowsOf(body, file) {
+  if (typeof body !== "string" || !doorReadsList(body)) return [];
+  const text = doorText(file);
+  const split = text === null ? null : splitPage(text);
+  if (split === null || split.body !== body) return [];
+  // and a list the night's placing write can stamp again: one it refuses (a header naming
+  // generated_by twice, or one that does not parse) takes no write, the removal's with it
+  if (withGeneratedBy("queues/supplied.md", text, "celorus-plugin 0 place_leads").refused) return [];
+  const widths = [];
+  const rows = readTable(body, (line) => {
+    const got = doorCells(line);
+    widths.push(got.length);
+    return got;
+  });
+  return rows.map((row, at) => (widths[at + 1] === widths[0] ? row : null));
+}
+
+// Track G G10, the base's ruling B2 and the gate's word on it: a lead's three tags show, on a day
+// row or in a brief, only while the night's withdrawal can reach the row that gives them, so the
+// tags of a lead the removal check removes go within one night. The night reaches a row two ways
+// (icp/placement_job.py, the withdrawal's head). By the store id the row holds: the check is asked
+// about it, a row with the placement's mark (its list, or its `lead` cell the link to the id's page)
+// is withdrawn, and the briefs of the id's page are cleared (icp/withdrawal.py candidates,
+// icp/brief_clear.py taken). So the row's id must be the page header's, the page must be the one
+// that id names, and the row must carry the mark. Or, for a row with no id, by the page itself:
+// the door lists a page that still reads as placed (storage/placed_digests.py placed_lead_id), the
+// night keeps it only while that header id names the page, the check is asked about the id, and a
+// removed lead's placed page is deleted. A page a seat edited no longer reads as placed and is
+// never listed, so on a row with no id it shows no tags.
+const STORE_ID = /^[0-9a-f]{64}$/u;
+// The placement's list and its cells (write/writers.js PLACE_LIST and PLACE_OWN_COLUMNS; a test
+// pins both equal), and the page header's record of them (writers.js PLACED_DIGESTS).
+const PLACED_LIST = "icp-record";
+const PLACED_CELLS = Object.freeze(["lead", "list", "date", "lead_id", "persona", "tier"]);
+const PLACED_RECORD = "placed_digests";
+const PLACED_STAMP = "generated_by";
+const PLACED_ITEM = /^([a-z_]+)[.]([0-9a-f]{16})$/u;
+const PLACED_UNNAMED = "~";
+const PLACED_LEAD_ID = /^lead_id: ("?)([0-9a-f]{64})\1$/u;
+const STRICT_TEXT = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+
+// A placed lead's page name from its store id (icp/placement.py page_name; a test pins it equal).
+const PAGE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
+function leadPageName(leadId) {
+  let rest = BigInt(`0x${sha256().update(`celorus-icp-lead:${leadId}`).hex()}`);
+  let name = "lead-";
+  for (let i = 0; i < 16; i += 1) {
+    name += PAGE_LETTERS[Number(rest % 26n)];
+    rest /= 26n;
+  }
+  return name;
+}
+
+function placedDigestOf(page, name, text) {
+  return sha256().update(`${page}\n${name}\n${text}`).hex().slice(0, 16);
+}
+
+function storedRecord(line) {
+  const value = pyStrip(line.slice(PLACED_RECORD.length + 1));
+  if (!(value.startsWith("[") && value.endsWith("]"))) return null;
+  const out = new Map();
+  for (const item of value.slice(1, -1).split(",")) {
+    const hit = PLACED_ITEM.exec(pyStrip(item));
+    if (hit === null || out.has(hit[1])) return null;
+    out.set(hit[1], hit[2]);
+  }
+  return out;
+}
+
+// The store id the header of the lead page `page` (its name, without `.md`) holds while the page,
+// as the bytes `bytes`, still reads as placed; else null. The door's read, line for line
+// (storage/placed_digests.py page_digests and placed_lead_id; a table test pins the two equal).
+function placedLeadId(page, bytes, columns = PLACED_CELLS) {
+  let text;
+  try {
+    text = STRICT_TEXT.decode(bytes);
+  } catch {
+    return null;
+  }
+  const lines = text.split("\n");
+  const end = lines.indexOf("---", 1);
+  if (lines[0] !== "---" || end === -1) return null;
+  let stored = null;
+  let seen = 0;
+  const now = new Map();
+  for (const line of lines.slice(1, end)) {
+    const colon = line.indexOf(":");
+    const key = colon === -1 ? line : line.slice(0, colon);
+    if (key === PLACED_RECORD) {
+      seen += 1;
+      stored = storedRecord(line);
+    } else if (key !== PLACED_STAMP) {
+      let name = `f_${key}`;
+      if (now.has(name)) name = `${name}~${now.size}`;
+      now.set(name, placedDigestOf(page, name, line));
+    }
+  }
+  now.set("body", placedDigestOf(page, "body", pyStrip(lines.slice(end + 1).join("\n"))));
+  const record = seen === 1 ? stored : null;
+  if (record === null) return null;
+  const named = new Map([...now].filter(([name]) => name === "body" || record.has(name)));
+  if (named.size < now.size) named.set(PLACED_UNNAMED, "0".repeat(16));
+  const cells = new Set([...record.keys()].filter((name) => name.startsWith("c_")).map((name) => name.slice(2)));
+  const fields = [...record].filter(([name]) => !name.startsWith("c_"));
+  const want = new Set(columns);
+  if (cells.size !== want.size || [...want].some((c) => !cells.has(c))) return null;
+  if (fields.length !== named.size || fields.some(([name, d]) => named.get(name) !== d)) return null;
+  const found = lines.slice(1, end).flatMap((line) => {
+    const hit = PLACED_LEAD_ID.exec(line);
+    return hit === null ? [] : [hit[2]];
+  });
+  return found.length === 1 ? found[0] : null;
+}
+
+// The folder the placement writes its lead pages to on the desk head's graph, the one folder the
+// door lists placed pages from (writers.js and storage/interface.py PLACE_LEAD_FOLDER).
+const PLACED_FOLDER = "shared/people";
+
+// The lead page `page`'s file where the door would list it, as the graph at `root` (a desk folder)
+// holds it at `rel`: only on the desk head's own graph, the one graph the night walks, and only in
+// the placement's folder; else null.
+function placedFile(root, graph, rel, page) {
+  if (!graph || typeof graph.seat !== "string" || graph.common === null || graph.common === undefined) return null;
+  if (rel !== `${PLACED_FOLDER}/${page}.md` || deskHeadNamed(graph.common) !== graph.seat) return null;
+  return path.join(root, "celorus", ...rel.split("/"));
+}
+
+// A page's bytes as they stand on disk, or null: lstat asks for a plain file before the read, so a
+// folder, a link or anything that would block a read reads as no page (the door reads the stored
+// object itself, never what a link points at).
+function pageBytes(file) {
+  try {
+    if (!fs.lstatSync(file).isFile()) return null;
+    return fs.readFileSync(file);
+  } catch {
+    return null;
+  }
+}
+
+// Whether the night reaches `row`, the lead page `page`'s live row as the door reads it
+// (doorCells; the B2 text above): `head` is the page's header as read, `file` its path on disk,
+// read only for a row with no id. A row the door reads as withdrawn is never reached.
+function nightReaches(row, page, head, file) {
+  const cell = (key) => (row && Object.hasOwn(row, key) && row[key] !== null && row[key] !== undefined ? String(row[key]) : "");
+  if (!row || cell("state") === WITHDRAWN) return false;
+  const id = cell("lead_id");
+  if (STORE_ID.test(id)) {
+    const header = head !== null && typeof head === "object" && !Array.isArray(head) ? head : {};
+    const marked = cell("list") === PLACED_LIST || cell("lead") === `[[${page}]]`;
+    return marked && String(header.lead_id) === id && leadPageName(id) === page;
+  }
+  // and, as the night lists a placed page (icp/placement_job.py), only while the id the page reads
+  // as placed by names this page
+  const bytes = file === null ? null : pageBytes(file);
+  const placed = bytes === null ? null : placedLeadId(page, bytes);
+  return placed !== null && leadPageName(placed) === page;
+}
+
 function readSuppliedLeads(desk) {
   const seatSet = seats(desk);
   const latest = new Map();
@@ -449,6 +756,26 @@ function readSuppliedLeads(desk) {
     if (seat !== null) later(named, lead, { key, seat });
   });
   const out = new Map();
+  const gone = withdrawnPages(desk.supplied);
+  // B2: a lead's tags only while the night reaches its row (nightReaches), and so only on a graph
+  // whose list is the firm's common one, the list the night walks (storage/interface.py PLACE_LIST)
+  // (no list file, no rows); the list read is the one the rows are (the last page at its path,
+  // as desk.supplied takes it: on a graph the common list comes after a seat's own copy), and
+  // it gives rows only while its body is the common list file's own (doorRowsOf)
+  const graph = desk.read.graph;
+  const walked = Boolean(graph && graph.common !== null && graph.common !== undefined);
+  const listFile = walked ? path.join(graph.common, "queues", "supplied.md") : null;
+  const listed = desk.read.pages.filter((p) => p.rel === "queues/supplied.md").pop();
+  const doorRows = listed && !listed.problem ? doorRowsOf(listed.body, listFile) : [];
+  // the pages a withdrawn row keeps, read as the night reads them (withdrawal.py kept_pages)
+  const doorGone = doorKept(doorRows);
+  const tagsOf = (r, at, lead, page) => {
+    if (clean(r.state) === WITHDRAWN || gone.has(lead) || doorGone.has(lead)) return null;
+    const tags = icpTags(r, page ? page.header : null);
+    if (tags === null || !page) return null;
+    const file = placedFile(desk.root, graph, page.path, lead);
+    return nightReaches(doorRows[at] || null, lead, page.header, file) ? tags : null;
+  };
   for (const [lead, { key, row: r }] of S.sortedBy([...latest], (x) => x[1].key[1])) {
     const page = desk.pages.get(lead);
     const owner = page ? desk.get(page, "owner") : null;
@@ -461,6 +788,7 @@ function readSuppliedLeads(desk) {
       date: asDateOrNull(r.date),
       state: r.state,
       worked: workedLead(desk, lead),
+      icp: tagsOf(r, key[1], lead, page),
     });
   }
   return out;
@@ -1676,20 +2004,32 @@ function callRow(desk, lead, kinds, order, careLines) {
   const said = { lead, title, clock, kinds: kindsHeld, no_clock: noClock, clock_not_listed: notListed, ...researchCare(desk, lead) };
   for (const k of kindsHeld) said[CALL_KIND_KEYS[k]] = kinds.get(k).map((r) => r.fields);
   said.source = first === "supplied" ? `supplied-${kinds.get(first)[0].fields.list}` : first === "book moment" ? "book" : "follow-up";
+  // Track G G10: a placed lead's tier, persona ordinal and profile version (icpTags), on the row
+  // only when all three read; a lead with none shows none
+  const icp = kinds.has("supplied") ? kinds.get("supplied")[0].icp || null : null;
+  if (icp) Object.assign(said, icp);
   if (page) said.page_as_of = headerValue(page, "timestamp");
   else said.no_page = true;
   said.last_touch = headerValue(page, "last_touch");
   said.readiness = headerValue(page, "readiness");
   said.what_just_happened = page ? freshestLine(desk, page) : null;
-  return { said, place: [order.indexOf(clock), CALL_KINDS.indexOf(first), kinds.get(first)[0].key, first === "book moment"] };
+  return { said, place: [order.indexOf(clock), CALL_KINDS.indexOf(first), first === "supplied" ? tierRank(icp) : 0, kinds.get(first)[0].key, first === "book moment"] };
 }
 
-// Two rows in the day's order: by clock, then by kind, then by the kind's own day, then by slug.
+// One-desk's Q-OD7: inside a clock and a kind, the supplied names go P0, P1, P2, then the untagged,
+// then by their day; the kinds keep their order, so a follow-up or a reply is never below them.
+function tierRank(icp) {
+  return icp ? ICP_TIERS.indexOf(icp.tier) : ICP_TIERS.length;
+}
+
+// Two rows in the day's order: by clock, then by kind, then by tier (supplied names only), then by
+// the kind's own day, then by slug.
 function byPlace(a, b) {
-  const [ca, ka, da, newest] = a.place;
-  const [cb, kb, db] = b.place;
+  const [ca, ka, ta, da, newest] = a.place;
+  const [cb, kb, tb, db] = b.place;
   if (ca !== cb) return ca - cb;
   if (ka !== kb) return ka - kb;
+  if (ta !== tb) return ta - tb;
   const d = byDay(da, db, newest);
   if (d !== 0) return d;
   return a.said.lead < b.said.lead ? -1 : a.said.lead > b.said.lead ? 1 : 0;
@@ -1700,12 +2040,12 @@ function callsForToday(desk, st, seat, day) {
   // the seat's leads, and the leads of no seat: each a map of its kinds to their rows
   const mine = new Map();
   const nobodys = new Map();
-  const take = (leads, lead, kind, fields, key) => {
+  const take = (leads, lead, kind, fields, key, icp = null) => {
     if (!lead) return;
     if (!leads.has(lead)) leads.set(lead, new Map());
     const kinds = leads.get(lead);
     if (!kinds.has(kind)) kinds.set(kind, []);
-    kinds.get(kind).push({ fields, key });
+    kinds.get(kind).push(icp ? { fields, key, icp } : { fields, key });
   };
   // input 1: a follow-up due by the day, and a reply; the seat by the row's source (R42 (a)), or
   // no seat's where the source names none
@@ -1727,7 +2067,7 @@ function callsForToday(desk, st, seat, day) {
     if (!ASKED_STATES.has(lead.state) || (owner !== seat && owner !== null)) continue;
     const matched = held(lead.lead);
     if (matched.length) alreadyYours.push({ lead: lead.lead, list: lead.list, matched, ...(owner === null ? { no_seat: true } : {}) });
-    else take(owner === null ? nobodys : mine, lead.lead, "supplied", { list: lead.list, date: lead.row.date }, lead.date);
+    else take(owner === null ? nobodys : mine, lead.lead, "supplied", { list: lead.list, date: lead.row.date }, lead.date, lead.icp);
   }
   // input 3: a book moment of the last week, the seat's as every reader reads a lead's owner
   // (effectiveOwner: a hand-over first, and a hand-over never rewrites the page), or no seat's
@@ -1811,6 +2151,25 @@ module.exports = {
   viewUnread,
   pageGates,
   suppliedLeads,
+  icpTags,
+  liveRow,
+  liveAt,
+  doorCells,
+  doorReadsList,
+  doorRowsOf,
+  doorKept,
+  DOOR_FILE_BYTES,
+  DOOR_FILE_ROOM,
+  withdrawnPages,
+  leadPageName,
+  nightReaches,
+  placedFile,
+  placedLeadId,
+  PLACED_CELLS,
+  PLACED_FOLDER,
+  PLACED_LIST,
+  ICP_TIERS,
+  ICP_TAG_KEYS,
   dueBy,
   fittingProducts,
   effectiveOwner,

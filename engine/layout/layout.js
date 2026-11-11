@@ -22,8 +22,10 @@ const PERSONAL = "personal";
 const TEAM = "team";
 const PARTS = [SHARED, PERSONAL, TEAM];
 // The version of the views' shape, which every view the engine writes names in its header as
-// `view_version` (Track F's F3, c/6217719020; the base's ruling D3, c/6218761764): one up at any
-// change to a view's header keys, headings or line forms, on both layouts.
+// `view_version` (Track F's F3, c/6217719020; the base's ruling D3, c/6218761764). It goes up when
+// a heading, a block or an existing line form changes, or a page's header keys change, on both
+// layouts. A new line form under an existing heading, which an older reader shows as written, does
+// not move it (Track F's ruling on Track G G10-Q4).
 const VIEW_VERSION = 1;
 
 // The firm folder's two places, by name.

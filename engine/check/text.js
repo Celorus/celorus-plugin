@@ -253,6 +253,15 @@ function holdsLinkBracket(text) {
   return typeof text === "string" && /[[\]]/u.test(text);
 }
 
+// The names a text links to by a bare link alone, `[[name]]` with nothing inside but a name the
+// pattern `name` takes whole: no blanks, no `|label`, no `#part`. Read left to right, each match
+// after the one before, so a stray `[` or a link left open before one does not hide it. For a
+// list another program reads by that same pattern (render/counts.js, the placed list's withdrawn
+// rows), so both read the same pages; every other reading of a link goes through linkSpans.
+function bareLinkNames(text, name) {
+  return [...text.matchAll(new RegExp(`\\[\\[(${name.source})\\]\\]`, "gu"))].map((m) => m[1]);
+}
+
 // The square brackets a page reads as part of a link, written here, where links are read, for a
 // reader elsewhere that stops at either: the converter's path token ends a web address at one
 // (convert/convert.js PATH_TOKEN, W2-1d-0), and DESK-60 lets no file but this one write them.
@@ -275,6 +284,7 @@ module.exports = {
   contactInText,
   holdsContactDetails,
   holdsLinkBracket,
+  bareLinkNames,
   LINK_BRACKETS,
   Page,
 };
