@@ -121,9 +121,20 @@ and `reason`:
   - "The desk server could not be reached", or any other answer: say it as it came, and set
     nothing up. The same folder is named again later, never another.
 - `not_pulled` with `no_desk`, or with `not_connected` (the seat has no storage connected): in seat mode,
-  the desk is made on the set-up page, not here. Say so, give the page,
-  https://app.celorus.com/dashboard/setup, and set nothing up on this computer. In desk mode, go
-  on with the steps below.
+  say in one line that the desk can live in their drive, made on the set-up page, and give the
+  page, https://app.celorus.com/dashboard/setup. Then ask one question: "Connect your drive
+  first, or set the desk up on this computer now?" When they answer connect first, say
+  "Connect it there, make your desk, then say 'set up my desk' again." and set nothing up on
+  this computer. When they answer this computer now, or say they have no drive, ask one
+  more question first: "Is there already a Celorus desk on this computer?" When they say yes,
+  say "Then open your AI in that desk's folder and say 'Milan, open my day' there. Nothing was
+  set up here." and set nothing up. When they say they are not sure, or answer anything
+  else, say "Then look for a folder with a Celorus desk in it first. If you find one, open your
+  AI there and say 'Milan, open my day'. If you do not, say 'set up my desk' again, and say no
+  when asked whether a desk is already on this computer. Nothing was set up here." and set
+  nothing up. When they say no, go on with the five seat questions, "Seat mode:
+  ask only what is missing" below; nothing more is asked about the set-up page. In desk mode, go on with
+  the steps below.
 - `not_pulled` with `not_basic`: the storage was not read, either because this seat's plan keeps
   its desk on this computer, or because its account or firm is not active now. Say the answer's
   words, then ask one question: was their desk made on the set-up page of their Celorus
@@ -131,6 +142,10 @@ and `reason`:
   sure, set nothing up, and send them to the dashboard, https://app.celorus.com/dashboard/setup.
 - "The desk server could not be reached": say so and set nothing up. The desk may be in the
   storage already, so try again once online.
+- `refused`, where the answer's words begin "The pull is for a seat's graph" (the answer has no
+  `reason`, so the words are what tells it apart): the folder the AI is in holds a desk made on
+  this computer with the five seat questions. Say "Your desk is already on this computer.
+  There is nothing more to set up: say 'Milan, open my day' to start." and set nothing up. Never say the answer's own words.
 - Any other answer: say it as it came, and set nothing up.
 
 **When the desk is on this computer.** The workday skills find the desk from the folder the AI
@@ -334,6 +349,11 @@ list, in these words, and nothing about anyone else doing the set-up for them:
 2. "Research" and the name of a lead you know: a page on them, every line with its source.
 3. Your calendar and mail, connected in this app when you are ready: the day then reads your
    meetings and replies for the people on your desk. Nothing is needed before that.
+
+When the set-up began from `no_desk` or `not_connected` and the person chose this computer, say
+this too, in these words: "Your desk is on this computer. Putting it into your drive comes
+in a later version. Until then, keep using this one and do not make a second desk on the
+set-up page."
 
 In desk mode, the operator's, say instead that the rest of the setup is Celorus's to do, not
 the firm's. Our people do it with the desk, it is part of what we deliver, and it runs in
