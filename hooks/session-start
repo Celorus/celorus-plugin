@@ -488,6 +488,37 @@ own_set="$(
   done
 )"
 if [ -n "$own_set" ]; then greeting=""; by_name=""; fi
+# A desk the converter has switched (desk.md says `converted:`) is history: its work lives in the
+# seat's graph, so this folder is never greeted as a desk that is ready. Only a top-level key counts,
+# as the engine reads it (lib/tools.js convertedState): `converted:` at the start of a line in the
+# header, never one indented under another key or written after a comma or brace. The date is said
+# only when it reads as a date; the line says nothing else of the desk.
+converted_line="$(awk '
+  { sub(/\r$/, "") }
+  NR == 1 && $0 != "---" { exit }
+  NR > 1 && $0 == "---" { exit }
+  NR > 1 && substr($0, 1, 10) == "converted:" {
+    v = substr($0, 11)
+    sub(/^[ \t]+/, "", v)
+    sub(/[ \t]+$/, "", v)
+    gsub(/"/, "", v)
+    print "Y" v
+    exit
+  }
+' "$stamps")"
+if [ -n "$converted_line" ]; then
+  converted_on="${converted_line#Y}"
+  as_of=""
+  case "$converted_on" in
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) as_of=" as of ${converted_on}" ;;
+  esac
+  emit "${greeting}This folder is the desk's history${as_of}. It was converted, and it is kept as it was.${node_note}
+The live desk is your seat's graph, in the firm folder the conversion made beside this folder. New work goes there, not here: write nothing in this folder.
+To open it, start a session in your seat's own folder there, then say '${by_name}open my day'.
+If your seat has no folder there, it was not converted: ask whoever ran the conversion.
+${RECORD_LINE}"
+  exit 0
+fi
 # A seat's graph, layout 3: the desk a first bring-down leaves, whose desk.md names its seat.
 graph=0
 [ "$(frontmatter_value "$stamps" layout_version)" = "3" ] && graph=1

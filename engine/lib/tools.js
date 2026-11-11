@@ -721,7 +721,10 @@ function heldBack(name, args) {
   if (state.converted !== null && (WRITERS.has(name) || recording)) {
     throw new Refusal(
       `This desk was converted to layout 3 on ${state.converted} and is kept as history, so ` +
-        `nothing is written in it: ${name} writes. Work in your seat's graph. Nothing was changed.`,
+        `nothing is written in it: ${name} writes. The live desk is your seat's graph, in the firm folder the ` +
+        `conversion made beside this folder. New work goes there, not here: start a session in your seat's own ` +
+        `folder there and make the change again. If your seat has no folder there, it was not converted: ` +
+        `ask whoever ran the conversion. Nothing was changed.`,
     );
   }
 }

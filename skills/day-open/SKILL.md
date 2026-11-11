@@ -68,8 +68,16 @@ The desk folder is the one named by `CELORUS_DESK`, or else the first folder fou
 walking up from the working directory that holds a `celorus` entry of any kind: the walk
 never passes that folder to reach a desk above, a folder whose entry is not a plain desk is
 refused or named by the tools, and only when no such folder exists is there no desk. If neither
-exists, say in one line that there is no desk here, offer `install-desk`, and stop. The
-seat is `CELORUS_SEAT`, or the handle in `~/.celorus/seat-<desk_id>` (the `desk_id` is
+exists, say in one line that there is no desk here, offer `install-desk`, and stop.
+
+If the header of `celorus/desk.md` holds a `converted:` line at the start of a line (a desk that
+is not converted has none), this folder is the desk's history. Check this before asking which seat
+this is. Say "This folder is the desk's history. The live desk is your seat's graph, in the firm folder
+the conversion made beside this folder. New work goes there, not here: start a session in your seat's own
+folder there, then open the day. If your seat has no folder there, it was not converted: ask whoever
+ran the conversion." Read nothing more, write nothing, send no usage line, and stop.
+
+The seat is `CELORUS_SEAT`, or the handle in `~/.celorus/seat-<desk_id>` (the `desk_id` is
 in `celorus/desk.md`); if neither exists, ask which seat this is, as its handle (the name of
 its page under `celorus/seats/`), never the person's name, write nothing until it is known,
 and say that `install-desk` can claim it for next time. When the person asks for another
