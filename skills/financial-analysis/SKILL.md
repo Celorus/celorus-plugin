@@ -238,13 +238,14 @@ time — do not assume a fixed catalog.
    straight to step 5: build the report from `data.units[]` — each unit's
    `content_md` is one year's compiled figures + narrative — citing from the
    envelope's `provenance` (every ref carries `cite_url`). Read its `state`
-   like any other tool: `constrained_proceed` with a `unit_building` warning
-   means **nothing is compiled yet** (a compile is pending) — answer from the
-   record path (steps 3–4) meanwhile, never wait. A `units_truncated` warning
-   carries per-type served-vs-total counts in `data.units_truncated` (more
-   years exist than the serving cap serves); an
-   `uncompiled_periods_on_record` warning names the actual years in
-   `data.uncompiled_periods` that are on record with no compiled unit —
+   like any other tool: `constrained_proceed` with a warning with the words
+   "still being built" means **nothing is compiled yet** (a compile is pending)
+   — answer from the record path (steps 3–4) meanwhile, never wait. A warning
+   with the words "more notes are on record than this answer shows" comes with
+   per-type served-vs-total counts in `data.units_truncated` (more years exist
+   than the serving cap serves); a warning with the words "have no compiled
+   notes yet" comes with the actual years in `data.uncompiled_periods` that are
+   on record with no compiled unit —
    surface those years by name in the coverage note, so a partial layer never
    reads as the whole record.
    `fallback` → the offer did not hold; continue to step 3 as usual.

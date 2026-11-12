@@ -116,7 +116,8 @@ The steps below run together, with a desk or with no desk, and the brief is made
   name itself (letter case and spacing aside): show each by the name and city the candidates carry, and nothing more, and ask
   which; nothing else runs until the answer, not the pack, not the brief. This step comes before
   every other and asks straight away, unless the seller has already answered: the record gave no
-  `typo_discovery` warning, every candidate carries a city, and the city the seller gave in their
+  warning with the words "closest names by spelling are shown as suggestions only",
+  every candidate carries a city, and the city the seller gave in their
   own words is the city of a candidate and of no other. For the web, show each person the search
   found by the name, the firm and the source. Nobody: say so in a line and run the web register on
   the name as given, marked as web throughout.
@@ -341,7 +342,8 @@ names, by the `subject_id` its candidate carried, without asking `resolve_subjec
 answer that names none of them is taken as nobody. In every other case of a person's `clarify`, do
 not stop the work to ask. The lead's name here is the spelling the web register found the person
 under, when the web found them, and the ask's spelling otherwise. The seller has already answered the question when the answer
-carries no `typo_discovery` warning, `candidates[]` holds several people whose `canonical_name`
+carries no warning with the words "closest names by spelling are shown as suggestions
+only", `candidates[]` holds several people whose `canonical_name`
 is the lead's name itself (letter case and spacing aside), every candidate carries a `city`,
 and the city the seller gave in their own words, in this ask or in their answer to a question
 this skill asked, is the `city` of a candidate and of no other. A city the web found or the desk
@@ -378,7 +380,8 @@ When the seller's word comes after the `subject_id` has left this conversation, 
 `resolve_subject` again with the lead's name and that person's `city`, the record's own city for
 the person the seller named; the limit above on where a lookup's `city` comes from is for the
 lookup before the seller's word, not for this lookup. Take a candidate only
-when the answer carries no `typo_discovery` warning, that person had a `city`, and it is the
+when the answer carries no warning with the words "closest names by spelling are shown
+as suggestions only", that person had a `city`, and it is the
 `city` of a candidate whose `canonical_name` is the lead's name itself (letter case and spacing
 aside) and of no other. A `proceed` is that person only when its `canonical_name` is the lead's
 name (letter case and spacing aside) and `get_person_profile` on its `subject_id` gives that

@@ -229,10 +229,11 @@ The API is **read-only** — nothing you do can change the data.
    ignore any class you don't recognize.
 
    The compiled path never weakens honesty either: a `constrained_proceed`
-   naming `unit_building` (nothing compiled yet — answer from the record
-   path, never wait), `units_truncated` (per-type served-vs-total counts), or
-   `uncompiled_periods_on_record` (the actual years on record but uncompiled)
-   is disclosed in the answer, and a units payload that doesn't contain the
+   with a warning with the words "still being built" (nothing compiled yet —
+   answer from the record path, never wait), with the words "more notes are on
+   record than this answer shows" (per-type served-vs-total counts), or with the
+   words "have no compiled notes yet" (the actual years on record but
+   uncompiled) is disclosed in the answer, and a units payload that doesn't contain the
    answer is **not** a "not available" — fall through to steps 2–3 before
    concluding, exactly as with the lean path. Precision and completeness asks
    stay on the record path even when a class is offered — exact/verbatim
@@ -254,20 +255,15 @@ The API is **read-only** — nothing you do can change the data.
    thin the answer. Selection never decides what *exists* — only where to look first.
 
    **The envelope may carry a `diagnostics[]` list — surface it.**
-   An entry whose `code` is `availability` describes the part of the question nothing
-   served can answer. It carries a `reason` (`not_served`, `held_back`, or
-   `no_routed_subdomain_answers`), the `subdomain_ids` it is about, a `count`, and a
-   `message` whose prose names those raw ids; one call can carry two such entries.
-   `get_subdomain_data` puts its own entry on the SAME channel,
-   `sections_stale_tag_suppressed` — stored content held back under a stale tag,
-   present in the record and serving under the ids its message names. Read both the same way: **carry each entry's substance to the user
-   beside the answer** — it is the honest statement for the part of the question nothing
-   served answers, and without it that part comes back as silence (see *Naming gaps
-   honestly* for the rendered form). **Never pass an availability entry's
-   `subdomain_ids` to `get_subdomain_data`** — they are not fetchable, and an entry's
-   ids are never among the ones in `sections`. An entry never thins the fetch: fetch
-   `sections` exactly as above, and an empty `sections` still falls back to the full
-   `list_available_subdomains` set.
+Each entry is one plain sentence in `message`, and nothing else: no code, no reason, no
+id. One says what part of the question nothing served can answer (an area nothing fills,
+or stored sections held back under an area label no longer in use); another says what
+was folded, cut or left out of what did serve. Read every entry the same way: **carry its
+substance to the user beside the answer** — it is the honest statement for the part of the
+question nothing served answers, and without it that part comes back as silence (see
+*Naming gaps honestly* for the rendered form). An entry never thins the fetch: fetch
+`sections` exactly as above, and an empty `sections` still falls back to the full
+`list_available_subdomains` set.
 3. **Fetch — signals-first for a figure question.** For a figure / filed-fact
    question, call `get_subdomain_data(subject_id, subdomain_ids=[…], fy=…,
    streams=["signals"])`. The signals stream carries each figure (names live in the top-level `fact_key_labels` map)
@@ -342,8 +338,8 @@ figure. The signals to read off the live response:
 - a stream comes back empty → that kind of answer isn't available yet.
 - the subject resolves to `stop` → say plainly no such company is on record; never
   synthesize one.
-- the envelope carries a `diagnostics[]` entry — `availability` from the narrowing
-  step, `sections_stale_tag_suppressed` from the fetch → that part of the question is
+- the envelope carries a `diagnostics[]` entry, from the narrowing step or from the
+  fetch → that part of the question is
   answered by a **statement**, not by silence. Render it as below.
 
 Don't enumerate known gaps from memory — read what's missing from the response, and
@@ -351,25 +347,17 @@ phrase the reason in plain language. A figure being "not available" is a true
 statement about the data on record; prefer it, every time, over a number that is not
 in the tool response.
 
-**Rendering a `diagnostics[]` availability statement — the substance, never the
-machinery.** The `message` on the wire is written for a machine reader and carries raw
-ids; the rule against naming your plumbing (*While you work*) governs what reaches the
-reader, so never print the `code`, never print the `reason` token, and never print a raw
-id. Carry the three things that are substance: what is held back or not served, that the
-record HOLDS it where the entry says so (a held-back entry is never an empty record for
-this company), and where the same content did serve. Name an area by its `display_name`
-from `list_available_subdomains` when the entry's id is in that list, and drop the id and
-describe the area in plain words when it is not.
+**Rendering a `diagnostics[]` statement.** Each entry's `message` is written for the
+reader. Carry it beside the answer as written, or in your own plain words where it must
+fit a sentence of yours, and never add what it does not say: if it does not name where
+the same content serves, do not guess an area. A held-back entry is never an empty record
+for this company. Never drop an entry, and never print an id of your own beside it.
 
-A held-back statement on a key-ratios question, rendered — one id the discovery list
-does not carry, three it does, and no id printed:
+A held-back statement on a key-ratios question, rendered:
 
-> The key-ratio figures are on record for this company, but they are held back from this
-> answer: they are stored under a label the current report areas no longer map to, so
-> nothing was served under that label here. This is not an empty record — the same
-> content is served under the Annual Financial Statements, Statutory Compliance Status
-> and Related Party Transactions areas, which is where the figures above come from.
-> The hold ends once those stored labels and the current areas are reconciled.
+> The key-ratio figures are on record for this company, but some stored sections are held
+> back from this answer because their area label is no longer in use. The record holds
+> them, so this is not an empty record for this company.
 
 ## Rendering provenance
 

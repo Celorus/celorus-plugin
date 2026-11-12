@@ -79,8 +79,8 @@ In brief:
    data.** It means no holder list is *attributable to that specific document*:
    most documents carry no reference linking holder records to individual
    rounds, so per-round lists serve empty even when holder records are on
-   record (the envelope discloses this as
-   `roster_present_but_unattributable`). Report the round, say per-round
+   record (the envelope discloses this in a warning with the words "cannot be
+   attributed to individual allotment rounds"). Report the round, say per-round
    holder detail is not attributable to it, and answer "who owns" from the
    **ownership view** (the latest-filed annual register + filed shareholding
    pattern) — never say the holder data is missing or unparseable when the
@@ -107,8 +107,10 @@ In brief:
    Top-holder answers come from the latest-FILED register available to serve
    only; category-breakdown answers come from the filed shareholding pattern,
    with the register as the fallback (the envelope's `served_from` says which).
-   When `holder_register_superseded_snapshots`
-   is present, superseded (or undatable) register documents exist and are
+   When a warning with the words "latest-filed register available to serve only"
+   is present (inside the ownership view, a block's `warnings` carry the code
+   `holder_register_superseded_snapshots` instead), superseded (or undatable)
+   register documents exist and are
    deliberately excluded — say the figures describe the latest-filed register
    available to serve, name when it was filed from the envelope message, and
    never present the excluded documents' holders as current ownership or
@@ -141,14 +143,14 @@ In brief:
    caveat and suppressing the data are both honesty failures.
 12. **Names on record, holdings not stated — an unstated holding is never
    zero.** Some registers list holders by name with no quantity anywhere; the
-   envelope flags them with `holder_register_holdings_not_stated` and each
-   such row serves `holdings_not_stated: true`. Render each such holding as
+   envelope flags them in a warning and each such row serves
+   `holdings_not_stated: true`. Render each such holding as
    "not stated" (the register states no figure — distinct from "not
    available"), keep them out of every total, average, percentage and
    "largest holder" claim, and introduce them with the envelope's words.
 13. **Unread holdings are "not available" — the register states them, the
-   reader did not.** Rows served with `holdings_unread: true` (envelope code
-   `holder_register_holdings_unread`) have figures printed in the register
+   reader did not.** Rows served with `holdings_unread: true` have figures
+   printed in the register
    under column headings that could not be mapped. Render them "not
    available" and point at the cited source; never "not stated", never zero,
    never in a total. The two classes must never swap words.
