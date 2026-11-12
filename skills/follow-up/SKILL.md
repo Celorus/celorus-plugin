@@ -227,6 +227,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - **Sending, in three classes.** A draft, with the collateral attached, is free and ships:
   write it and hand it over. A write to your own calendar or CRM, on your explicit yes, is free;
   the calendar hold already ships, and a CRM write waits on the connector, so it stays

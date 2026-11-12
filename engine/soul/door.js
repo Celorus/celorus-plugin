@@ -267,7 +267,6 @@ function soulFeedback(args = {}) {
   const result = same ? { written: null } : writeSteps(ctx.celorus, [done.step, log.step]);
   const base = {
     tool: FEEDBACK,
-    plugin_version: ctx.version,
     desk: ctx.desk.name,
     seat,
     whole_desk: ask.whole,
@@ -312,15 +311,13 @@ function readSoul(args = {}) {
   }
   const read = readDesk(root);
   const who = P.persona({ desk: read, seat });
+  // DESK-378: only what the voice is read from (capabilities SKILL.md, "speaks in the voice of the
+  // desk's soul page"; hooks/session-start). Claude shows a tool's answer to the person as it shows
+  // it to the model, so the desk's id, the seat asked for, the tool, the version and why a desk's
+  // assistant name was not used are not answered: check_desk says that last in its own words.
   return {
-    tool: READ,
-    plugin_version: pluginVersion(),
-    desk: read.stamps && typeof read.stamps.desk === "string" ? read.stamps.desk : null,
-    seat,
     name: who.name,
     introduction: who.introduction,
-    refused: who.refused,
-    not_used: P.notUsed(who),
     manner: who.manner,
     soul: who.soul,
   };

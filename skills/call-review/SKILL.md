@@ -32,7 +32,7 @@ they forbid, they win.
 ## The tools this skill calls
 
 - `family_facts`, before the review, when the call was about a family: the people already on
-  the desk, their pages and their CRM ids, so the review names them as the desk does.
+  the desk and their pages, so the review names them as the desk does.
 - `log_action`, through `make`, writes the call's row in `celorus/desk-log.md`, and its own
   line in `celorus/log.md`: the row the desk's consoles count.
 - `check_desk`, over the pages written, at the end.
@@ -362,6 +362,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never quote from a call that was not recorded; never guess at pace or attribution.
 - **Sending, in three classes.** A draft, with the collateral attached, is free and ships:
   write it and hand it over. A write to your own calendar or CRM, on your explicit yes, is free;

@@ -30,12 +30,12 @@ const { systemsOf, istTime, ROLES } = require("../render/systems.js");
 const { screen, normalised } = require("../render/screen.js");
 
 // The rules a row is refused by, besides the screen's own (render/screen.js), each in a word.
-const NOT_ON_THE_DESK = "not-on-the-desk";
-const NOT_A_ROW = "not-a-row";
-const NOT_AN_ID = "not-an-id";
-const NOT_A_PHONE_NUMBER = "not-a-phone-number";
-const NOT_AN_IST_TIME = "not-an-ist-time";
-const NOT_A_DAY = "not-a-day";
+const NOT_ON_THE_DESK = "not on the desk";
+const NOT_A_ROW = "not a row in this view";
+const NOT_AN_ID = "not an id";
+const NOT_A_PHONE_NUMBER = "not a phone number";
+const NOT_AN_IST_TIME = "not a time in IST";
+const NOT_A_DAY = "not a day";
 // The pages a row may name as its family, record or subject.
 const PAGE_KINDS = ["families", "people", "firms"];
 

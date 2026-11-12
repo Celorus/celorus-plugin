@@ -58,6 +58,8 @@ record. It reads only the desk on this machine; the overnight itself runs on the
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never write a page, a row or a history line yourself, and never do the overnight's work by
   hand from these instructions.
 - Never make, change or delete a routine: a person does, in the app.

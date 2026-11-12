@@ -417,6 +417,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never read a source for a name that is not on the desk: the scope is the queued,
   named and booked accounts, never the whole mailbox.
 - Never upload what you read anywhere but through `make`. The Celorus desk server sees only

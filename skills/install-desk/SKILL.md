@@ -261,7 +261,8 @@ and writes one line to `log.md`, under the day's heading.
 
 ## Verify mode: "check my desk setup"
 
-Report, and change nothing. First read `celorus/desk.md`. If it is missing, the desk is
+Report, and change nothing. Read each page this mode names with the file-read tool, and leave
+the rest of the desk to `check_desk`. First read `celorus/desk.md`. If it is missing, the desk is
 layout 1, or a layout 2 desk whose desk.md is lost; `index.md` tells them apart. If its
 header holds a nested `celorus` block, the desk is on layout 1, one version behind: say so
 in one line, check it against `layout-1.md` in this skill's folder, and say that "update my
@@ -271,27 +272,24 @@ copy taken before the last update or from the desk's history; "update my desk" s
 than make its stamps up. Otherwise:
 
 - the desk folder found, and how (the variable or the walk);
-- each required file present or missing: `index.md`, `desk.md`, `log.md`, `desk-log.md`,
-  `motion-spec.md`, `register.md`, `marks.md`, the three queues, the three context files,
-  `crm/README.md`, `rules/rulebook.md`, `model/model.md`, `model/connections.md`,
-  `model/own-words.md`, and `.gitignore` carrying `.celorus/`,
-  `celorus/.obsidian/workspace*.json` and `celorus/.views/`;
-- `index.md` has a header holding only `okf_version: "0.2"`; `log.md` has no header: it
-  holds `# Log`, then `## YYYY-MM-DD` day headings with lines `* HH:MM · ...` under them;
+- what `check_desk` lists, called read-only (leave `record` out): it reads every page under
+  `celorus/` for you, except those under `model/`, `views/` and `merges/` (the model, the
+  generated views and the merge records, which tools write), so, for this, read by hand none of
+  the pages it checks. It lists a
+  required file that is missing, a page with no header or a header of another shape (`index.md`
+  holding more than `okf_version: "0.2"`, `log.md` with a header or a line of another shape, a
+  nested value), a missing `type` or `title`, and a `type` that is no kind of page. Say its
+  findings, rule by rule in its words, as it gives them, or that it lists none;
+- `index.md` is there, and `.gitignore` carries `.celorus/`, `celorus/.obsidian/workspace*.json`
+  and `celorus/.views/`;
 - `desk.md` carries `layout_version: 2`, a `model_version`, and a non-empty `desk` and `desk_id`;
 - `motion-spec.md` says `pulse: on` or `pulse: off`, said as it reads; a desk set up before the
   line has none, and that reads as on;
-- every other markdown file under `celorus/` opens with a header that has a non-empty `type`,
-  and a `timestamp` outside `model/` and `views/`;
-- outside `model/`, `views/` and `merges/`, every `type` is a kind named by a
-  `kind-<kind>.md` page in `model/`, or one of the system types listed in `model/model.md`;
-- outside those three folders, no header holds a nested value (a list of plain words,
-  or of quoted links, is fine), except `sources`;
 - the header of `desk-log.md` is exactly
   `| date | seat | lead | source | minutes | action | outcome | mark | by |`;
 - the header of `queues/follow-ups.md` is exactly `| owed_by | who | what | by | from | state |`;
 - the seat pointer for this machine exists and names a seat file that exists;
-- no absolute path anywhere under `celorus/`.
+- no absolute path on the pages this mode read.
 
 What was still to connect at the set-up is read from the systems table, never from a count of
 your own: call `take_down`, which changes nothing, and say its `not_connected` roles. The table
@@ -528,6 +526,10 @@ desk's `celorus/motion-spec.md` to stop it."
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
+  Update mode's git steps (`update.md`: whether the folder is a repository, and its commits
+  before and after the update) and its dated copy are the only shell steps over the folder.
 - Never ask for, copy or store the client master list; the CRM is an export the desk
   chooses, removable by deleting `celorus/crm/`.
 - Never read a message, an event or a document while testing a connector.

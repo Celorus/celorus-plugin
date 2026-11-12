@@ -1026,7 +1026,6 @@ function deskSync(ctx, { seat, message, push, overnight }) {
   }
   return {
     tool: "desk_sync",
-    plugin_version: ctx.version,
     // The desk by its own name (desk.md's desk:, or null), never by its folder (round 1 readers, K4).
     desk: head.name,
     seat,

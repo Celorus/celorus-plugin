@@ -668,7 +668,6 @@ function overnightReconcile(ctx, args, env = process.env) {
   const done = writeSteps(ctx.celorus, ordered);
   const answer = {
     tool: ctx.tool,
-    plugin_version: ctx.version,
     desk: ctx.desk.name,
     attended: args.attended,
     ...(server ? { run: "server" } : {}),

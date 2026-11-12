@@ -7,7 +7,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
 const { readDesk, DESK_ARGUMENT: DESK } = require("../lib/desk.js");
-const { pluginVersion } = require("../lib/version.js");
 const { refuseLinkedRoot } = require("../lib/linkedroot.js");
 const { checkPages } = require("../check/rules.js");
 const H = require("../update/history.js");
@@ -93,7 +92,7 @@ function convertDeskTool(args = {}) {
     switch: args.switch === true,
     unsent_writes: args.unsent_writes,
   };
-  const named = { tool: "convert_desk", plugin_version: pluginVersion(), desk: path.basename(root), into: path.basename(into) };
+  const named = { tool: "convert_desk", desk: path.basename(root), into: path.basename(into) };
   if (!args.apply) {
     const p = converting(() => previewConvert(root, into, opts));
     return {

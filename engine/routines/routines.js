@@ -288,7 +288,7 @@ function registerRoutine(ctx, args) {
   // log.md last: the history line goes down after the page it names (house rule 5).
   const steps = plan.steps();
   const done = writeSteps(ctx.celorus, [...steps.filter((s) => s.rel !== LOG), ...steps.filter((s) => s.rel === LOG)]);
-  const answer = { tool: ctx.tool, plugin_version: ctx.version, desk: ctx.desk.name, row };
+  const answer = { tool: ctx.tool, desk: ctx.desk.name, row };
   if (done.written === null) return { ...answer, written: null, page: null, history: null, reason: done.reason, previous_text: done.previous_text };
   return {
     ...answer,

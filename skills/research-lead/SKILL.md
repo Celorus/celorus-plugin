@@ -48,7 +48,7 @@ Celorus, as *Signing in* below says.
 
 ## The tools this skill calls
 
-- `family_facts`, for a family already on the desk: its people, their pages and CRM ids, and
+- `family_facts`, for a family already on the desk: its people and their pages, and
   what the desk already holds on it, so step 1 starts from the desk's own facts.
 - `check_desk`, over the pages written, at the end.
 - `research_ask`, when this session has it, as *Before the web register: ask for a research
@@ -544,7 +544,7 @@ list a name came from as bought or scraped, write no page for it and say why in 
 Every connection in the header gets its one proof line under `## Connections`, the word fixed
 by where it came from, as `profile-shape.md` says: `shown` or `said`. A guess is never in the
 header, so a `guessed` line stands on its own under `## Connections` with nothing in the header
-above it; `check-desk` lists a header connection whose only proof line is a guess as C07.
+above it; `check-desk` lists a header connection whose only proof line is a guess under "guess drawn as a line".
 
 Before writing a new firm page, look for a firm page with the same title or alias. If one
 exists and neither lists the other in `not_same_as`, ask "same firm?", naming each page's last
@@ -712,6 +712,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never state a web figure as a record figure, or blend the two in one line.
 - Never write a point estimate of anyone's wealth; a band or nothing.
 - Never unmask a contact coordinate; social and web coordinates in full, work and

@@ -158,6 +158,8 @@ sees what was written. Follow these as they say:
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never send anything: the brief is for the seat, not the family.
 - Never write a fact the desk does not hold, and never a figure about anyone's wealth.
 - Never count, total or rank a row yourself.

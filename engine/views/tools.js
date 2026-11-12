@@ -10,7 +10,6 @@ const { readDesk, readPage, PAGE_UNREAD, deskShown, DESK_ARGUMENT: DESK } = requ
 const V = require("../check/values.js");
 const { Refusal } = require("../lib/refusal.js");
 const { refuseLinkedRoot, refuseLinkedFolders } = require("../lib/linkedroot.js");
-const { pluginVersion } = require("../lib/version.js");
 const { persona, notUsed } = require("../lib/persona.js");
 const { checkPages } = require("../check/rules.js");
 const { ModelUnreadable, loadDeskModel } = require("../check/model.js");
@@ -432,7 +431,6 @@ function renderViewsTool(args = {}) {
     : "";
   const answer = {
     tool: "render_views",
-    plugin_version: pluginVersion(),
     root: c.shown.root,
     views: withPaths(c.shown, wrote.views),
     sent_lists: withPaths(c.shown, wrote.sent),
@@ -473,7 +471,6 @@ function mergePagesTool(args = {}) {
   if (done.alreadyMerged) {
     return {
       tool: "merge_pages",
-      plugin_version: pluginVersion(),
       root: c.shown.root,
       already_merged: true,
       summary: `${args.merge} was merged already, as a record under merges/ says. ${H.NOTHING}`,
@@ -487,7 +484,6 @@ function mergePagesTool(args = {}) {
   );
   return {
     tool: "merge_pages",
-    plugin_version: pluginVersion(),
     root: c.shown.root,
     already_merged: false,
     kept: withPaths(c.shown, [done.changed.find((rel) => path.posix.basename(rel, ".md") === args.keep)].filter(Boolean)),
@@ -547,7 +543,6 @@ function undoMergeTool(args = {}) {
   const [views, logged] = done.rest;
   return {
     tool: "undo_merge",
-    plugin_version: pluginVersion(),
     root: c.shown.root,
     record: withPaths(c.shown, [done.record])[0],
     restored: withPaths(c.shown, done.restored),
@@ -611,7 +606,6 @@ function updateDeskTool(args = {}) {
     const p = updating(() => previewUpdate(c.root, opts));
     return {
       tool: "update_desk",
-      plugin_version: pluginVersion(),
       root: c.shown.root,
       applied: false,
       preview: p.text,
@@ -636,7 +630,6 @@ function updateDeskTool(args = {}) {
   const r = updating(() => applyUpdate(c.root, { ...opts, plan: args.plan }));
   return {
     tool: "update_desk",
-    plugin_version: pluginVersion(),
     root: c.shown.root,
     applied: true,
     changed: r.changed,

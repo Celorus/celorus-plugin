@@ -61,7 +61,7 @@ function describeCheck(result) {
   }
   lines.push(...remedies);
   for (const finding of result.findings) {
-    lines.push(`${finding.rule} | ${result.rules[finding.rule]} | ${finding.page} | ${finding.message}`);
+    lines.push(`${finding.rule} | ${finding.page} | ${finding.message}`);
   }
   const rules = `${result.rules_run} ${result.rules_run === 1 ? "rule" : "rules"}`;
   lines.push(`${result.findings.length} to look at, against ${rules}. The check lists; it never blocks.`);

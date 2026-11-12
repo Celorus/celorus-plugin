@@ -95,9 +95,10 @@ card makes no lookup by a person's name, no list of candidates and no comparison
 
 ## A mail draft, only when asked
 
-1. Find the person's CRM record in the facts, and their email address through the harness's
-   CRM connector. If there is no CRM connector, or the record carries no address, say so in one
-   line and stop.
+1. Call `family_facts(family=<the family's page name>, include=["crm_id"])`: the facts leave a
+   CRM id out unless asked. Find the person's CRM record by its id, and their email address
+   through the harness's CRM connector. If there is no CRM connector, or the record carries no
+   address, say so in one line and stop.
 2. Write five to eight short lines in the seat's voice: the reason first, one ask (fifteen
    minutes on a call this week), signed with the seat's name. No figure, nothing the never-say
    page rules out.
@@ -168,6 +169,8 @@ sees what was written. Follow these as they say:
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never send anything: a mail stops at a draft, and you say it is a draft.
 - Never write a figure about anyone's wealth, and never in an opener.
 - Never write to an address the desk's CRM does not hold.

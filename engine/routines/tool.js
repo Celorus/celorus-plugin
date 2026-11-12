@@ -8,7 +8,6 @@
 // lib/tools.js loads this file, so its helpers are reached when the tool runs, never at load.
 
 const { DESK_ARGUMENT: DESK } = require("../lib/desk.js");
-const { pluginVersion } = require("../lib/version.js");
 const R = require("./routines.js");
 
 const TOOLS = [
@@ -30,7 +29,7 @@ const TOOLS = [
       const { deskFor, onlyArguments } = require("../lib/tools.js");
       onlyArguments("list_routines", args, ["desk"]);
       const root = deskFor(args.desk);
-      return { tool: "list_routines", plugin_version: pluginVersion(), ...R.listRoutines(root) };
+      return { tool: "list_routines", ...R.listRoutines(root) };
     },
   },
 ];

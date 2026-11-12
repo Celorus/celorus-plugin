@@ -16,7 +16,6 @@
 // lib/tools.js loads this file, so its helpers are reached when a tool runs, never at load.
 
 const { Refusal } = require("../lib/refusal.js");
-const { pluginVersion } = require("../lib/version.js");
 const { DESK_ARGUMENT: DESK } = require("../lib/desk.js");
 const { readView } = require("../layout/graph.js");
 const { Desk } = require("../render/desk.js");
@@ -62,7 +61,7 @@ function context(tool, args, allowed) {
   if (read.stampsUnread) {
     throw new Refusal(`The desk's stamps page ${read.stampsUnread.rel} cannot be read, so nothing is counted. Run check_desk to see why.`);
   }
-  return { tool, day, desk: new Desk(read), read };
+  return { day, desk: new Desk(read), read };
 }
 
 // The systems rows a read tool counts, under the live-row contract (row E11, live/live.js), as
@@ -125,8 +124,10 @@ function holes(desk, st, roles, overFamilies) {
   return out;
 }
 
-function answer(tool, data, st, found) {
-  return { tool, plugin_version: pluginVersion(), ...data, systems: st.given, holes: found };
+// DESK-378: no `tool` and no `plugin_version`. Claude shows a tool's answer to the person as it
+// shows it to the model, and no skill reads either from a read tool.
+function answer(data, st, found) {
+  return { ...data, systems: st.given, holes: found };
 }
 
 // desk_count's `count`: one workday count (counts.js WORKDAY_COUNTS) for one seat on one day, in
@@ -144,7 +145,7 @@ const VIEW_OR_COUNT = `desk_count needs \`view\` or \`count\`. The views are: ${
 const NOT_BOTH = "desk_count takes `view` or `count`, never both: `view` is a view of the desk, `count` one workday count for one seat on one day.";
 const TIMED_ONLY = `\`start\` and \`page\` go with \`count\` "${TIMED}" only: leave them out of a view and of every other count.`;
 
-function workdayCount(tool, desk, st, day, args) {
+function workdayCount(desk, st, day, args) {
   const { count, seat, start, page } = args;
   if (args.view !== undefined) throw new Refusal(NOT_BOTH);
   if (typeof count !== "string" || !Object.hasOwn(C.WORKDAY_COUNTS, count)) {
@@ -157,14 +158,14 @@ function workdayCount(tool, desk, st, day, args) {
   const unread = holes(desk, st, C.WORKDAY_READS[count], false);
   // a count's own hole is a sentence about a follow-up, or a hole with its own role
   const found = [...unread, ...own.map((hole) => (typeof hole === "string" ? { role: "follow-ups", why: hole } : hole))];
-  if (unread.length) return answer(tool, { not_counted: Object.keys(data) }, st, found);
-  return answer(tool, data, st, found);
+  if (unread.length) return answer({ not_counted: Object.keys(data) }, st, found);
+  return answer(data, st, found);
 }
 
 function deskCount(args = {}) {
-  const { tool, day, desk, read } = context("desk_count", args, ["desk", "view", "count", "seat", "start", "page", "date", "systems"]);
+  const { day, desk, read } = context("desk_count", args, ["desk", "view", "count", "seat", "start", "page", "date", "systems"]);
   const { st, told } = underContract(args, read);
-  if (args.count !== undefined) return told(workdayCount(tool, desk, st, day, args));
+  if (args.count !== undefined) return told(workdayCount(desk, st, day, args));
   if (args.start !== undefined || args.page !== undefined) throw new Refusal(TIMED_ONLY);
   if (args.view === undefined) throw new Refusal(VIEW_OR_COUNT);
   const { view, seat = "" } = args;
@@ -175,7 +176,7 @@ function deskCount(args = {}) {
   if (view === "team") {
     C.teamOnGraph(desk, "The team view");
     needRole(desk, ["desk-head"], "team");
-    return told(answer(tool, C.leadGenView(desk, st, day), st, C.viewUnread(desk, st, "desk-head")));
+    return told(answer(C.leadGenView(desk, st, day), st, C.viewUnread(desk, st, "desk-head")));
   }
   const roles = { brief: ["rep", "rm", "desk-head"], rep: ["rep"], rm: ["rm"] }[view];
   needRole(desk, roles, view);
@@ -186,18 +187,62 @@ function deskCount(args = {}) {
   // reads no CRM row and counts its book moments over the families; a seat not on the desk reads all
   const page = desk.pages.get(seat);
   const role = page && page.kind === "seats" ? page.header.role : null;
-  return told(answer(tool, data, st, C.viewUnread(desk, st, role)));
+  return told(answer(data, st, C.viewUnread(desk, st, role)));
 }
 
 function teamRollup(args = {}) {
-  const { tool, day, desk, read } = context("team_rollup", args, ["desk", "date", "systems"]);
+  const { day, desk, read } = context("team_rollup", args, ["desk", "date", "systems"]);
   const { st, told } = underContract(args, read);
   needRole(desk, ["desk-head"], "team");
-  return told(answer(tool, { ...C.leadGenView(desk, st, day), pull: PULL }, st, C.viewUnread(desk, st, "desk-head")));
+  return told(answer({ ...C.leadGenView(desk, st, day), pull: PULL }, st, C.viewUnread(desk, st, "desk-head")));
+}
+
+// DESK-378 (Track F base's ruling, 11 Nov): what family_facts leaves out
+// unless the call asks for it by name. Claude shows a tool's answer to the person as it shows it to
+// the model, so a phone, a CRM id, a CRM record's owner seat or a city comes back only on a call
+// whose `include` names it; the skill steps that need one (reach-out's mail draft, crm_id; the
+// console's make-a-prospect step, city) name it. This keeps them out of sight by default and is no
+// privacy wall: the model chooses `include`, and the desk's own pages carry the phone. Each map is
+// a row's key, then the name `include` asks for it by. The family pages are drawn from
+// render/facts.js whole (render/index.js); only this answer leaves them out.
+// Each name `include` takes, with what it brings back: the one table both descriptions and the
+// refusal are written from.
+const ASKED = Object.freeze({
+  phone: "each member's, contact's and CRM record's phone",
+  crm_id: "their CRM ids and each CRM record's id",
+  owner_seat: "each CRM record's owner",
+  city: "the family's city, and each CRM record's research city",
+});
+const ASKED_ONLY = Object.freeze(Object.keys(ASKED));
+const FAMILY_ASKED = Object.freeze({ city: "city" });
+const PERSON_ASKED = Object.freeze({ phone: "phone", crm_id: "crm_id" });
+const RECORD_ASKED = Object.freeze({ id: "crm_id", phone: "phone", owner_seat: "owner_seat" });
+const RESEARCH_ASKED = Object.freeze({ city: "city" });
+const INCLUDE_SAID = `\`include\` is a list of the fields family_facts leaves out unless asked: ${ASKED_ONLY.join(", ")}. Pass one only when the person asked for it, or a skill's step names it.`;
+
+// The names `include` asks for, refused (never repeated) when it is not a list of them.
+function includeOf(value) {
+  if (value === undefined || value === null) return new Set();
+  if (!Array.isArray(value) || !value.every((one) => typeof one === "string" && ASKED_ONLY.includes(one))) throw new Refusal(INCLUDE_SAID);
+  return new Set(value);
+}
+
+// `row` without each key of `asked` whose name the call did not include.
+function shownOf(row, asked, include) {
+  return Object.fromEntries(Object.entries(row).filter(([key]) => !Object.hasOwn(asked, key) || include.has(asked[key])));
+}
+
+// A CRM record as shown: its own keys, and its research block's, each left out unless included.
+function recordShownOf(record, include) {
+  const shown = shownOf(record, RECORD_ASKED, include);
+  const { research } = shown;
+  if (research && typeof research === "object" && !Array.isArray(research)) shown.research = shownOf(research, RESEARCH_ASKED, include);
+  return shown;
 }
 
 function familyFacts(args = {}) {
-  const { tool, desk, read } = context("family_facts", args, ["desk", "family", "systems"]);
+  const { desk, read } = context("family_facts", args, ["desk", "family", "include", "systems"]);
+  const include = includeOf(args.include);
   const { st, told } = underContract(args, read);
   const { family } = args;
   const families = desk
@@ -208,7 +253,15 @@ function familyFacts(args = {}) {
   if (typeof family !== "string" || !families.includes(family)) {
     throw new Refusal(`${JSON.stringify(family === undefined ? "" : family)} is not a family on this desk. The families are: ${families.join(", ")}.`);
   }
-  return told(answer(tool, F.familyFacts(desk, st, family), st, holes(desk, st, C.FAMILY_READS, false)));
+  const facts = F.familyFacts(desk, st, family);
+  const person = (row) => shownOf(row, PERSON_ASKED, include);
+  const shown = {
+    ...shownOf(facts, FAMILY_ASKED, include),
+    members: facts.members.map(person),
+    contacts: facts.contacts.map(person),
+    crm: facts.crm.map((record) => recordShownOf(record, include)),
+  };
+  return told(answer(shown, st, holes(desk, st, C.FAMILY_READS, false)));
 }
 
 // book_query's signal window: a day (`event_since`), or a count of days back from the query's own
@@ -230,7 +283,7 @@ function signalWindow(args, day) {
 
 function bookQuery(args = {}) {
   const allowed = ["desk", "owner", "relationship", "event_since", "event_within_days", "no_touch_days", "liquidity_only", "date", "systems"];
-  const { tool, day, desk, read } = context("book_query", args, allowed);
+  const { day, desk, read } = context("book_query", args, allowed);
   const { st, told } = underContract(args, read);
   const { owner = "", relationship = "", no_touch_days: noTouch = 0, liquidity_only: liquidityOnly = false } = args;
   const seats = desk
@@ -277,7 +330,7 @@ function bookQuery(args = {}) {
     liquidity_engines: engines,
     today: day,
   };
-  return told(answer(tool, { query, count: rows.length, rows }, st, found));
+  return told(answer({ query, count: rows.length, rows }, st, found));
 }
 
 const TOOLS = [
@@ -357,12 +410,20 @@ const TOOLS = [
     description:
       "Everything the desk knows about one family, each fact naming the page it came from: its " +
       "members and contacts, the decision maker, firms, routes in, signals, conversations, open " +
-      "follow-ups, fitting products, its CRM records and its last touch.",
+      "follow-ups, fitting products, its CRM records and its last touch. " +
+      `Each field include takes (${ASKED_ONLY.join(", ")}) is left out unless include names it.`,
     inputSchema: {
       type: "object",
       properties: {
         desk: DESK,
         family: { type: "string", description: "The family page's name, as its file is named, without .md." },
+        include: {
+          type: "array",
+          items: { type: "string", enum: ASKED_ONLY },
+          description:
+            `Fields left out unless asked: ${ASKED_ONLY.map((name) => `${name} (${ASKED[name]})`).join(", ")}. ` +
+            "Pass one only when the person asked for that field, or a skill's step names it.",
+        },
         systems: SYSTEMS,
       },
       required: ["family"],

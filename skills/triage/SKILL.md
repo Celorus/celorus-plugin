@@ -283,6 +283,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never invent a reason, an event or a date to justify a rank.
 - Never present a handle-with-care row as a prospect or attach a pitch to it.
 - Never skip the dedupe.

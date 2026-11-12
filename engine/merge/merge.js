@@ -65,7 +65,7 @@ const { hiddenName, readDesk, splitPage, NO_HEADER, NOT_UTF8, HEADER_UNREAD, PAG
   require("../lib/desk.js");
 const { parseHeader } = require("../lib/header.js");
 const { pluginVersion } = require("../lib/version.js");
-const { checkPages } = require("../check/rules.js");
+const { checkPages, RULES } = require("../check/rules.js");
 const { loadDeskModel, ModelUnreadable } = require("../check/model.js");
 const { linkSpans, linkName, linksIn, readOutsideFences, headingOf, sectionSpan, holdsContactDetails, Page } =
   require("../check/text.js");
@@ -1100,7 +1100,7 @@ function mergePages(desk, keep, merge, now, { sent = false, after = null, atStop
       if (raw.get(where).problem === PAGE_UNREAD) readGuarded(root, where, MERGE_PAGE, { need: true, unreadAtStart: true });
       refuse(
         `${name} is on this desk at ${where}, but ${said}, so this merge cannot use it; check-desk ` +
-          `lists it (${rule}) and says the same. ${mend}, then say this again`,
+          `lists it under "${RULES[rule]}" and says the same. ${mend}, then say this again`,
       );
     }
     refuse(`${name} is not a page on this desk`);

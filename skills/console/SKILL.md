@@ -96,8 +96,8 @@ shape, count with the page's `systems` unchanged, and say the change is made in 
 this page does not show it. Never say a row left or arrived that the count does not show.
 
 **Make a family a prospect** ("make them a prospect"):
-1. `family_facts(family=<the family's page name>)` for the decision maker, their firm and role,
-   and the family's city.
+1. `family_facts(family=<the family's page name>, include=["city"])` for the decision maker,
+   their firm and role, and the family's city: the facts leave a city out unless asked.
 2. Create the record through the harness's CRM connector: the decision maker's name, company,
    designation and city, the seat as its owner, and the family's page name as the desk's
    reference. Its answer's id is the new record. If there is no CRM connector, or it refuses,
@@ -289,6 +289,8 @@ sees what was written. Follow these as they say:
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never send anything: no mail, no invitation, no message.
 - Never count, total or rank a row yourself, and never type a number onto a page.
 - Never read a connector for anyone who is not on the desk.

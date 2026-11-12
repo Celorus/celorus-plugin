@@ -108,7 +108,6 @@ function whoCanIntroduce(args = {}, { now = localNow() } = {}) {
   const kept = Math.min(page.kept, SHOWN_PATHS);
   return {
     tool: TOOL,
-    plugin_version: pluginVersion(),
     // The desk as the caller named it, and the page's path from there, or both desk-relative (R72).
     root: shown.root,
     page: shown.at(rel),

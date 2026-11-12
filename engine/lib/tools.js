@@ -419,9 +419,12 @@ function checkDesk(args = {}) {
   // A page the scope names that no rule reads carries no finding of its own, and the findings on
   // the pages it links are kept, from the links the same read holds (check/rules.js).
   const kept = scope === null ? whole : narrowFindings(whole, [...scope.pages, ...scope.skipped.keys()], byRules.linked);
+  // DESK-378: a finding names its rule in words (RULES), never by its id. Claude shows a tool's
+  // answer to the person as it shows it to the model; the ids stay inside the engine, where
+  // paths/walk.js, merge.js and cite.js key on them.
   const findings = kept.map((finding) => ({
     page: finding.page,
-    rule: finding.rule,
+    rule: RULES[finding.rule],
     message: finding.message,
   }));
   const byRule = {};
@@ -454,9 +457,10 @@ function checkDesk(args = {}) {
     version,
   });
   return {
-    tool: "check_desk",
+    // Kept (DESK-378): the workday skills send both as desk_pulse's desk_id and pack_version.
     plugin_version: version,
     desk: name,
+    // The one id kept (DESK-378): the workday skills read the seat from ~/.celorus/seat-<desk_id>.
     desk_id: unread ? null : read.stamps.desk_id || null,
     layout: read.layout,
     stamps_unread: unread ? unread.rel : null,
@@ -465,7 +469,6 @@ function checkDesk(args = {}) {
     pages_read: read.pages.length,
     pages_with_problems: problems,
     rules_run: byRules.rules.length,
-    rules: RULES,
     findings_by_rule: byRule,
     findings,
     checked_with: stamp,
@@ -484,8 +487,8 @@ const TOOLS = [
   {
     name: "check_desk",
     description:
-      "Check a desk against rules C01 to C22 and list what to look at, each finding with its " +
-      "page, rule and message. It lists; it never blocks. Only when record is true, a " +
+      "Check a desk against its rules and list what to look at, each finding with its page, its " +
+      "rule in words and its message. It lists; it never blocks. Only when record is true, a " +
       "whole-desk check writes checked_with: <version> and checked_findings: <n> into desk.md." +
       " What the seat says about themselves is never written to the desk: leave it out of every field.",
     inputSchema: {

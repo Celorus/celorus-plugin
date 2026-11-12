@@ -67,9 +67,8 @@ hand run stamps only with `--record`; this skill asks, so a clean whole-desk che
 its stamp. Tell the person not to save `desk.md` while the check records.
 Its answer is the whole of what this skill knows about the desk's rules:
 
-- `findings`: one row per finding, each with its `page`, its `rule` and its `message`.
-- `rules`: the words of each rule, by its id, C01 to C22.
-- `findings_by_rule`: how many rows each rule has.
+- `findings`: one row per finding, each with its `page`, its `rule` in words and its `message`.
+- `findings_by_rule`: how many rows each rule has, by the rule's words.
 - `summary`: the check's own sentence about the run.
 - `pages_with_problems`: each page the check could not read, or whose stamps it could not
   read, with why and the remedy. A page with no header is not one of them; the rules say
@@ -312,7 +311,7 @@ is not empty, and nothing when all three are:
 - `points_at_itself`: each line of the kept page the merge turned into a link to itself, as
   `<line>: <the line>`. Say where it is.
 - `named_only_holds_details`: true when the kept page is a named-only person who now holds
-  contact details. Say so, and that C08 is the rule that will report it.
+  contact details. Say so, and that the rule "contact details on a named-only person" will report it.
 
 Change none of them yourself: a queue row may want repointing or closing, a line pointing at
 its own page may want deleting or rewriting, and a `standing` is a claim about a relationship
@@ -353,7 +352,7 @@ needs-attention, and no page is changed for it.
 ## Say at the end
 
 After a check: the check's `summary`, as it returned it, and the page, shown from its path.
-Name a rule by its words from `rules`, with the number `findings_by_rule` gives it, never a
+Name a rule by its words, as `findings` gives them, with the number `findings_by_rule` gives it, never a
 number of your own. When `checked_with` names lines the check wrote, say so in one sentence.
 Whenever `checked_with` carries `previous_text` (text, not null), whatever its reason says, say
 the reason as it came and show `previous_text` as it came. When `previous_text_is_desk_md` is
@@ -428,6 +427,8 @@ sees what was written. Follow these as they say:
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never block, undo or refuse another skill's write, and never change a page's own lines to
   fix a finding. List it; the person fixes it, or says "fix it" for one row. A merge changes
   pages only when the person asks for it, as "Merge two pages" says.

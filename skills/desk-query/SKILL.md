@@ -81,6 +81,8 @@ record. The desk tools it uses run on this machine.
 
 ## Never
 
+- Never read the desk with a shell command (no ls, cat, grep, find or head over its folder):
+  read a page this skill names with the file-read tool, and ask the desk tools for the rest.
 - Never send anything.
 - Never count, total or rank a row yourself: the count is the tool's.
 - Never turn a period in words into a date yourself.

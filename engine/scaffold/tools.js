@@ -2,7 +2,6 @@
 // The set-up and take-down tools: scaffold_desk (scaffold.js) and take_down (the take-down
 // folder's own tools.js), listed together so lib/tools.js takes both in one line.
 
-const { pluginVersion } = require("../lib/version.js");
 const { scaffoldDesk, SEAT_ROLES, BOOK_SOURCES } = require("./scaffold.js");
 const S = require("./systems.js");
 const { readBack } = require("../takedown/takedown.js");
@@ -18,7 +17,7 @@ const ARGUMENTS = ["desk", "name", "seats", "systems", "pack", "pack_version", "
 
 function scaffoldDeskTool(args = {}) {
   registry().onlyArguments("scaffold_desk", args, ARGUMENTS);
-  return { tool: "scaffold_desk", plugin_version: pluginVersion(), ...scaffoldDesk(args, { readBack }) };
+  return { tool: "scaffold_desk", ...scaffoldDesk(args, { readBack }) };
 }
 
 const TOOLS = [

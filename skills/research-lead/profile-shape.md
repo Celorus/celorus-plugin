@@ -140,7 +140,7 @@ Every claim traceable on request.
 Write the heading on every profile page, even when there is nothing to put under it yet.
 Connection lines are read under `## Connections` and nowhere else, so a page without the
 heading is a page the "who can introduce me" walk never looks at - `check-desk` lists it
-(C14), and a question the desk finds no path for hedges until the heading is there.
+("no Connections section"), and a question the desk finds no path for hedges until the heading is there.
 
 Under it, one proof line for each connection in the header, and one for each connection you
 inferred and no source showed. The proof word is fixed by where the connection came from:

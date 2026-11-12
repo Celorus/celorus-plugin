@@ -20,7 +20,6 @@
 const { DESK_ARGUMENT, PAGE_UNREAD, HEADER_UNREAD, NOT_UTF8 } = require("../lib/desk.js");
 const { readInPlace } = require("../layout/graph.js");
 const { Refusal } = require("../lib/refusal.js");
-const { pluginVersion } = require("../lib/version.js");
 const { strip, splitLines, compareText, isMapping } = require("../check/values.js");
 const { linksIn } = require("../check/text.js");
 const rules = require("../check/rules.js");
@@ -126,7 +125,6 @@ function introductionsFrom(args = {}) {
   const unread = notRead.length ? ` ${UNREAD(notRead.length)}` : "";
   return {
     tool: TOOL,
-    plugin_version: pluginVersion(),
     firm,
     conversations_about: conversations,
     count: introductions.length,

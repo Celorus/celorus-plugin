@@ -27,7 +27,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal } = require("../lib/refusal.js");
-const { pluginVersion } = require("../lib/version.js");
 const { DESK_ARGUMENT } = require("../lib/desk.js");
 const { readView } = require("../layout/graph.js");
 const { Desk } = require("../render/desk.js");
@@ -288,7 +287,6 @@ function proposeHold(args = {}, { now = Date.now() } = {}) {
     : `The seat's calendar listed no event on ${day}.`;
   return {
     tool: TOOL,
-    plugin_version: pluginVersion(),
     hold,
     day,
     events_compared: events.length,
