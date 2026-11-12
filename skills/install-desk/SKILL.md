@@ -296,7 +296,9 @@ than make its stamps up. Otherwise:
   the pages it checks. It lists a
   required file that is missing, a page with no header or a header of another shape (`index.md`
   holding more than `okf_version: "0.2"`, `log.md` with a header or a line of another shape, a
-  nested value), a missing `type` or `title`, and a `type` that is no kind of page. Say its
+  nested value), a missing `type` or `title`, a `type` that is no kind of page, a page with no
+  `timestamp`, a page of `model/`, `views/` or `merges/` with no `type`, and a path from this
+  computer written on any page (it names the page and the line, never the path). Say its
   findings, rule by rule in its words, as it gives them, or that it lists none;
 - `index.md` is there, and `.gitignore` carries `.celorus/`, `celorus/.obsidian/workspace*.json`
   and `celorus/.views/`;
@@ -306,8 +308,7 @@ than make its stamps up. Otherwise:
 - the header of `desk-log.md` is exactly
   `| date | seat | lead | source | minutes | action | outcome | mark | by |`;
 - the header of `queues/follow-ups.md` is exactly `| owed_by | who | what | by | from | state |`;
-- the seat pointer for this machine exists and names a seat file that exists;
-- no absolute path on the pages this mode read.
+- the seat pointer for this machine exists and names a seat file that exists.
 
 What was still to connect at the set-up is read from the systems table, never from a count of
 your own: call `take_down`, which changes nothing, and say its `not_connected` roles. The table

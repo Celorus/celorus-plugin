@@ -6,8 +6,11 @@
 const HEADING = "Georgia, 'Times New Roman', serif";
 const BODY = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
+// DESK-384: what Milan does, above the next step; the Next line below is the one place that gives the step.
+const WHAT_MILAN_DOES = "Milan runs your sales day: who to call first, why now, and what to say.";
 const NEXT = [
   "Your chat can now use your Celorus desk.",
+  WHAT_MILAN_DOES,
   'Next: go back to your chat and say "Milan, open my day."',
   'Not you? Say "Milan, sign out" in the chat and sign in again.',
   "You can close this tab.",

@@ -101,6 +101,17 @@ number: "Already yours, so left off today's list: <each name>." On a seat's grap
 nothing, and name them in the chat in those words. This is the desk's own
 feature: it never calls a client as if they were new.
 
+A supplied name or a book moment whose lead has already been met is no call either. A meeting
+held on or after the day the name was listed, or the moment happened, leaves the row off the
+list and spends none of the day's cap. The tool names each under `met_already` of
+`calls_for_today`, with the lead, the day of the meeting, and what put it on the day: the kind
+and its date. Write them after the names already yours, under this line: "Met already; the next
+step is a follow-up, if a follow-up is queued." Write each lead on a line of its own, naming every reason the tool lists for it, even
+where the tool lists the lead under both kinds. Mark nothing for them in
+`queues/supplied.md`. A follow-up or a reply after a meeting stays a call, and a meeting held
+before the day a name was listed changes nothing. Where `holes` says a meeting row has no date that
+can be read, say that sentence as it came: the lead stays on the list.
+
 ## The order
 
 The order and the cut are the desk tool's. Call `desk_count` with `count` `calls_for_today`
@@ -112,11 +123,19 @@ rows under `handle_with_care`. Write `today` from the top as it came. Below it w
 row says what care means.
 
 Each row is a lead with every reason it has. Write the row from its fields and from nothing
-else: the name from `title`; the clock from `clock`; the reason from `what_just_happened`
+else: the name from `title`; the clock from `clock`; what happened from `what_just_happened`
 and from the rows under `follow_up`, `reply`, `supplied` and `book_moment`, every kind the
-row carries; the source from `source`; the page from `page_as_of`, or, where `no_page` is
-`true`, the words the row shape below gives a lead with no page. Where `no_clock` or
-`clock_not_listed` holds words, say them as they came.
+row carries; why it sits where it does from `order_why`; the source from `source`; the page
+from `page_as_of`, or, where `no_page` is `true`, the words the row shape below gives a lead
+with no page. Where `no_clock` or `clock_not_listed` holds words, say them as they came.
+
+`order_rule` is the tool's sentence for how every row is placed: the day's order of clocks,
+the order the kinds run in, the tiers, and the day. Write it as it came, on a line above
+today's calls, and on no row. `order_why` is the tool's sentence for a row alone: its
+clock and where that clock sits, its kind, a supplied name's tier, and the kind's day. Write it
+as it came, word for word. Add no reason of your own to it and take none from it, and never say
+why a row is in its place from anything else. Every row under `today`, `later_today`,
+`handle_with_care` and `no_seat` carries it.
 
 A lead the nightly placement put on the list for the firm's ideal client profile carries
 `tier`, `icp_persona` and `icp_version`: its tier, the persona it was placed under by its
@@ -174,7 +193,7 @@ empty day with a lead, a reply or a meeting of your own.
 ## Every row
 
 ```markdown
-- **<Name>** · <clock in words> · <the reason: what happened, when, and why that puts them here today> · Source: <supplied-<list id> | book | follow-up | inbound> · <tier> · persona `icp_persona`, version `icp_version` · <no page yet; research first | page as of <date>>
+- **<Name>** · <clock in words> · <what happened, and when> · <why it is here: `order_why` as it came> · Source: <supplied-<list id> | book | follow-up | inbound> · <tier> · persona `icp_persona`, version `icp_version` · <no page yet; research first | page as of <date>>
 ```
 
 Rows are in order from the top, one bullet each, with no position number. In the tag part,
@@ -184,18 +203,18 @@ of them; any other row goes straight from the source to the page. On a desk that
 seat's graph, the rows written into the board leave the tag part out: it is shown in the chat
 only.
 
-The reason is words, never a score. A supplied name with no page reads "no page yet;
+The reason and the place are words, never a score. A supplied name with no page reads "no page yet;
 research first" and stays on the list: research is the first call's preparation.
 
 ## What you write
 
 On a seat's graph (`celorus/desk.md` says `layout_version: 3`), this skill writes nothing: its
 board and queues are written on the desk server, never by hand. Show today's calls in the chat,
-each with its reason and its clock, and the names already yours below them, and say that on
+each with its reason and its clock, and the names already yours below them, then the names met already, and say that on
 this desk the order stays in this chat and is not kept on the board. On any other desk:
 
 - The "Today's calls" block of `celorus/today/<date>.md`, replacing "Ordered by triage."
-  and, below the list, the names already yours.
+  and, below the list, the names already yours, then the names met already under their line.
   Write each header on the board as a line of its own, never in a row's shape: no bold field at its start and no `Source:` field.
 - State changes in `celorus/queues/supplied.md`: `already-yours` from the dedupe;
   `researched` once a page exists.

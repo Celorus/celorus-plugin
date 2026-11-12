@@ -283,10 +283,12 @@ escape_for_json() {
 }
 
 emit() {
-  local ctx
+  local ctx shown=""
   ctx="$(escape_for_json "$1")"
+  # DESK-384: the one line the person sees, on a session start only (SHOWN_LINE, set below)
+  [ -n "$SHOWN_LINE" ] && shown="  \"systemMessage\": \"$(escape_for_json "$SHOWN_LINE")\","$'\n'
   if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ]; then
-    printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$ctx"
+    printf '{\n%s  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$shown" "$ctx"
   else
     printf '{\n  "additionalContext": "%s"\n}\n' "$ctx"
   fi
@@ -311,6 +313,11 @@ node_missing_or_old() {
 # DEFAULT_NAME), and the line every start line ends with.
 NAME="Milan"
 RECORD_LINE="To read the record, sign in to celorus-data under /mcp if you have not."
+# DESK-384: what Milan does and how to start, shown to the person (a top-level systemMessage, which
+# the app shows; additionalContext reaches only the model). hooks.json runs the hook with the word
+# startup on a start and with none on a clear or a compact, so only a start says it.
+SHOWN_LINE=""
+[ "${1:-}" = "startup" ] && SHOWN_LINE="${NAME} runs your sales day: who to call first, why now, and what to say. Say '${NAME}, open my day' to start, or '${NAME}, what can you do?' first."
 
 # Whether the link keeps a sign-in on this machine: ~/.celorus/link/token.json is there as a plain
 # file, with no link on the way. The file is never opened; a sign-in that has ended still counts,
@@ -456,6 +463,8 @@ dated_copy_name() {
   return 0
 }
 dated_emit() {
+  # A copy is no desk the person starts in: the first words are not said here (DESK-384).
+  SHOWN_LINE=""
   if [ -n "$dated_partial" ]; then
     emit "${greeting}This folder is a copy the conversion started on ${dated_on} and did not finish. It is not a desk: write nothing in it, and do not restore from it.${node_note}
 ${RECORD_LINE}"
@@ -481,6 +490,9 @@ greeting="${NAME} here. "
 by_name="${NAME}, "
 if [ "$found" -ne 0 ] && dated_copy_name "${CELORUS_DESK:-$PWD}"; then dated_emit; exit 0; fi
 if [ "$found" -eq 2 ] || [ "$found" -eq 3 ]; then
+  # A desk the walk could not read (a broken celorus entry, no index.md) is no live desk: the first
+  # words are not said here either (DESK-384).
+  SHOWN_LINE=""
   # The one path a fault line says is CELORUS_DESK's value, as it was set: said with the seat its
   # desk.md names hidden too, when celorus/desk.md there is a plain file under a plain folder.
   named="${CELORUS_DESK:-}" named_seat=""
@@ -524,7 +536,7 @@ own_set="$(
     [[ $own_raw =~ $own_none ]] || { printf 1; break; }
   done
 )"
-if [ -n "$own_set" ]; then greeting=""; by_name=""; fi
+if [ -n "$own_set" ]; then greeting=""; by_name=""; SHOWN_LINE=""; fi
 # The copy the conversion leaves of a desk (DESK-391), said by dated_emit: told by the desk folder's
 # name alone, read as the engine reads it (dated_copy_name), and a copy cut short before its
 # celorus/index.md is told by the same name, ahead of the walk's own message about a desk it cannot
@@ -554,6 +566,7 @@ if [ -n "$converted_line" ]; then
   case "$converted_on" in
     [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) as_of=" as of ${converted_on}" ;;
   esac
+  SHOWN_LINE=""
   emit "${greeting}This folder is the desk's history${as_of}. It was converted, and it is kept as it was.${node_note}
 The live desk is your seat's graph, in the firm folder the conversion made beside this folder. New work goes there, not here: write nothing in this folder.
 To open it, start a session in your seat's own folder there, then say '${by_name}open my day'.

@@ -589,8 +589,10 @@ Never say what the record holds. No count, no figure, no URL, on any lane. For a
 person or a family, say "The record was not asked by this name.", then close with the lane's
 own sentence:
 
-- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it. The sign-in
-  step is `/mcp`, then sign in.
+- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it: your browser
+  opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come
+  back to this chat. In Claude Code, `/mcp` shows the connection if the browser does not
+  open.
 - **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
   connection.
 - **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.

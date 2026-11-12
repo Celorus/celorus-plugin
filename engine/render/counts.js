@@ -1301,11 +1301,19 @@ const SEAM_WORDS = {
 };
 const SEAM_AHEAD_DAYS = 365;
 
+// The meeting-held rows of the desk log, each as [the lead's page name, the day it was held]: the
+// one reading of a meeting held, which the seam below and calls_for_today both use. `read` turns a
+// row's date into a day: asDate, which refuses a date that is none, or asDateOrNull, which gives
+// null for it.
+function meetingsHeld(desk, read = asDate) {
+  return desk.deskLog.filter((r) => r.action === "meeting-held").map((r) => [unlink(r.lead), read(r.date)]);
+}
+
 // The week's hand-overs from a rep to an RM, and what became of each: met (a meeting-held row on
 // or after the hand-over), on the calendar (a meeting ahead on the RM's calendar), or stalled.
 function handOverSeam(desk, st, today, reps) {
   const handles = seats(desk);
-  const held = desk.deskLog.filter((r) => r.action === "meeting-held").map((r) => [unlink(r.lead), asDate(r.date)]);
+  const held = meetingsHeld(desk);
   const ahead = new Map();
   const rows = [];
   for (const r of desk.deskLog) {
@@ -1974,12 +1982,66 @@ function byDay(a, b, newest) {
   return (a < b ? -1 : 1) * (newest ? -1 : 1);
 }
 
+// The kinds as a sentence names them, and the word each kind's day goes by.
+const KIND_WORDS = { "follow-up": "follow-up", reply: "reply", supplied: "supplied name", "book moment": "book moment" };
+const KIND_DAY_WORDS = { "follow-up": "due", reply: "to the follow-up due", supplied: "listed", "book moment": "moment of" };
+
+// A clock as a sentence says it: its key with the hyphens as spaces.
+function clockWords(clock) {
+  return String(clock).split("-").join(" ");
+}
+
+function capital(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// Where a clock sits in the day's order, in words and with no number: first, or after the
+// clock before it.
+function clockPlace(order, clock) {
+  const at = order.indexOf(clock);
+  if (at === 0) return "first of the clocks";
+  return `after ${clockWords(order[at - 1])}`;
+}
+
+// The kind's own day as a row's sentence says it ("due Wed 11 Nov"), or null where it names none.
+function kindDay(kind, day) {
+  return day === null || day === undefined ? null : `${KIND_DAY_WORDS[kind]} ${shortDate(day)}`;
+}
+
+// The one sentence that says how every row of the answer is placed, built from what the order is
+// sorted by: the day's order of clocks (handle-with-care is not in it, as its rows say so
+// themselves), the kinds, the tiers, and the day.
+function orderRule(order) {
+  const clocks = order.filter((c) => c !== HANDLE_WITH_CARE).map(clockWords).join(", ");
+  const kinds = CALL_KINDS.map((k) => KIND_WORDS[k]).join(", ");
+  return (
+    `Calls go by clock, in the day's order: ${clocks}; inside a clock by kind: ${kinds}; ` +
+    `supplied names by tier: ${ICP_TIERS.join(", ")}, then untagged; then by day, the earlier day first ` +
+    "and the newest book moment first; a row with no date that can be read goes after the dated ones."
+  );
+}
+
+// Why a row sits where it does: its own facts only, the rule being said once in order_rule. Its
+// clock and where that clock sits, its first kind, a supplied name's tier, and the kind's day. A
+// row of no seat is in no order, and a handle-with-care row is held back; each says so.
+function orderWhy(first, day, clock, order, clockFrom, icp, nobodys) {
+  const kind = KIND_WORDS[first];
+  const dayWords = kindDay(first, day);
+  if (nobodys) return `Nobody's yet, so outside the order and the cap; a ${kind}, ${dayWords === null ? "with no date that can be read" : dayWords}.`;
+  const when = dayWords === null ? "no date that can be read" : dayWords;
+  if (clock === HANDLE_WITH_CARE) return `${capital(clockWords(clock))}, held back from today's list and outside the cap; a ${kind}, ${when}.`;
+  const place = clockPlace(order, clock);
+  const head = clockFrom !== null ? `${clockFrom}, so ${clockWords(clock)}, ${place}` : `${capital(clockWords(clock))}, ${place}`;
+  const tier = first === "supplied" ? `, ${icp ? icp.tier : "untagged"}` : "";
+  return `${head}; a ${kind}${tier}, ${when}.`;
+}
+
 // One row of the answer, and its place in the order: a lead with every reason it has and its
 // clock. Handle with care is the clock of a lead a never-say line names, by any name of
 // leadNames, and of a page whose own clock says so (the key or its words, isCareClock), whatever the day's order lists. A page's
 // clock that the order does not hold places the row as reason-to-call and is said in
 // clock_not_listed; no_clock is said only of a lead with no page or a page with no clock.
-function callRow(desk, lead, kinds, order, careLines) {
+function callRow(desk, lead, kinds, order, careLines, nobodys = false) {
   const page = leadPage(desk, lead);
   const title = page ? desk.title(lead) : lead;
   const kindsHeld = CALL_KINDS.filter((k) => kinds.has(k));
@@ -2013,6 +2075,9 @@ function callRow(desk, lead, kinds, order, careLines) {
   said.last_touch = headerValue(page, "last_touch");
   said.readiness = headerValue(page, "readiness");
   said.what_just_happened = page ? freshestLine(desk, page) : null;
+  // why the row sits where it does, in the engine's words: a row with no usable clock says so first
+  const clockFrom = notListed !== null ? "Its page's clock is not in the day's order of clocks" : noClock !== null ? (page ? "Its page names no clock" : "It has no page yet") : null;
+  said.order_why = orderWhy(first, kinds.get(first)[0].key, clock, order, clockFrom, icp, nobodys);
   return { said, place: [order.indexOf(clock), CALL_KINDS.indexOf(first), first === "supplied" ? tierRank(icp) : 0, kinds.get(first)[0].key, first === "book moment"] };
 }
 
@@ -2033,6 +2098,11 @@ function byPlace(a, b) {
   const d = byDay(da, db, newest);
   if (d !== 0) return d;
   return a.said.lead < b.said.lead ? -1 : a.said.lead > b.said.lead ? 1 : 0;
+}
+
+// the hole said of a lead whose meeting-held row has no day that can be read
+function undatedMeetingWhy(lead) {
+  return `The meeting-held row for ${lead} in the desk log has no date that can be read, so the lead stays a call and is not named as met already.`;
 }
 
 function callsForToday(desk, st, seat, day) {
@@ -2062,11 +2132,40 @@ function callsForToday(desk, st, seat, day) {
   const found = crmExport(desk.root, desk.crm);
   const held = deskHolds(desk, found.available ? found.names : null);
   const alreadyYours = [];
+  // A lead already met is no call either: a supplied row or a book moment whose lead has
+  // a meeting-held row (meetingsHeld, the one reading the hand-over seam uses) on or after the
+  // row's own day leaves the order, spends no cap, and is named in met_already with the meeting's
+  // day and the kind and day that put it on the list. A meeting before the row's day, and a
+  // follow-up or a reply, change nothing. A meeting-held row with no day that can be read removes
+  // nothing and is said as a hole.
+  const meetings = new Map();
+  for (const [family, held_on] of meetingsHeld(desk, asDateOrNull)) {
+    if (!meetings.has(family)) meetings.set(family, { days: [], undated: false });
+    if (held_on === null) meetings.get(family).undated = true;
+    else meetings.get(family).days.push(held_on);
+  }
+  const metAlready = [];
+  const undatedMeeting = new Set();
+  // the latest meeting held on or after `since`, or null; a lead whose meeting row has no day is
+  // remembered for the hole while its row stays a call
+  const metOn = (lead, since) => {
+    const had = meetings.get(lead);
+    if (!had) return null;
+    const days = since === null ? [] : had.days.filter((d) => d >= since);
+    if (days.length) return days.reduce((a, b) => (b > a ? b : a));
+    if (had.undated) undatedMeeting.add(lead);
+    return null;
+  };
   for (const lead of suppliedLeads(desk).values()) {
     const owner = effectiveOwner(desk, lead.lead);
     if (!ASKED_STATES.has(lead.state) || (owner !== seat && owner !== null)) continue;
     const matched = held(lead.lead);
-    if (matched.length) alreadyYours.push({ lead: lead.lead, list: lead.list, matched, ...(owner === null ? { no_seat: true } : {}) });
+    if (matched.length) {
+      alreadyYours.push({ lead: lead.lead, list: lead.list, matched, ...(owner === null ? { no_seat: true } : {}) });
+      continue;
+    }
+    const met = metOn(lead.lead, lead.date);
+    if (met !== null) metAlready.push({ lead: lead.lead, met_on: met, kind: "supplied", date: lead.date, ...(owner === null ? { no_seat: true } : {}) });
     else take(owner === null ? nobodys : mine, lead.lead, "supplied", { list: lead.list, date: lead.row.date }, lead.date, lead.icp);
   }
   // input 3: a book moment of the last week, the seat's as every reader reads a lead's owner
@@ -2079,7 +2178,9 @@ function callsForToday(desk, st, seat, day) {
     if (!lead || at === null || at < from || at > day) continue;
     const owner = effectiveOwner(desk, lead);
     if (owner !== seat && owner !== null) continue;
-    take(owner === null ? nobodys : mine, lead, "book moment", { moment: b.moment, date: b.date }, at);
+    const met = metOn(lead, at);
+    if (met !== null) metAlready.push({ lead, met_on: met, kind: "book moment", date: at, ...(owner === null ? { no_seat: true } : {}) });
+    else take(owner === null ? nobodys : mine, lead, "book moment", { moment: b.moment, date: b.date }, at);
   }
   const spec = motionSpec(desk);
   const order = clockOrder(spec.clocks);
@@ -2089,7 +2190,7 @@ function callsForToday(desk, st, seat, day) {
   const care = rows.filter((r) => r.said.clock === HANDLE_WITH_CARE).map((r) => r.said);
   // the rows of no seat: in no order and cut at no cap, by slug, the same for every seat that asks
   const noSeat = [...nobodys]
-    .map(([lead, kinds]) => callRow(desk, lead, kinds, order, careLines).said)
+    .map(([lead, kinds]) => callRow(desk, lead, kinds, order, careLines, true).said)
     .sort((a, b) => (a.lead < b.lead ? -1 : a.lead > b.lead ? 1 : 0));
   const { cap, no_cut: noCut } = dayCap(spec);
   const out = {
@@ -2099,7 +2200,9 @@ function callsForToday(desk, st, seat, day) {
     cap,
     no_cut: noCut,
     no_clocks: spec.clocks === null ? NO_CLOCKS : null,
+    order_rule: orderRule(order),
     already_yours: alreadyYours,
+    met_already: metAlready,
     no_seat: noSeat,
   };
   // a due follow-up whose `by` is no date is on no day: named, as due_follow_ups names it. An
@@ -2108,6 +2211,7 @@ function callsForToday(desk, st, seat, day) {
   const holes = [
     ...(noSeat.length ? [{ role: "seats", why: NO_SEAT }] : []),
     ...(!found.available && !found.none ? [{ role: "crm export", why: found.reason }] : []),
+    ...[...undatedMeeting].map((lead) => ({ role: "meetings", why: undatedMeetingWhy(lead) })),
     ...undatedFollowUps(desk, seat, true).map((why) => ({ role: "follow-ups", why })),
   ];
   return holes.length ? { ...out, holes } : out;
@@ -2169,6 +2273,8 @@ module.exports = {
   PLACED_FOLDER,
   PLACED_LIST,
   ICP_TIERS,
+  CALL_KINDS,
+  KIND_WORDS,
   ICP_TAG_KEYS,
   dueBy,
   fittingProducts,
@@ -2186,6 +2292,7 @@ module.exports = {
   leadGenView,
   briefView,
   handOverSeam,
+  meetingsHeld,
   snapshotView,
   checkReconcile,
   reconcileCounts,

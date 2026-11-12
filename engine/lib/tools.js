@@ -7,7 +7,7 @@
 // counts itself) or throws a Refusal naming the valid values.
 //
 // Tool names are the demo's or the checker oracle's, so each port is testable against them.
-// `check_desk` reads the desk through the shared reader and runs rules C01 to C22
+// `check_desk` reads the desk through the shared reader and runs rules C01 to C25
 // (check/rules.js) over it. It is read-only unless asked to record (`record: true`): then a
 // whole-desk check writes `checked_with: <version>` and `checked_findings: <n>` into desk.md
 // (lib/stamp.js), clean or not.
@@ -138,8 +138,8 @@ function scopeOf(scope) {
   return scope;
 }
 
-// The folder a page is named by, where no rule reads it: its top folder, or for a page below
-// model/, its own folder there (model/old), never model/, whose own pages the rules read.
+// What a page no page rule reads is read for (DESK-394); a page below model/ is named by its own folder.
+const READ_FOR = (rels) => `read only for a missing type and a path from this computer${rels.some((rel) => rel.split("/")[0] === "merges") ? ", merges/ also for a missing timestamp" : ""}`;
 function folderOf(rel) {
   const parts = rel.split("/");
   return parts[0] === "model" && parts.length > 2 ? `model/${parts[1]}` : parts[0];
@@ -196,14 +196,14 @@ function unreadKind(rel) {
 function skippedLine(skipped) {
   const one = (n, a, b) => (n === 1 ? a : b);
   const why = {
-    generated: (n) => `${one(n, "is", "are")} generated and ${one(n, "carries", "carry")} no rules`,
-    "below-model": (n) => `${one(n, "is", "are")} in a folder below model/ and ${one(n, "carries", "carry")} no rules`,
+    generated: (n, rels) => `${one(n, "is", "are")} generated and ${one(n, "is", "are")} ${READ_FOR(rels)}`,
+    "below-model": (n, rels) => `${one(n, "is", "are")} in a folder below model/ and ${one(n, "is", "are")} ${READ_FOR(rels)}`,
     unread: (n) => `${one(n, "carries", "carry")} no rules, since no rule read ${one(n, "it", "them")}`,
   };
   const parts = [];
   for (const kind of Object.keys(why)) {
     const rels = [...skipped].filter(([, k]) => k === kind).map(([rel]) => rel).sort();
-    if (rels.length) parts.push(`${andList(rels)} ${why[kind](rels.length)}`);
+    if (rels.length) parts.push(`${andList(rels)} ${why[kind](rels.length, rels)}`);
   }
   if (!parts.length) return "";
   return ` Of those, ${parts.join(", and ")}; the findings on the pages ${one(skipped.size, "it links", "they link")} were kept.`;
@@ -224,10 +224,10 @@ function notReadByRules(entry, rel) {
   const folder = folderOf(rel);
   const remedy = "a scope must also name a page the rules read. Name one beside it, or leave scope out to check the whole desk.";
   if (unreadKind(rel) === "generated") {
-    return `${named}, a page under ${folder}/, which is generated: no rule reads it, so ${remedy}`;
+    return `${named}, a page under ${folder}/, which is generated: it is ${READ_FOR([rel])}, so ${remedy}`;
   }
   if (unreadKind(rel) === "below-model") {
-    return `${named}, a page in ${folder}/, a folder below model/: no rule reads it, so ${remedy}`;
+    return `${named}, a page in ${folder}/, a folder below model/: it is ${READ_FOR([rel])}, so ${remedy}`;
   }
   // Every other page the reader read is one the rules read (a scope is only held to the pages
   // when they read past the layout), so this is a guard, said without a reason it cannot know.
@@ -379,7 +379,7 @@ function pagesLine(pages, byRules, name, rules) {
   const folders = [...new Set(rest.map((page) => folderOf(page.rel)))].sort();
   const one = rest.length === 1;
   const generated = folders.every((folder) => folder === "views" || folder === "merges");
-  const what = `${generated ? `${one ? "is" : "are"} generated and ` : ""}${one ? "carries" : "carry"} no rules`;
+  const what = `${generated ? `${one ? "is" : "are"} generated and ` : ""}${one ? "is" : "are"} ${READ_FOR(rest.map((page) => page.rel))}`;
   return `${line} (the other ${rest.length}, under ${andList(folders.map((folder) => `${folder}/`))}, ${what})`;
 }
 
@@ -419,8 +419,9 @@ function checkDesk(args = {}) {
       }),
     ...read.links.map(linkRow),
   ].sort((a, b) => comparePaths(a.page, b.page));
-  // A page the scope names that no rule reads carries no finding of its own, and the findings on
-  // the pages it links are kept, from the links the same read holds (check/rules.js).
+  // A page the scope names that the page rules do not read is read only for what READ_FOR says, so
+  // it carries no other finding of its own, and the findings on the pages it links are kept, from
+  // the links the same read holds (check/rules.js).
   const kept = scope === null ? whole : narrowFindings(whole, [...scope.pages, ...scope.skipped.keys()], byRules.linked);
   // DESK-378: a finding names its rule in words (RULES), never by its id. Claude shows a tool's
   // answer to the person as it shows it to the model; the ids stay inside the engine, where
@@ -507,15 +508,15 @@ const TOOLS = [
             "findings on those pages and on the pages they link. A required page that is missing " +
             "may be named, as the check puts its finding there. A relative path is read with ./ " +
             "dropped and .. resolved inside the celorus folder; letter case is matched as written. " +
-            "A page no rule reads (under views/ or merges/, or in a folder below model/) carries " +
-            "no findings; when the list also names a page the rules read, the findings on the " +
+            "A page the page rules do not read (under views/ or merges/, or in a folder below model/) is " +
+            "read only for a missing type and a path from this computer, and in merges/ a missing timestamp; when the list also names a page the rules read, the findings on the " +
             "pages it links are kept and the summary names it. " +
             "Refused first: an empty list, and a path that matches no page path the check read " +
             "(where the rules read past the desk's layout). Next, the scope is not applied, and the " +
             "answer is the whole check's with the summary saying why, where the rules stopped at the " +
             "desk's layout, or where a page the list names has links the check could not all read: " +
             "the page cannot be read, its header does not parse or does not read as keys and values, " +
-            "or it is not UTF-8. Only then is a list of pages no rule reads alone refused. Leave it " +
+            "or it is not UTF-8. Only then is a list of pages the page rules do not read alone refused. Leave it " +
             "out to check the whole desk.",
         },
         record: {

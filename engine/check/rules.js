@@ -1,5 +1,5 @@
 "use strict";
-// The desk check, rules C01 to C22. It lists; it never blocks. It reads the desk's own model
+// The desk check, rules C01 to C25. It lists; it never blocks. It reads the desk's own model
 // pages under celorus/model/, so a desk one model version behind is checked against its own
 // words. A finding is { page, rule, message }: the page under celorus/, the rule's id, and what
 // is wrong, in words the person can act on.
@@ -43,6 +43,9 @@ const RULES = {
   C20: "lead id that is not ours",
   C21: "two personas match the same leads",
   C22: "a part of the profile that finds no one",
+  C23: "page with no timestamp",
+  C24: "path from this computer on a page",
+  C25: "no type on a page of the model, views or merges",
 };
 // C20 (Track G, row G1): a store lead id is the lead store's own id for one listing, the
 // SHA-256 hex of its source (people/leads.py lead_id): exactly 64 characters of 0 to 9 and a to f.
@@ -317,6 +320,103 @@ function narrowFindings(findings, scope, linked) {
     for (const rel of scope) for (const other of linked(rel)) wanted.add(other);
   }
   return findings.filter((finding) => wanted.has(finding.page));
+}
+
+// C23 to C25 (DESK-394): the three things the old verify mode of install-desk checked by hand, which
+// DESK-378 moved onto this check. Each lists a page and never blocks, writes or changes it.
+// - C23: a page with a header but no timestamp. The old mode's pages: every page under celorus/
+//   outside model/ and views/ (merges/ counted, so it does here), but the index and the log, which
+//   the old mode set apart (an index has only okf_version; the log has no header). The soul's page
+//   and a seat's manner page are set apart too: the set-up writes them with no timestamp (C17, the
+//   desk's own). A page whose header carries generated_by is set apart too: the engine wrote it, and
+//   its writer decides its header (a firm card and a placed lead page carry no timestamp by design).
+//   A timestamp that is empty is none, as C02 reads an empty type or title.
+// - C24: an absolute path written on a page, header or body, a line in a fenced block too, since it
+//   still names this computer's folders. It is found by the one path finder (render/screen.js
+//   pathsSaid: a drive, a home folder or a scratch folder, but not a ~/ path), so no second finder
+//   stands beside it, with two more starts that finder does not know (a /Volumes/ or /mnt/ path),
+//   and a path inside a web link is a link's, not this computer's. The finding names the lines,
+//   never the path.
+// - C25: a page under model/, views/ or merges/ (which the rules above do not read as pages) whose
+//   header lost its type. Outside those folders C02 says it.
+const PATH_LINES_NAMED = 10;
+// A home-relative path (~/folder) names no user and reads the same on any machine, and the set-up
+// writes one into desk.md (the seat pointer), so C24 leaves it out; pathsSaid still says it for its
+// other callers.
+const HOME_RELATIVE = /(?<![\p{L}\p{N}_.~\\/-])~[\\/][^\s"'`<>|]*/gu;
+// A web link's address (an http or https link) holds a path that is the site's, not this
+// computer's, so a line is read with its web links taken out. Any other scheme names a place a
+// machine reaches (a file, a share, a remote folder), so its path stays in and pathsSaid reads it.
+// A link ends at white space, a quote, a bracket, "," or "|", and at "=" when a slash follows it
+// (a query's value that is a path: ?p=/folder is no part of the site).
+const WEB_LINK = /\bhttps?:\/{2}(?:[^\s"'`<>)\]|,=]|=(?![\\/]))*/giu;
+// The two starts of a machine's path the one finder does not say: a mounted volume (macOS) and a
+// mount (Linux, WSL). Found at a root only, so "work/mnt/x" in a sentence is no path, and also
+// after a file link's scheme or host, and after an editor link's file host (a volume path written
+// into either). /opt/ is left out: a program's folder is on a site as often as on a
+// computer.
+const MOUNT_PATH =
+  /(?:(?<![\p{L}\p{N}_.~\\/:-])|(?<=\bfile:(?:[\\/]{2}[^\\/\s"'<>]*)?)|(?<=:\/{2}file))[\\/]+(?:Volumes|mnt)[\\/]+[^\\/\s"'`<>|]/iu;
+const TIMELESS_ONLY = new Set(["index.md", "log.md"]);
+const isFolderPage = (page) => typeof page.rel !== "string" || page.rel.endsWith("/");
+const leafOf = (rel) => rel.slice(rel.lastIndexOf("/") + 1);
+
+// The lines of a page's own text (header and body), 1-based, whose text holds a path.
+function pathLinesOf(root, rel) {
+  let raw;
+  try {
+    // Only a regular file is opened, as the reader opens one (lib/desk.js readPage): a named pipe
+    // is named by the reader and never read here, where it would wait for ever.
+    const file = path.join(root, ...rel.split("/"));
+    if (!fs.statSync(file).isFile()) return [];
+    raw = fs.readFileSync(file);
+  } catch {
+    return [];
+  }
+  const lines = new TextDecoder("utf-8", { fatal: false, ignoreBOM: true }).decode(raw).replace(/\r\n?/g, "\n").split("\n");
+  const found = [];
+  lines.forEach((line, index) => {
+    // A path holds a separator, a tilde or, written out, a percent escape or a look-alike
+    // separator; any other line cannot hold one, so it is not read.
+    if (!/[\\/~%\u0080-￿]/u.test(line)) return;
+    const held = line.replace(WEB_LINK, "x").replace(HOME_RELATIVE, "x");
+    if (pathsSaid(held) !== held || MOUNT_PATH.test(held)) found.push(index + 1);
+  });
+  return found;
+}
+
+function pathLinesSaid(lines) {
+  const shown = lines.slice(0, PATH_LINES_NAMED).map(String);
+  const more = lines.length - shown.length;
+  const named =
+    more > 0 ? `${shown.join(", ")} and ${more} more` : shown.length === 1 ? shown[0] : andList(shown);
+  const one = lines.length === 1;
+  return `${one ? "line" : "lines"} ${named} ${one ? "holds" : "hold"} a path from this computer; write the file's name alone`;
+}
+
+function nameThree(root, readPages, add, isSoul) {
+  for (const page of readPages) {
+    if (isFolderPage(page)) continue;
+    const top = page.rel.split("/")[0];
+    const leaf = leafOf(page.rel);
+    const head = values.isMapping(page.head) ? values.asPython(page.head) : null;
+    if (head !== null && !TIMELESS_ONLY.has(leaf)) {
+      if (
+        top !== "model" &&
+        top !== "views" &&
+        isEmpty(own(head, "timestamp")) &&
+        isEmpty(own(head, "generated_by")) &&
+        !isSoul({ rel: page.rel, type: own(head, "type") })
+      ) {
+        add("C23", page.rel, "no timestamp; write the day and time the page was made in its header");
+      }
+      if (SKIP_TOP.has(top) && isEmpty(own(head, "type"))) {
+        add("C25", page.rel, "no type; write the page's type in its header");
+      }
+    }
+    const lines = pathLinesOf(root, page.rel);
+    if (lines.length) add("C24", page.rel, pathLinesSaid(lines));
+  }
 }
 
 // Checks the desk at `desk` (its folder) whose pages under celorus/ are `readPages`, in path
@@ -791,6 +891,9 @@ function checkDesk(desk, readPages, scope = null, read = {}) {
     for (const message of overlapsOf(pages, statusPage)) add("C21", STATUS_PAGE, message);
     for (const message of gapsOf(statusPage)) add("C22", STATUS_PAGE, message);
   }
+
+  // C23 to C25 (DESK-394), on every page the reader read.
+  nameThree(root, readPages, add, (page) => (page.type === "soul" || page.type === "manner") && model.furniture(m, page));
 
   // One hop: the pages a page links, read when a scope asks. A page no rule reads (under views/
   // or merges/, or in a folder below model/) is in the same read of the desk, `readPages`, and
