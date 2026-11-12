@@ -437,12 +437,49 @@ masked() {
   }'
 }
 
+# The copy the conversion leaves of a desk (DESK-391): <desk>-before-convert-<YYYY-MM-DD>[-<n>], or
+# that name plus .partial when the copy was cut short. It is told by the desk folder's own name,
+# the pattern of engine/lib/tools.js DATED_COPY and link/lib/seed.js (pinned to agree by test), and
+# the name is the folder's real one, as the engine reads it: a folder reached as `.`, with a slash
+# at its end or through a link is known by the name it has on disk. The date said is the name's.
+dated_re='^.+-before-convert-([0-9]{4}-[0-9]{2}-[0-9]{2})(-[0-9]+)?(\.partial)?$'
+dated_on="" dated_partial=""
+dated_copy_name() {
+  local f="$1" p base
+  [ -n "$f" ] || return 1
+  p="$(CDPATH= cd -P -- "$f" 2>/dev/null && pwd -P)" || p=""
+  [ -n "$p" ] || p="${f%/}"
+  base="${p##*/}"
+  [[ $base =~ $dated_re ]] || return 1
+  dated_on="${BASH_REMATCH[1]}"
+  dated_partial="${BASH_REMATCH[3]}"
+  return 0
+}
+dated_emit() {
+  if [ -n "$dated_partial" ]; then
+    emit "${greeting}This folder is a copy the conversion started on ${dated_on} and did not finish. It is not a desk: write nothing in it, and do not restore from it.${node_note}
+${RECORD_LINE}"
+  else
+    emit "${greeting}This folder is a copy of the desk as it stood before the conversion on ${dated_on}, kept as it was. It is not the live desk: write nothing in this folder.${node_note}
+The live desk is your seat's graph, in the firm folder the conversion made beside the desk.
+To open it, start a session in your seat's own folder there, then say '${by_name}open my day'.
+If your seat has no folder there, it was not converted: ask whoever ran the conversion.
+${RECORD_LINE}"
+  fi
+}
+
 found=0
 desk="$(find_desk)" || found=$?
 node_note=""
 if node_missing_or_old; then
   node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start, and the plugin's guard refuses the use of every other connector (mail, calendar, any connector but the Celorus record server's own tools) until it is installed; offer to install it now with the install-desk skill, and install it only if the person says yes."
 fi
+# A copy the conversion left, cut short before its celorus/index.md, is no desk the walk can read: its
+# name is looked at first, the folder CELORUS_DESK names or else the working folder, and the copy's
+# words are said in place of the walk's message.
+greeting="${NAME} here. "
+by_name="${NAME}, "
+if [ "$found" -ne 0 ] && dated_copy_name "${CELORUS_DESK:-$PWD}"; then dated_emit; exit 0; fi
 if [ "$found" -eq 2 ] || [ "$found" -eq 3 ]; then
   # The one path a fault line says is CELORUS_DESK's value, as it was set: said with the seat its
   # desk.md names hidden too, when celorus/desk.md there is a plain file under a plain folder.
@@ -488,13 +525,18 @@ own_set="$(
   done
 )"
 if [ -n "$own_set" ]; then greeting=""; by_name=""; fi
+# The copy the conversion leaves of a desk (DESK-391), said by dated_emit: told by the desk folder's
+# name alone, read as the engine reads it (dated_copy_name), and a copy cut short before its
+# celorus/index.md is told by the same name, ahead of the walk's own message about a desk it cannot
+# read. Nothing is written in the copy, and a copy renamed back is greeted as a desk again.
+if dated_copy_name "$desk"; then dated_emit; exit 0; fi
 # A desk the converter has switched (desk.md says `converted:`) is history: its work lives in the
 # seat's graph, so this folder is never greeted as a desk that is ready. Only a top-level key counts,
 # as the engine reads it (lib/tools.js convertedState): `converted:` at the start of a line in the
 # header, never one indented under another key or written after a comma or brace. The date is said
-# only when it reads as a date; the line says nothing else of the desk.
-converted_line="$(awk '
-  { sub(/\r$/, "") }
+# only when it reads as a date; the line says nothing else of the desk. A carriage return is read as
+# a line break (tr), as the engine reads one, so a desk.md with lone CR line ends is read as any other.
+converted_line="$(tr '\r' '\n' < "$stamps" | awk '
   NR == 1 && $0 != "---" { exit }
   NR > 1 && $0 == "---" { exit }
   NR > 1 && substr($0, 1, 10) == "converted:" {
@@ -505,7 +547,7 @@ converted_line="$(awk '
     print "Y" v
     exit
   }
-' "$stamps")"
+')"
 if [ -n "$converted_line" ]; then
   converted_on="${converted_line#Y}"
   as_of=""

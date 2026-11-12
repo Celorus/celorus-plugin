@@ -71,6 +71,18 @@ never passes that folder to reach a desk above, a folder whose entry is not a pl
 refused or named by the tools, and only when no such folder exists is there no desk. If neither
 exists, say in one line that there is no desk here, offer `install-desk`, and stop.
 
+If the desk folder's own name ends as the copy the conversion leaves of a desk does, that is
+`-before-convert-` and a date written year, month, day with hyphens (then perhaps a hyphen and a
+serial, then perhaps `.partial`), this folder is that copy and no desk. Check this before asking
+which seat this is. For a full copy say "This folder is a copy of the desk as it stood before the
+conversion on <the date in the name>, kept as it was. It is not the live desk: write nothing in this
+folder. The live desk is your seat's graph, in the firm folder the conversion made beside the desk.
+To open it, start a session in your seat's own folder there, then open the day. If your seat has no
+folder there, it was not converted: ask whoever ran the conversion." For a copy ending `.partial`
+say "This folder is a copy the conversion started on <the date in the name> and did not finish. It is
+not a desk: write nothing in it, and do not restore from it." Read nothing more, write nothing, send
+no usage line, and stop.
+
 If the header of `celorus/desk.md` holds a `converted:` line at the start of a line (a desk that
 is not converted has none), this folder is the desk's history. Check this before asking which seat
 this is. Say "This folder is the desk's history. The live desk is your seat's graph, in the firm folder
@@ -383,6 +395,8 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 
 - On a seat's graph, as *Where the desk's pages are* says, skip the call: a desk we host for the
   firm does not send the usage line yet.
+- On the history stop (a converted desk, or the copy the conversion leaves of a desk, as *Find the
+  desk* says), skip the call: nothing was done there to report.
 - Read `pulse:` in `celorus/motion-spec.md`. When it says `pulse: off`, skip the call. A motion spec
   with no `pulse:` line reads as on.
 - `desk_pulse` is served by the same server as the record's other tools (on Claude Code,

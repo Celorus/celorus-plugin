@@ -697,19 +697,80 @@ function convertedState(name, args) {
   const { readPage } = require("./desk.js");
   const page = readPage(path.join(root, "celorus"), "desk.md");
   const head = page && page.head && typeof page.head === "object" && !Array.isArray(page.head) ? page.head : null;
-  if (head === null) return null;
+  // The copy the conversion leaves of a desk (DESK-391) is known by its folder's name, read before
+  // its desk.md: a copy cut short may hold no readable desk.md at all.
+  const dated = datedCopy(root);
+  if (head === null) return dated === null ? null : { converted: null, graph: false, dated };
   // A seat's graph says layout 3, as the reader and the checker read it, whether or not its firm
   // folder's common space is beside it: a graph a stopped conversion left before the common space,
   // or one opened away from its firm folder, is held back all the same.
   const graph = head.layout_version === 3;
-  return { converted: Object.hasOwn(head, "converted") ? String(head.converted) : null, graph };
+  // A `converted:` with no value is still the switch line, with no date to say.
+  let converted = null;
+  if (Object.hasOwn(head, "converted")) converted = head.converted === null || head.converted === undefined ? "" : String(head.converted);
+  return { converted, graph, dated };
+}
+
+// The copy the conversion leaves beside a desk (engine/convert/convert.js copyName):
+// <desk>-before-convert-<YYYY-MM-DD>[-<n>], and that name plus `.partial` when the copy was cut
+// short. It is told by the desk folder's name alone and nothing is written in it, so a copy
+// renamed back to the desk's own name is a desk again. This is the engine's one copy of the
+// pattern; link/lib/seed.js and the session-start hook hold the same one, pinned to agree by
+// test (tests/test_dated_copy_patterns_agree.py).
+const DATED_COPY = /^.+-before-convert-\d{4}-\d{2}-\d{2}(-\d+)?(\.partial)?$/u;
+const BEFORE_CONVERT = "-before-convert-";
+
+// The date the name carries and whether the copy was cut short, or null for any other folder.
+function datedCopy(root) {
+  // The folder's real name, as the session-start hook reads it (a link, a trailing slash or `.`
+  // never hides it); the name as given when the folder cannot be resolved.
+  let real;
+  try {
+    real = fs.realpathSync(root);
+  } catch {
+    real = path.resolve(root);
+  }
+  const name = path.basename(real);
+  if (!DATED_COPY.test(name)) return null;
+  const at = name.lastIndexOf(BEFORE_CONVERT) + BEFORE_CONVERT.length;
+  return { date: name.slice(at, at + 10), partial: name.endsWith(".partial") };
+}
+
+// What a refusal says of a dated copy: the hook's words (hooks/session-start), made for a tool.
+function datedCopyWords(dated, name) {
+  if (dated.partial) {
+    return (
+      `This folder is a copy the conversion started on ${dated.date} and did not finish. It is not a ` +
+      `desk: write nothing in it, and do not restore from it. ${name} writes. Nothing was changed.`
+    );
+  }
+  return (
+    `This folder is a copy of the desk as it stood before the conversion on ${dated.date}, kept as it ` +
+    `was. It is not the live desk: write nothing in this folder. ${name} writes. The live desk is your ` +
+    `seat's graph, in the firm folder the conversion made beside the desk. To open it, start a session ` +
+    `in your seat's own folder there and make the change again. If your seat has no folder there, it ` +
+    `was not converted: ask whoever ran the conversion. Nothing was changed.`
+  );
 }
 
 function heldBack(name, args) {
-  if (name === "convert_desk") return;
+  if (name === "convert_desk") {
+    // A conversion out of a dated copy reads the copy and writes into a new folder, so it may run;
+    // `switch` would write the switch line into the copy itself, which is never written in.
+    if (args !== null && typeof args === "object" && args.switch === true) {
+      const copy = convertedState(name, args);
+      if (copy !== null && copy.dated !== null) throw new Refusal(datedCopyWords(copy.dated, name));
+    }
+    return;
+  }
   const state = convertedState(name, args);
   if (state === null) return;
   const recording = name === "check_desk" && args && args.record === true;
+  // A dated copy of a desk is never written in, whatever its desk.md says (DESK-391).
+  // desk_sync is refused too: a copy holds no git history of its own to send.
+  if (state.dated !== null && (WRITERS.has(name) || recording || name === "desk_sync")) {
+    throw new Refusal(datedCopyWords(state.dated, name));
+  }
   // check_desk reads a graph, recorded or not: the stamp it would write goes only on a desk at
   // layout 2 (lib/stamp.js whyNot), so a recorded check of a graph writes nothing and says why.
   if (state.graph && !GRAPH_TAUGHT.has(name)) {
@@ -719,8 +780,9 @@ function heldBack(name, args) {
     throw new Refusal(`This desk is a seat's graph, on layout 3. ${why} Nothing was changed.`);
   }
   if (state.converted !== null && (WRITERS.has(name) || recording)) {
+    const on = state.converted === "" ? "" : ` on ${state.converted}`;
     throw new Refusal(
-      `This desk was converted to layout 3 on ${state.converted} and is kept as history, so ` +
+      `This desk was converted to layout 3${on} and is kept as history, so ` +
         `nothing is written in it: ${name} writes. The live desk is your seat's graph, in the firm folder the ` +
         `conversion made beside this folder. New work goes there, not here: start a session in your seat's own ` +
         `folder there and make the change again. If your seat has no folder there, it was not converted: ` +
