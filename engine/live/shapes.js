@@ -13,16 +13,25 @@
 //     is:unread, in:inbox), and nothing else: an OR joins address terms alone, and a window term
 //     is never an OR's operand, so it narrows the search and never widens it. The search is a run
 //     of groups, each one address term or several joined by OR, and at least one group holds only
-//     addresses that are on no seat's page: a seat's own address alone reads that seat's whole
-//     mailbox, so it bounds nothing. Grouping, braces,
-//     quotes and any other word are refused, never read. A thread is read by its id; a draft goes
+//     addresses that bound it: a seat's own address alone reads that seat's whole mailbox, so it
+//     bounds nothing. No search goes through until this computer knows the address the mailbox
+//     sends from (live/own.js). Then an address on a person's, a family's or a firm's page bounds
+//     unless it is the mailbox's own, a seat's, on the firm's own mail domain or on the firm's
+//     own page (one that writes such an address), an address on a sub-domain of the firm's own
+//     counting as on it. Nor does any search go through until the person has said what comes
+//     after the @ in the firm's own mail addresses, if anything, since until then the firm's own
+//     cannot be told from a lead's
+//     (c/6801296281, c/6803159294, c/6804197374). Grouping, braces, quotes and any other word are
+//     refused, never read. A thread is read by its id; a draft goes
 //     only to addresses written on the desk's pages. Nothing is sent: no send tool.
 //   calendar: no listing of calendars; events are listed and created on the seat's own calendar
 //     only ("primary", or left out), a listing by its window alone, an event with no guest (a
 //     guest is an invitation mailed from the seat's account). An event is created only as a hold
 //     propose_hold accepted within its time: the same title, start and end, read from the record
 //     propose_hold keeps in the desk's .celorus/ (hold/hold.js).
-// The addresses on the desk and the accepted holds are read at the moment of the call, never kept.
+// The addresses on the desk, the mailbox's own and the accepted holds are read at the moment of
+// the call, never kept. On a seat's graph (layout 3) a page sits in a part (shared/, personal/,
+// team/), and its kind is the folder under the part.
 //
 // The tools of a guarded connector are of two sorts. Its connection tools, which sign the
 // connector in and carry no desk data (CONNECTION, named from each connector's tool list as it
@@ -48,6 +57,8 @@ const path = require("node:path");
 const { findDesk, readDesk } = require("../lib/desk.js");
 const { Refusal } = require("../lib/refusal.js");
 const { ACCEPTED_FOR_MS, SCRATCH, RECORD } = require("../hold/hold.js");
+const { ownRecord, domainOf, ADDRESS, PUBLIC_MAIL } = require("./own.js");
+const { partOf, LAYOUT: GRAPH_LAYOUT, TEAM } = require("../layout/layout.js");
 
 const PASS = 0;
 const REFUSE = 2;
@@ -138,17 +149,23 @@ const ROLES = [
   },
 ];
 
-// A plain address, ASCII only, so a look-alike letter is never read as a letter.
-const ADDRESS = /^[a-z0-9._%+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/u;
+// A plain address, ASCII only, so a look-alike letter is never read as a letter: ADDRESS, from
+// live/own.js, the one test the guard and the own-address record share.
 const ADDRESS_IN_TEXT = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/gu;
 // The kinds of page an address on the desk is read from, and the kind whose addresses are the
-// seats' own.
+// seats' own. A sent page (sent/) is not one: it links the person, firm or family page it went
+// to, and can carry the seat's own address as its sender (DESK-367, the base's ruling Q3).
 const ADDRESS_KINDS = ["people", "firms", "families", "seats"];
 const SEAT_KIND = "seats";
-// The pages whose addresses bound a mail search on their own: a person's and a family's. A firm page
-// can carry a seat's own address, and the installed seat page carries none (row E11, the base's
-// ruling B of 2026-10-01), so an address on a firm's page alone bounds nothing.
+// The pages whose addresses bound a mail search on their own: a person's and a family's. A firm
+// page can carry a seat's own address, and the installed seat page carries none (row E11, the
+// base's ruling of 2026-09-30, row DESK-175, c/5918890748), so a firm page's address
+// bounds a search only once this computer knows the address the mailbox sends from
+// (live/own.js), and only when the page is not the firm's own (DESK-367, the base's ruling at
+// c/6799425914); and only once the person has said what comes after the @ in the firm's own
+// mail addresses, if anything (amended at c/6801296281 and c/6803159294, Q1).
 const PARTY_KINDS = ["people", "families"];
+const FIRM_KIND = "firms";
 // The terms a mail search may hold beside the addresses it names.
 const SEARCH_ADDRESS = /^(?:from|to|cc):(.+)$/u;
 const SEARCH_WINDOW = /^(?:(?:after|before):\d{4}\/\d{2}\/\d{2}|(?:newer_than|older_than):\d{1,3}[dmy]|is:unread|in:inbox)$/u;
@@ -199,43 +216,125 @@ function deskOf(payload, env, cwd) {
   }
 }
 
-// Every address written on the desk's pages, in lower case, read now: `all` of them, `seats`, those
-// written on a seat's page, and `parties`, those written on a person's or a family's page.
+// Every address written on the desk's pages, in lower case, read now, with the mailbox's own:
+//   all: every address on a page of an address kind;
+//   seats: those on a seat's page; parties: those on a person's or a family's page;
+//   own: the addresses this computer recorded as the mailbox's own (live/own.js), none without
+//     a whole record; ownDomains: their mail domains and the seats', the public ones aside, and
+//     every domain the person named as the firm's;
+//   domainWait: an own address is kept but the firm's mail domain was not asked, so no search
+//     goes through (c/6804197374);
+//   ownFirm: every address on a firm page that is the firm's own, one that writes an own or a
+//     seat's address or an address on an own domain; leadFirm: every address on any other firm
+//     page.
+// On a seat's graph a page's kind is the folder under its part (layout/layout.js partOf).
 function deskAddresses(root) {
+  const read = readDesk(root);
+  const graph = read.layout === GRAPH_LAYOUT;
   const all = new Set();
   const seats = new Set();
   const parties = new Set();
-  for (const page of readDesk(root).pages) {
-    const kind = page.rel.split("/")[0];
+  const firmPages = [];
+  for (const page of read.pages) {
+    const where = graph ? partOf(page.rel) : null;
+    if (graph && where === null) continue;
+    const kind = (graph ? where.inner : page.rel).split("/")[0];
+    // On a graph, from-my-team (team/) holds the graph job's copies of other seats' pages, which
+    // no other engine reader takes as this seat's (graph.js readView): none bounds a search, but
+    // an address on a teammate's seat page there is still a seat's, so it still makes a firm page
+    // the firm's own and its domain one of the firm's.
+    const team = graph && where.part === TEAM;
+    if (team && kind !== SEAT_KIND) continue;
     if (!ADDRESS_KINDS.includes(kind)) continue;
     const text = `${page.body || ""}\n${JSON.stringify(page.head || {})}`;
+    const onPage = new Set();
     for (const match of text.matchAll(ADDRESS_IN_TEXT)) {
-      all.add(match[0].toLowerCase());
-      if (kind === SEAT_KIND) seats.add(match[0].toLowerCase());
-      if (PARTY_KINDS.includes(kind)) parties.add(match[0].toLowerCase());
+      const address = match[0].toLowerCase();
+      if (team) {
+        seats.add(address);
+        continue;
+      }
+      all.add(address);
+      onPage.add(address);
+      if (kind === SEAT_KIND) seats.add(address);
+      if (PARTY_KINDS.includes(kind)) parties.add(address);
     }
+    if (kind === FIRM_KIND) firmPages.push(onPage);
   }
-  return { all, seats, parties };
+  const record = ownRecord(root);
+  const own = new Set(record.addresses);
+  const domainWait = own.size > 0 && record.firm_domains === null;
+  const ownDomains = new Set([
+    ...[...own, ...seats].map(domainOf).filter((domain) => !PUBLIC_MAIL.includes(domain)),
+    ...(record.firm_domains || []),
+  ]);
+  const ourFirms = (address) => seats.has(address) || own.has(address) || onOwnDomain(address, ownDomains);
+  const ownFirm = new Set();
+  const leadFirm = new Set();
+  for (const onPage of firmPages) {
+    const into = [...onPage].some(ourFirms) ? ownFirm : leadFirm;
+    for (const address of onPage) into.add(address);
+  }
+  return { all, seats, parties, own, ownDomains, domainWait, ownFirm, leadFirm };
+}
+
+// On the firm's own mail domain: on one of them, or on a sub-domain of one (in.firm.example on
+// firm.example), which only ever refuses more.
+function onOwnDomain(address, ownDomains) {
+  const domain = domainOf(address);
+  return [...ownDomains].some((own) => domain === own || domain.endsWith(`.${own}`));
 }
 
 function onTheDesk(address, known) {
   return typeof address === "string" && ADDRESS.test(address.toLowerCase()) && known().all.has(address.toLowerCase());
 }
 
-// An address on the desk that is on no seat's page: a person's, a family's or a firm's.
-function notASeats(address, known) {
-  return onTheDesk(address, known) && !known().seats.has(address.toLowerCase());
+// The mailbox's own: an address on a seat's page, or one this computer recorded as its own.
+function theMailboxs(address, known) {
+  const lower = address.toLowerCase();
+  return known().seats.has(lower) || known().own.has(lower);
 }
 
-// An address that bounds a mail search: on a person's or a family's page, and on no seat's.
+// An address that bounds a mail search on a person's or a family's page: on one, and not the
+// mailbox's own, a seat's, on the firm's own mail domain or on the firm's own page (c/6803159294
+// Q2: the seat's own forwarded work address on a person page reads the whole mailbox).
 function aPartys(address, known) {
-  return notASeats(address, known) && known().parties.has(address.toLowerCase());
+  const lower = address.toLowerCase();
+  return (
+    onTheDesk(address, known) &&
+    !theMailboxs(address, known) &&
+    known().parties.has(lower) &&
+    !known().ownFirm.has(lower) &&
+    !onOwnDomain(lower, known().ownDomains)
+  );
 }
 
-// The refusals of a search no person's or family's address bounds.
-const BESIDE = "name a person's or a family's address beside it, outside any OR that holds a seat's or a firm's";
-const SEAT_ONLY = `${SEARCH_SHAPE}; this one is held to no address but a seat's own, which reads that seat's whole mailbox: ${BESIDE}`;
-const FIRM_ONLY = `${SEARCH_SHAPE}; this one is held to no address but one on a firm's page, and a firm page can carry a seat's own address, which reads that seat's whole mailbox: ${BESIDE}`;
+// An address on a firm page that is not the firm's own, and on none that is.
+function onALeadFirm(address, known) {
+  const lower = address.toLowerCase();
+  return onTheDesk(address, known) && known().leadFirm.has(lower) && !known().ownFirm.has(lower);
+}
+
+// An address that bounds a mail search: a person's or a family's, or on a lead firm's page. The
+// search waits for the firm's mail domain before either is asked (search_threads, NO_DOMAIN).
+function bounds(address, known) {
+  return aPartys(address, known) || onALeadFirm(address, known);
+}
+
+// The refusals of a search, by what holds it. Without a kept address no search goes through
+// (c/6801296281, Q2): the desk cannot tell the mailbox's own address from an address on its pages.
+const NO_OWN =
+  `${SEARCH_SHAPE}; this computer does not yet know the address this mailbox sends mail from, so no mail ` +
+  "search goes through: ask the person which address they send mail from, once, and record it with own_mail";
+const BESIDE = "name a lead's address beside it (a person's, a family's or a lead firm's), outside any OR that holds the mailbox's own";
+const SEAT_ONLY = `${SEARCH_SHAPE}; this one is held to no address but the mailbox's own or a seat's, which reads that whole mailbox: ${BESIDE}`;
+const OWN_FIRM = `${SEARCH_SHAPE}; this one is held to an address on the firm's own page or the firm's own mail domain, which reads the firm's own mail: ${BESIDE}`;
+const NO_DOMAIN =
+  `${SEARCH_SHAPE}; the firm's own mail domain is not yet known on this computer, so the firm's own pages and ` +
+  "addresses cannot be told from a lead's and no mail search goes through: ask the person what comes after the @ " +
+  "in the firm's own mail addresses, once, in the words own_mail gives, and record the answer with own_mail as " +
+  "firm_domains, an empty list for none. Only the person's own answer may be recorded: with nobody to ask, as on " +
+  "an overnight run, no mail is read";
 
 const MAIL = {
   search_threads(args, known) {
@@ -251,8 +350,8 @@ const MAIL = {
       }
     }
     // The groups: address terms joined by OR, or one alone. Terms side by side narrow the search
-    // to the threads every group matches, so one group of addresses on a person's or a family's
-    // page, and on no seat's, bounds it.
+    // to the threads every group matches, so one group whose every address bounds (bounds, above)
+    // bounds it.
     const groups = [];
     for (const [i, kind] of kinds.entries()) {
       if (kind !== "address") continue;
@@ -262,8 +361,11 @@ const MAIL = {
     }
     if (groups.length === 0) return SEARCH_SHAPE;
     if (!groups.flat().every((address) => onTheDesk(address, known))) return `${SEARCH_SHAPE}; this one names an address that is on no page of the desk`;
-    if (!groups.some((group) => group.every((address) => aPartys(address, known)))) {
-      if (groups.some((group) => group.every((address) => notASeats(address, known)))) return FIRM_ONLY;
+    if (known().own.size === 0) return NO_OWN;
+    if (known().domainWait) return NO_DOMAIN;
+    if (!groups.some((group) => group.every((address) => bounds(address, known)))) {
+      // the refusal names what holds it: the firm's own address, else the mailbox's own
+      if (groups.some((group) => group.every((address) => !theMailboxs(address, known)))) return OWN_FIRM;
       return SEAT_ONLY;
     }
     return only(args, ["query", "pageSize", "pageToken"]);
@@ -431,4 +533,4 @@ function run(text, { env = process.env, decider = decide, now = Date.now() } = {
   return { code: REFUSE, message: refusalLine(reason) };
 }
 
-module.exports = { decide, run, roleOf, refusalLine, PASS, REFUSE, ASIDE, ASIDE_LINE };
+module.exports = { decide, run, roleOf, refusalLine, PASS, REFUSE, ASIDE, ASIDE_LINE, PUBLIC_MAIL };

@@ -81,6 +81,11 @@ out with the link's `sign_out`, and disconnect the desk's storage on your Celoru
 page; where the desk is kept on Drive, the account page of that Drive lists Celorus's access
 too. The folder in your Drive and its pages stay yours."
 
+Then say this once too, as it is: "Research briefs are kept on this computer in
+`~/.celorus/briefs/`, one page for each lead and day, apart from every desk, so taking a desk down
+leaves them there. To clear them, delete that folder; nothing else reads it, and the next research
+brief makes it again."
+
 Remove nothing yourself: delete no file, disconnect nothing, uninstall nothing. Each step is
 done by a person, where the step says.
 

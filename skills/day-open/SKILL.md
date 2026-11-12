@@ -121,7 +121,34 @@ there for now, and the board is the overnight's.
 5. The mailbox, through the harness's mail connector when one exists: for the accounts
    and people already on the desk (queued, named, in the book), read the threads in
    full, not just their headers. Connecting a source is the consent to read it. The
-   scope is those accounts and never the whole mailbox.
+   scope is those accounts and never the whole mailbox. Search for each account by every
+   address on its page and, for a person, on the firm page they work at; for a sent page
+   (`sent/`), follow its `sent_to` to that page and search by that page's addresses, never
+   the sent page's own. Search each address both ways, `from:<address> OR to:<address> OR
+   cc:<address>`, so a reply and a follow-up already sent both show.
+   - On a desk with no leads (*A desk with no leads* below), there is nothing to search
+     for: call no `own_mail`, ask nothing about addresses, read no mail, and the closing line
+     is "- Mail: no lead to check yet."
+   - Before any search, call `own_mail` with the desk alone: the mail guard refuses every
+     search until it holds an address and the firm's mail domain is answered. When it holds
+     no address, ask, in these words: "Which address do you send mail from? I keep it on
+     this computer only, and I never search your whole mailbox by it." Record the answer
+     with `own_mail` and its `addresses`. When its summary asks for the firm's mail domain,
+     ask that too, in the words it gives: "What comes after the @ in your firm's own mail
+     addresses, if the firm has a domain of its own?", or the same question offering a kept
+     address's own domain by name. Record the answer with
+     `own_mail` and its `firm_domains` alone, an empty list for none. A mail service named in
+     place of a domain, a public service anyone may sign up to or the firm's mail provider,
+     is not none: ask which domain the firm's own addresses end in, and record none only
+     when the firm has no mail domain of its own. A public mail domain named beside the
+     firm's own is left out, as `own_mail` refuses it. Then search. Ask nothing it already
+     holds. Where the person gives no address, or no answer on the domain, read no mail and
+     say so in the closing line below. Never search by the seat's own address.
+   - Mail a teammate sent from their own mailbox shows here only where this seat was
+     copied: say so when a follow-up due today is a teammate's.
+   - End the mail read with a closing line, unasked, naming each lead not checked, with why
+     in plain words: no address on its page; its address is on the firm's own page or the
+     firm's own mail domain; or the guard's refusal as it came.
 6. The calendar, the CRM and chat, through their connectors when they exist: today's
    events, the account's own rows and the messages that name the account, read in full,
    for the same accounts and no others.
@@ -278,7 +305,9 @@ Ordered by triage.
 ```
 
 The example's sources show each state: the calendar and chat read, mail present but
-unreadable and so in `sources_missing`, and no CRM on this desk, in neither list.
+unreadable and so in `sources_missing`, and no CRM on this desk, in neither list. When mail
+is read, its line carries the mail read's closing line: "- Mail: not checked: <Name>, <why>;
+...", or "- Mail: every lead checked." when every lead was checked. On a desk with no leads, mail is not read and is in neither list, and its line is "- Mail: no lead to check yet." On a seat's graph, where the board is the overnight's, say that line in the chat.
 
 Every line under "Moved overnight", "Due today" and "On the clock" is the desk's own
 knowledge and carries the register label `yours` with the date. A reply is a fact about
@@ -319,9 +348,28 @@ written by the set-up to show how a day looks. Show it only while the desk is ne
 page is there and `celorus/today/` holds no board dated before today. Then, after the board,
 give the page's heading and lines as they are, each still starting "Sample:", never retyped
 into other words, never mixed into the board, and with no line of your own inside them. Write
-nothing from it onto the desk: no row, no page and no line in either log. After it, say in a
+nothing from it onto the desk: no row, no page and no line in either log. After it, on a desk
+with no leads, give the lines of *A desk with no leads* below; on a desk with leads, say in a
 line that their own desk fills as they work, and that a good start is "research" and the name
 of a lead they know. When an older board is there, say nothing of the sample.
+
+## A desk with no leads
+
+A desk has no leads when the supplied, follow-ups and book queues, read where this skill reads
+them, hold no row, and no lead's page sits under `people/`, `families/` or `firms/`. On such a
+desk, after the board, and after the sample morning when it is shown, say these lines as they are,
+and nowhere else in the reply:
+
+- "Your desk has no leads yet. To start:"
+- "Draft your firm's profile: say "draft my firm's profile". Milan drafts the kinds of people
+  your firm sells to and shows who on our record would match."
+- "Add a lead you know: say "research" and their name. Milan writes their brief."
+
+Give the firm-profile line only when the profile tools, whose names begin `icp_`, are among this
+session's Celorus tools (a tool listed by its name only, to be loaded when it is used, is among
+them); without them, give the research line alone. Where the desk gave the
+assistant another name, say that name where these lines say Milan. Never fill the empty day with a
+lead, a reply or a meeting of your own.
 
 ## While you work
 
@@ -425,6 +473,7 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
   what a change made through `make` sends it: the desk pages that change needs, and the
   arguments the step gives it, such as the brief's gists.
 - Never read mail from anyone not named in the queues or the last board.
+- Never search mail by the seat's own address: alone it reads the whole mailbox.
 - Never invent a reply, a meeting or a signal to fill an empty block.
 - Never send anything but the usage line, as *Last step: the usage line* says.
 

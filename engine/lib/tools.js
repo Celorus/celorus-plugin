@@ -40,8 +40,11 @@ const { TOOLS: SYNC_TOOLS } = require("../sync/tool.js");
 const { TOOLS: SETUP_TOOLS } = require("../scaffold/tools.js");
 const { TOOLS: ROUTINE_TOOLS } = require("../routines/tool.js");
 const { TOOLS: HOLD_TOOLS } = require("../hold/hold.js");
+const { TOOLS: OWN_TOOLS } = require("../live/own.js");
 const { TOOLS: SOUL_TOOLS } = require("../soul/read.js");
 const { TOOLS: CONVERT_TOOLS } = require("../convert/tool.js");
+// DESK-381: the research brief as a page, in ~/.celorus/briefs/, outside every desk.
+const { TOOLS: BRIEF_TOOLS } = require("../brief/brief.js");
 
 // Refuses an argument the tool does not take, naming the ones it does.
 function onlyArguments(tool, args, allowed) {
@@ -536,8 +539,10 @@ const TOOLS = [
   ...SETUP_TOOLS,
   ...ROUTINE_TOOLS,
   ...HOLD_TOOLS,
+  ...OWN_TOOLS,
   ...SOUL_TOOLS,
   ...CONVERT_TOOLS,
+  ...BRIEF_TOOLS,
 ];
 
 // E5b-1 (the base's verdict c/6284330827 V1): TOOLS above is the laptop's table, the
@@ -607,6 +612,7 @@ const WRITERS = new Set([
   "write_board",
   "register_routine",
   "propose_hold",
+  "own_mail",
   "soul_feedback",
 ]);
 const READERS = new Set([
@@ -622,10 +628,13 @@ const READERS = new Set([
   "list_routines",
   "read_soul",
   "convert_desk",
+  // DESK-381: reads and writes no desk; its page goes to ~/.celorus/briefs/, so a desk kept as
+  // history does not refuse it (engine/brief/brief.js)
+  "write_research_brief",
 ]);
 
 // Slice E6b-2a: the tools that read a seat's graph, each through its parts and the
-// common space beside it (engine/layout/graph.js), and the four writers among them that write only
+// common space beside it (engine/layout/graph.js), and the five writers among them that write only
 // the graph's own generated files and scratch (views/, .views/, .celorus/) and the sent lists in its
 // shared and personal parts. Slice E6b-2b: the writers that write a page into its kind's part, never
 // from-my-team, for the graph's own seat alone, and the firm's common space for the desk head alone
@@ -648,6 +657,7 @@ const GRAPH_TAUGHT = new Set([
   "render_snapshot",
   "who_can_introduce",
   "propose_hold",
+  "own_mail",
   "write_conversation",
   "log_action",
   "add_follow_up",
@@ -662,6 +672,8 @@ const GRAPH_TAUGHT = new Set([
   "register_routine",
   "overnight_reconcile",
   "write_board",
+  // DESK-381: reads and writes no desk, so a seat's graph is no reason to refuse it
+  "write_research_brief",
 ]);
 const GRAPH_KEPT = Object.freeze({
   check_reconcile:

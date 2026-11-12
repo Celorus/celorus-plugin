@@ -189,6 +189,10 @@ Ask, one at a time, only what the person has not already said:
    "No CRM is connected here. Does the firm have one that is still to connect, or is there none on this desk?"
 
    Its answers: "The firm has a CRM; it is still to connect." / "The firm has no CRM: none on this desk."
+
+   When the mail test answers, ask once, in these words: "Which address do you send mail
+   from? I keep it on this computer only, and I never search your whole mailbox by it."
+   Keep the answer for `own_mail` (below). Where mail is not connected, do not ask.
 5. **How long researching one lead takes you today, in minutes.** It is self-reported, and
    it is the "before" the desk log measures against.
 
@@ -228,6 +232,20 @@ record.
 
 Then, through `make`, call `render_views` with the same `desk`, the seat's `handle` and
 `now`, so `views/` holds its three pages from the first day.
+
+Where the person said the address they send mail from (step 4), call `own_mail` with the same
+`desk` and `addresses`, the address as they said it. When its summary asks for the firm's mail
+domain, ask once, in the words it gives: "What comes after the @ in your firm's own mail
+addresses, if the firm has a domain of its own?", or, where their address is on a domain of
+its own, "What comes after the @ in your firm's own mail addresses: <that domain>, another, or
+none?" Record the answer with `own_mail` and its `firm_domains` alone:
+the domains they named, or an empty list for none. A mail service named in place of a domain,
+a public service anyone may sign up to or the firm's mail provider, is not none: ask which
+domain the firm's own addresses end in, and record none only when the firm has no mail domain
+of its own. A public mail domain named beside the firm's own is left out, as `own_mail`
+refuses it. Until the domain is answered, the mail guard lets no mail search through. It is a
+desk tool on this computer, never through `make`: the answers stay in the desk's `.celorus/`
+folder and are never sent.
 
 ## Desk mode: the operator
 

@@ -51,6 +51,7 @@ Celorus, as *Signing in* below says.
 - `family_facts`, for a family already on the desk: its people and their pages, and
   what the desk already holds on it, so step 1 starts from the desk's own facts.
 - `check_desk`, over the pages written, at the end.
+- `write_research_brief`, for the brief's page, every time research answers, as *The brief* says.
 - `research_ask`, when this session has it, as *Before the web register: ask for a research
   pack* says. That section, not the rule on a refusal below, says what follows each of its
   answers, and this skill never asks it again on its own.
@@ -72,7 +73,7 @@ never passes that folder to reach a desk above, a folder whose entry is not a pl
 refused or named by the tools, and only when no such folder exists is there no desk. The seat is
 `CELORUS_SEAT` or the handle in `~/.celorus/seat-<desk_id>`. A desk is optional: nothing waits
 on it. With no desk, still do the research and show the brief in the conversation, and invite
-`install-desk` inside the line that nothing was written to the desk, which is not another offer; a page is written to disk only inside a desk. Inside a desk without a
+`install-desk` inside the line that nothing was written to the desk, which is not another offer; the desk's own pages are written only inside a desk, and the brief's page is kept in `~/.celorus/briefs/`, as *The brief* says. Inside a desk without a
 seat, ask which seat this is, as its handle (the name of its page under `celorus/seats/`), never the
 person's name, and write nothing until it is known; the brief does not wait for the seat.
 
@@ -119,7 +120,12 @@ The steps below run together, with a desk or with no desk, and the brief is made
   warning with the words "closest names by spelling are shown as suggestions only",
   every candidate carries a city, and the city the seller gave in their
   own words is the city of a candidate and of no other. For the web, show each person the search
-  found by the name, the firm and the source. Nobody: say so in a line and run the web register on
+  found by the name, the firm and the source. A name many people share: when the web finds the
+  name on different people, and the ask, the desk and the record give no city, company or job that
+  tells them apart, ask the seller for that detail before picking anyone, in a line, "Many people
+  share this name. Which city, company or job is theirs?", under up to three of those found, each
+  by the name, the firm and the source, and pick nobody until the seller answers: nothing else runs before
+  that answer, not the pack, not the brief. Nobody: say so in a line and run the web register on
   the name as given, marked as web throughout.
 - **The pack.** Where the ask section below applies, it runs as it stands, under its own words, and
   the pack runs beside the rest; where it does not, nothing is said of it. The pack is asked for only
@@ -405,31 +411,57 @@ with its chip, and the values stay the record's.
 
 ## The brief
 
-Every research answer returns the brief: a seller's brief of the person or the company, filled from
-`assets/person-brief.html` beside this page and rendered through the collateral path of `celorus-design`:
-that skill's fonts and tokens go into the template's empty style tags when the page is rendered, as
-the template says. When the mark's bytes cannot be read from the `celorus-design` skill's assets,
-leave the mark out and never draw an approximation. Show it in the chat, as an artifact where the
-assistant can show an artifact and as
-text only where it cannot. It needs no desk and no sign-in to be made. Where `assets/person-brief.html` cannot
-be read, make the brief from the frame below and say so in a line. On a seat's graph, where the
-page-writing step below writes no page, the brief is what the chat shows, and the long profile that
-step describes is added beside it only when the person asks for it.
+Every research answer returns the brief, and every research answer makes it as a page: a seller's
+brief of the person or the company, written by the desk tool `write_research_brief` from
+`assets/person-brief.html` beside this page, in the house design of `celorus-design`. The page is
+made whatever the desk already holds on the person or the company: their page, a mention in a note,
+a CRM row or an earlier brief. What the desk holds feeds the "you and them" strip and the meeting
+part, and decides only whether the page-writing step below updates the lead's page or writes a new
+page; it never stands in for the brief or its page. The page needs no desk and no sign-in, and it is
+kept on this computer in `~/.celorus/briefs/`, outside every desk; the same lead on the same day
+replaces its page.
 
-These rules hold for every copy of the brief: the page filled from the template, the artifact shown
-in the chat, and any page built from the frame below. Some values come from the web and the page
-opens in the seller's browser. Every value put in the brief is escaped for HTML (`&`, `<`, `>`, `"`
-and `'` as entities) and is never written as markup. Every slot is text except the chip slot, which
-takes only a chip shape the template's comment on source chips shows; the link and the site's name inside a chip are values like any other, escaped. A link from the web is trimmed
-of spaces at both ends and compared without regard to case, and goes into an href only when it then
-begins with `https://` or `http://`. Any other link, such as `javascript:`, `data:` or `vbscript:`, or
-a link that opens with a tab or another control character, gets the template's chip with no link: a
-span of class `src` holding `web ·` and the site's name, escaped. Web text never goes
-inside a tag, an attribute other than that href, a style or a script. Each mark goes into its img as a
-`data:` URI of the file's own bytes, because the page loads nothing from outside. The CSP line and the
-script under it are copied exactly as they are. The page's policy guards only a page that opens as its
-own document. In a chat artifact the host puts the page inside its own frame and the policy does not
-apply, so the escaping rule above is the guard there, and it is never skipped.
+Give `write_research_brief` the brief's parts as its fields, each value as plain text, and never
+write the page, fill the template or load a design skill yourself. The tool brings that skill's
+fonts and tokens into the template's empty style tags and its wordmarks into the page. When the
+mark's bytes cannot be read from the `celorus-design` skill's assets, leave the mark out and never
+draw an approximation. Then show the page, in this order:
+
+- The tool answers the page's `file`, its name alone; the page is that file in
+  `~/.celorus/briefs/`. Where this session can run a command on the person's computer, open it in
+  their own browser with the computer's opener: `open ~/.celorus/briefs/<file>` on a Mac,
+  `xdg-open ~/.celorus/briefs/<file>` on Linux, `cmd /c start "" "%USERPROFILE%\.celorus\briefs\<file>"`
+  on Windows.
+- Say where the page is, in a line of its own: "The brief is open in your browser:
+  ~/.celorus/briefs/<file>", or "The brief is a page on this computer: ~/.celorus/briefs/<file>"
+  where it was not opened. On Windows the opener can end with no error and open nothing, so there
+  say the line for a page that was not opened, whatever the opener answered.
+- Never open the page through the app's own browser pane or the Chrome extension: neither can open
+  a file on this computer, and the person would see the open fail.
+- Never draw the brief as an artifact or as markup in the chat: the page is the tool's file alone.
+- In the chat, give the brief's summary lines as text: the part under the top card (who, why now,
+  open with, ask for), not the meeting part's opener and ask. The reply then stands where the page
+  does not open.
+
+When `write_research_brief` is not among this session's tools, cannot run, or refuses in words the
+call cannot be corrected by, make the brief from the frame below as text in the chat, and say in a
+line that its page could not be made, with the tool's own words where it gave any. On a seat's
+graph, where the page-writing step below writes no page of the desk's, the brief and its page are
+what the person gets, and the long profile that step describes is added beside them only when the
+person asks for it.
+
+These rules hold for every copy of the brief: the page the tool writes and the brief shown in the
+chat. Some values come from the web and the page opens in the seller's browser. Every value given to
+the tool is plain text and is never written as markup: the tool escapes it for HTML (`&`, `<`, `>`,
+`"` and `'` as entities). A chip is given as where the line came from (`record`, `desk`, or `web`
+with the site's name and its link), never as markup. A link from the web is given as it was found:
+the tool trims it of spaces at both ends, compares it without regard to case, and puts it into an
+href only when it then begins with `https://` or `http://`. Any other link, such as `javascript:`,
+`data:` or `vbscript:`, or a link that opens with a tab or another control character, keeps its chip
+with no link. Web text never goes inside a tag, an attribute other than that href, a style or a
+script. The page runs no script and loads nothing from outside it: its policy allows neither, and
+each mark is the file's own bytes. In the chat, a value from the web is said as text, never as
+markup.
 
 The reader is a salesperson who gives the page a minute before a meeting. The frame is fixed and the
 fill adapts to what is known: a person's full work history, another person's directorships over
@@ -500,6 +532,9 @@ depth when this session is not signed in to the record, no pack where the flow s
 it and no pack without credits, and never a verb that promotes the plan. The offer never waits on a
 question: it names a step that can be taken now from what the seller has already said, and asks the
 seller for nothing but a yes, never for a date, a name or a choice.
+The offer line names Milan and reads "Milan can <the action>, if you want that next." Milan is
+named in the reply's opening line and in the offer line, not on every line. Where the desk gave the
+assistant another name, say that name where this skill says Milan.
 
 The end order is set here and nowhere else. The reply shows the brief; then, with no desk or when
 the desk tools cannot run, the "Where this came from" list and the line that nothing was written to
@@ -507,6 +542,9 @@ the desk, whose invitation to set up a desk stays inside that line and is not an
 the offer line, last, and not repeated. Where anything follows the brief in the chat (that list and line, or what the page-writing step
 says on a desk), the offer line is said after it, last, and not inside the brief's page. For a handle-with-care lead the pitch
 above is not written and the offer line offers none of it, as the rule under the frame says.
+Showing the brief is the page opened, the line that says where it is, and the brief's summary
+lines, as *The brief* sets out; all of them come before the "Where this came from" list
+and the offer line.
 
 ## Step 4: write the page
 
@@ -514,7 +552,8 @@ This step changes the desk: write the page only after `sign_in` answers that you
 as *Signing in* below says. Until it does, write nothing.
 
 On a desk, the brief is also written as the lead's page, in the shape below, and the desk's history
-gets its line. With no desk, nothing is written to disk.
+gets its line. With no desk, nothing is written to the desk; the brief's page is kept in
+`~/.celorus/briefs/`, as *The brief* says.
 
 On a seat's graph, a hosted desk, this step writes no page: a page written new by hand never
 reaches the firm, and no desk tool keeps a profile yet. Show the whole profile in the chat
@@ -617,12 +656,14 @@ about a person.
 
 ## While you work
 
-One plain progress line per step ("Reading what the desk already holds", "Checking what a
+The reply opens with "Milan is researching <name>.", with the name as the seller gave it.
+One plain progress line per step follows ("Reading what the desk already holds", "Checking what a
 research pack would cost", "Asking for a research pack", "Searching the web for the company", "Reading the record", "Writing the page", or on a hosted desk
 "Showing the profile here"). "Checking what a research pack would cost" is the quote's line;
 "Asking for a research pack" is said only for the order, after the person says yes.
 Never name a tool, a stream or a path to the user, except the folder a research pack appears
-in and the link's pull that brings it.
+in and the link's pull that brings it. The brief's page is a further exception: say its place,
+`~/.celorus/briefs/<file>`, as *The brief* sets out.
 
 ## When the desk tools cannot run
 
@@ -636,7 +677,8 @@ If a desk tool call cannot be made after the skill has written, the skill names 
 wrote and ends there; that sentence is never said then.
 
 The brief does not wait for the desk tools. That sentence is the reply to a request to write the
-desk's own pages. A research ask is answered with the brief, which needs none of them, and, with no desk,
+desk's own pages. The brief's page is made by `write_research_brief`, a desk tool: when the desk
+tools cannot run, the brief is made as text in the chat, as *The brief* says. A research ask is answered with the brief, which needs none of them, and, with no desk,
 or when the desk tools cannot run, a line saying that nothing was written to the desk, in the place *The
 brief* gives it.
 

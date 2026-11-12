@@ -41,7 +41,8 @@ const { SERVED, workingSet } = require("./workingset.js");
 
 const PLUGIN_ROOT = path.resolve(__dirname, "..", "..");
 const PROTOCOL = "2025-06-18";
-const STAY = ["take_down", "list_routines", "render_snapshot"];
+// write_research_brief (DESK-381) writes its page on this computer, in ~/.celorus/briefs/: never sent.
+const STAY = ["take_down", "list_routines", "render_snapshot", "write_research_brief"];
 const NOTHING = "Nothing was written.";
 
 const NAME_IT_IN_FULL =

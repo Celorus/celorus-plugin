@@ -4,22 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="celorus-surface" content="collateral">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Vp8EI661lrisfGGnTZk1tRwFtnvf97L/rMj2liWiz2M='; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Meeting brief: {{person_name}}</title>
-<script>
-(function(){var r=document.documentElement;
-  if(!r.getAttribute('data-theme')){r.setAttribute('data-theme',
-    matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}
-  /* Paper is always light: print in the light theme, then put the reader's theme back. */
-  var was=null;
-  addEventListener('beforeprint',function(){was=r.getAttribute('data-theme');r.setAttribute('data-theme','light');});
-  addEventListener('afterprint',function(){if(was){r.setAttribute('data-theme',was);}});
-})();
-</script>
+<!--
+  NO SCRIPT. The page runs none, and its policy allows none (DESK-381).
+  The dark theme follows the computer's own setting through a media rule the desk
+  tool write_research_brief writes after collateral.css, from the dark block of
+  foundation-block.css, for the screen only: paper is always light.
+-->
 <!--
   THE DESIGN SYSTEM'S SHEETS, brought in when the page is rendered, never kept in this file.
-  This template carries only the brief's own layer (the last style tag). To render, put the
-  celorus-design skill's own files into the empty style tags below, in this order, byte for byte:
+  This template carries only the brief's own layer (the last style tag). The desk tool
+  write_research_brief renders it: it puts the celorus-design skill's own files into the empty
+  style tags below, in this order, byte for byte:
     1. celorus-design/assets/embedded-fonts.css    the brand type, for a full-page host that blocks font
                                     servers (a claude.ai artifact). A small embedded surface
                                     leaves it empty and rides the token fallback stacks.

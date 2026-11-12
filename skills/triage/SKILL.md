@@ -153,6 +153,24 @@ nobody's yet: no seat is named for them, so they are on no seat's day. Write eac
 fields as any other row. A row there whose clock is handle-with-care gets no pitch, no draft
 and no opener.
 
+## A desk with no leads
+
+When the tool answers no row under `today`, `later_today`, `handle_with_care` or `no_seat`, and the
+desk has no leads, say these lines as they are, in place of the list. The desk has no leads when
+the supplied, follow-ups and book queues, read where this skill reads them, hold no row, and no
+lead's page sits under `people/`, `families/` or `firms/`.
+
+- "No calls today: your desk has no leads yet. To start:"
+- "Draft your firm's profile: say "draft my firm's profile". Milan drafts the kinds of people
+  your firm sells to and shows who on our record would match."
+- "Add a lead you know: say "research" and their name. Milan writes their brief."
+
+Give the firm-profile line only when the profile tools, whose names begin `icp_`, are among this
+session's Celorus tools (a tool listed by its name only, to be loaded when it is used, is among
+them); without them, give the research line alone. Where the
+desk gave the assistant another name, say that name where these lines say Milan. Never fill the
+empty day with a lead, a reply or a meeting of your own.
+
 ## Every row
 
 ```markdown
