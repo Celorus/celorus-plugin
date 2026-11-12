@@ -7,7 +7,8 @@ description: >-
   won, and the head's step that makes the profile the firm's own. Use when
   someone asks to draft or build their firm's profile, their ideal client
   profile or their personas, to preview who would match, to add a client
-  they have won, or to make the profile theirs. The preview is not a list of
+  they have won, to make the profile theirs, or to read and answer the comments
+  its seats left on it. The preview is not a list of
   leads, and nothing goes into the desk's queue. When the profile tools are
   not switched on for this desk, the skill says so and stops.
 ---
@@ -133,3 +134,33 @@ person's `handle` as `sample` and the name as the firm gives it as `name`. Never
 When the person asks to make the profile the firm's own, call `icp_make_yours` with the
 `version_id` from `icp_start` or `icp_save`, and say the `message` it returns. A refusal is said
 as given; `not_a_head` means the desk's head takes this step.
+
+## Comments on the profile
+
+Only when `icp_profile` and `icp_comment_answer` are among the Celorus tools in this session.
+When they are not, skip this section and say nothing about comments.
+
+The firm's seats leave comments on the profile in the dashboard. When the walk starts, and
+whenever the person asks about comments, call `icp_profile`. For each comment whose `state` is
+`open`, say who left it (the person you are talking to when `mine` is true, the desk's head when
+`by_head` is true, another seat of the firm otherwise), what it is on (version `version_no`,
+persona `persona`, and line `line` when it names a line), and its `text` as given. When `truncated` is true, say that there are more open comments than were read.
+
+For each open comment, propose the edit it asks for as a change to the personas, and wait for
+the word of the comment's author (`mine` is true) or the desk's head: only they decide a
+comment. Only on a yes from the author or the head, call `icp_save` with the edited personas,
+say the `message` it returns, and then call `icp_comment_answer` with the comment's
+`comment_id` and the `version_id` that `icp_save` returned. Make the edit on the personas
+`icp_profile` gives under `draft_waiting` when a draft is waiting, and under `serving` otherwise,
+and send them to `icp_save` as they are, with only the edit made: the draft waiting already
+holds the edits made before, and building on it keeps them.
+
+When the comment's author or the desk's head decides nothing changes, call
+`icp_comment_answer` with the `comment_id` and a short `note` saying why, in the firm's words. The note is about the profile line alone: never a
+client's or a family's name, and nothing from the desk's pages.
+
+Never answer a comment its author or the desk's head has not decided on. When the person you
+are talking to is neither, say that the comment's author or the desk's head decides it, and
+change nothing. When `icp_comment_answer` refuses, say its
+`message`. Say an answered comment's `answer` as given. A comment is withdrawn on the dashboard,
+never here.
