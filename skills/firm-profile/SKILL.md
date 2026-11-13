@@ -2,7 +2,7 @@
 name: firm-profile
 description: >-
   Draft a firm's buyer profile with Celorus, through its profile tools: our
-  draft of the firm's personas, a preview of the people on our record who
+  draft of the firm's personas, a preview of the people in our data who
   would match each persona, the firm's own edits, the clients it has already
   won, and the head's step that makes the profile the firm's own. Use when
   someone asks to draft or build their firm's profile, their ideal client
@@ -26,7 +26,7 @@ Before anything else, look at the Celorus tools in this session. When `icp_start
 `icp_preview`, `icp_save`, `icp_add_client` or `icp_make_yours` is not among them, the whole reply
 is this sentence, and the skill stops:
 
-"The firm-profile tools are not switched on for this desk yet."
+"The firm profile isn't open on this desk."
 
 Never call another tool in their place, never draft a profile from this skill's text or from
 general knowledge, and never say when they will be on.
