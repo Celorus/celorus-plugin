@@ -15,11 +15,11 @@ with the `cite_url` permalink as a footnote.
 ## Financial Analysis — {canonical_name}
 
 **Company:** {canonical_name} · **Subject ID:** {subject_id}
-**Source record:** {form_code} for FY {fy} · **SRN:** {srn} · **Format:** {format}
+**Source document:** {form_code} for FY {fy} · **SRN:** {srn} · **Format:** {format}
 **Document:** {cite_url}
 
-> If `list_available_subdomains` returned `fallback`: "No data is on record
-> for this company — the financial sections below are not available." Then still
+> If `list_available_subdomains` returned `fallback`: "The financial sections
+> below rest on what is known about this company; no figures are shown for them." Then still
 > render the section headers with "not available".
 
 > If `get_subdomain_data` returned `constrained_proceed`: add a line here —
@@ -38,12 +38,12 @@ with the `cite_url` permalink as a footnote.
 >
 > **If the state is `constrained_proceed` but no row carries a caveat, the
 > qualification is somewhere else — find it, never print an empty caveat
-> line.** This happens when the qualification is about the RECORD rather than a
-> figure: part of a document was not ingested, a document's ingest never
+> line.** This happens when the qualification is about the source rather than a
+> figure: part of a document could not be read, a document's reading never
 > finished, or a section was withheld. Read the envelope's own `message` and
 > its `diagnostics[]` entries (each carries a plain-language `message`) and say
-> plainly what is missing. "Some of this company's filed material is not
-> included" is a caveat a reader needs; a caveat line with nothing after it is
+> plainly what is missing. "Part of the source for this company could not be
+> read, so these figures are what our data carries" is a caveat a reader needs; a caveat line with nothing after it is
 > the silent absence this whole instruction exists to prevent.
 >
 > **Join caveats with `  ·  ` (space-middot-space), and add no full stop of your
@@ -168,7 +168,7 @@ entirely when its layer is empty; never render "not available" here.
   allotment, an officer change — only if present}
 - **Connections** ({tag}): {one-line summary of a holding or directorship —
   only if present}
-- **Secured charges** ({tag}): {one-line summary of the charges on record — the
+- **Secured charges** ({tag}): {one-line summary of the charges in our data — the
   count, and the open count — only if present. NEVER a total of the amounts: a
   charge amount is the secured limit, not drawn debt}
 

@@ -16,11 +16,11 @@ Provenance tag convention: `[SRN <srn> · <pages|no page range>]`, with the
 
 **Company:** {canonical_name} · **Subject ID:** {subject_id}
 
-> If `get_captable` returned `stop`: do not render a report — no such company
-> is on record.
-> If `get_captable` returned `fallback`: "No live cap-table content is on
-> record for this company yet." Then still render the section headers below
-> with "not available".
+> If `get_captable` returned `stop`: do not render a report; say "I did not find a company
+> by that name."
+> If `get_captable` returned `fallback`: say the envelope's `message` as served; it says which
+> case this is. Then render the section headers below with "not available", and §3's registry
+> capital block when that view is live.
 
 Fill each section from the matching view in the `get_captable` response —
 match by the view's own `view` id, not a remembered catalog. A view whose
@@ -33,7 +33,7 @@ Identity + subject ID. Note that this report covers share-allotment events
 and the latest post-allotment capital structure; year-end annual positions
 are a separate, not-yet-available layer (see §6).
 
-### 1. Ownership — who holds the company (latest annual register)
+### 1. Ownership — who holds the company (latest-filed shareholder list)
 
 From the `ownership` view — **this section, not §2's per-round lists, answers
 "who owns this company"** (rule 6). If the view's `status` is
@@ -61,8 +61,8 @@ stated in the pattern, so there is no Holders column to render):
 | --- | --- | --- | --- | --- |
 | {holder_group} | {holder_category} | {capital_kind} | {total_shares_held or "not available"} | {total_shares_held_pct or "not available"} |
 
-Note under the table: "Holder counts are stated in the record only at the
-promoter/public group level, not per category." Percentages are per capital
+Note under the table: "Holder counts are given only at the promoter and public
+group level, not per category." Percentages are per capital
 kind and group — do not sum them across rows into one total.
 
 If `served_from.basis` is `"aggregated_from_register"`:
@@ -118,24 +118,22 @@ across every round in the same document. If the round carries a
 `roster_partially_read` warning, still render every holder returned, and put
 this line immediately above the table (rule 9):
 
-> **This holder list is incomplete.** Part of the shareholder register filed
-> with this round could not be read — some pages of the source document are
-> unreadable, so any holders listed on those pages are missing here. Read the
-> register in full in the cited source document.
+> **This holder list is incomplete.** Some pages of the source for this round
+> could not be read, so holders on those pages are missing here. The full list
+> is in the cited source document.
 
 If the round instead carries a `roster_sheets_unread` warning (a spreadsheet
 register with sheets that were not read), still render every holder returned,
 and put this line immediately above the table (rule 9 applies the same way):
 
-> **This holder list is incomplete.** The shareholder register filed with this
-> round is a workbook with sheets that could not be read, so any holders listed
-> on those sheets are missing here. Read the register in full in the cited
-> source document.
+> **This holder list is incomplete.** Some sheets of the source for this round
+> could not be read, so holders on those sheets are missing here. The full list
+> is in the cited source document.
 
 A round can carry both warnings; show both lines, pages first.
 
 Never write or imply that the company filed nothing further, that the missing
-holders are "not on record", or that this is the whole register.
+holders are absent from our data, or that this is the whole list.
 
 | Holder | Share class | Shares held | Consideration paid | Grain | Provenance |
 | --- | --- | --- | --- | --- | --- |
@@ -159,8 +157,8 @@ The most recent post-allotment capital structure, as of {as_of_srn}.
 price, latest post-money valuation — each with its `formula_id` or "not
 available".
 
-**Registry capital** — the company register's own authorised / subscribed /
-paid-up capital: a second record beside the filed figures above (rule 15),
+**Registry capital** — the company's own registered authorised / subscribed /
+paid-up capital: a second source, kept apart from the statement figures above (rule 15),
 never a restatement of them, never merged, averaged or summed with them, and
 never presented as superseding them. Render this block only when the registry
 capital view is live; omit it entirely when it is not.
@@ -176,8 +174,7 @@ capture date unknown" — never "captured null", never the word "null" in either
 cell, never an empty cell.
 
 When these are the only capital figures the door served, say so in one line:
-the register holds them and no filed cap table stands behind them — no share
-classes, allotments, holders or rounds.
+"This cap table rests on the company's registered capital figures."
 
 ### 4. As-converted / fully-diluted view
 

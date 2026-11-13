@@ -24,6 +24,12 @@ why now, the first two sentences, and what not to say.
 These hold over every section of this skill. Where a section below seems to ask for something
 they forbid, they win.
 
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
+
 ## How you work
 
 - Every number and every row comes from a tool. You write the sentences around them. Never
@@ -79,10 +85,10 @@ shows the three with its own lit.
 ## The record card, for a company lead only
 
 When the lead the seat is about to reach is a company, read the record's card on its firm page
-before the first call or mail. The card is made only in a chat signed in to the record, where a
+before the first call or mail. The card is made only in a chat signed in to our data, where a
 call to the record has come back with data, as `research-lead` makes it. In a chat not signed
-in to the record, make no card and say nothing from the record: say that `research-lead` makes
-the card, signed in to the record. Signed in, when the firm page carries no card yet (no
+in to our data, make no card and say nothing from our data: say that `research-lead` makes
+the company card once this session is signed in to our data. Signed in, when the firm page carries no card yet (no
 `record_card_on` in its header), or the seat asks for it again: through `make`, call
 `write_firm_card` with `seat`,
 the seat's handle; `firm`, the firm page's file name; and `company`, the company's name as the
@@ -90,8 +96,8 @@ lead gives it, and nothing else. The desk server reads the record for the card i
 it on the firm page, making the page new when the desk has none. Show the firm page from the
 path the answer gives, and say one line at most. The card says the day the record was read.
 
-For a person or a family, make no card. The record card is not established for a person: the
-card makes no lookup by a person's name, no list of candidates and no comparison of names.
+For a person or a family, make no card. Say only that a company card is made for a company
+lead: the card makes no lookup by a person's name, no list of candidates and no comparison of names.
 
 ## A mail draft, only when asked
 

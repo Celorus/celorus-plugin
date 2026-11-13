@@ -19,8 +19,8 @@ description: >-
 
 The manual digging each lead takes is the drudgery this skill removes.
 You produce one page the day can reuse, in the house format, with every line carrying
-its register: `record`, `web` or `yours`. What the web could not establish is listed at
-the end, plainly, because that list is the honest close and it is what the record holds.
+its register: `record`, `web` or `yours`. What the web could not confirm about the lead is
+listed at the end, plainly, as the honest close; that list never says what our data holds or lacks.
 
 ## House rules
 
@@ -38,13 +38,19 @@ Until a `celorus-data` call has come back with data in this session, a `celorus-
 answer that is not data (a sign-in ask, a refusal, an error, an empty or unreadable
 reply), and a session with no `celorus-data` tool to call, are not a tool that cannot
 run: the record step's not-signed-in branch and *When this session is not signed in to
-the record* below decide them, and the web register still runs. After data has come back,
+our data* below decide them, and the web register still runs. After data has come back,
 the rule on a tool that cannot run holds for every `celorus-data` call, as it does for
 every tool these do not govern.
 
 The web register only reads, so it runs signed in or not. The page this skill writes waits: it
 is written only after `celorus-link`'s `sign_in` answers that this computer is signed in to
 Celorus, as *Signing in* below says.
+
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
 
 ## The tools this skill calls
 
@@ -106,6 +112,56 @@ A specific question about a named company's revenue, auditor, directors or finan
 specific ask for a report or a cap table, is the record door's, on that ask alone: the reports
 are part of company research and are never offered or listed.
 
+## Before anything runs: our data's sign-in
+
+This comes first, before Who and before anything else in the flow, and it is about the
+`celorus-data` connection only. The desk's own sign-in (`celorus-link`'s `sign_in`, before the
+page is written, as *Signing in* below says) is a different step: it stays where it is and is
+never part of this ask.
+
+- **No `celorus-data` tool is among this session's tools.** Nothing can be called: ask now. A
+  `celorus-data` tool listed by its name only, to be loaded when it is used, is among them: load
+  it, then go on as the next point says.
+- **A `celorus-data` tool is there.** Do not ask yet. The flow's first `celorus-data` call settles
+  it, and only a call that comes back with data counts. If that call asks you to sign in, is
+  refused for want of authorization, or is unreadable twice, ask then, before the pack and
+  before the web register.
+- **Data comes back.** Never ask. A session that reads our data is never asked to sign in.
+
+The ask is one message on its own, with one question, and it ends on the choice. When the seller
+must also be asked which person a shared name means, this ask comes first and that question after
+it, never in one message. Say it in the lane's words, with the lead's name as the seller gave it,
+for a person, a family or a company alike:
+
+- **Claude Code, Cowork, Claude Desktop:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Connect Celorus: your browser opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come back to this chat and say "done". In Claude Code, /mcp shows the connection if the browser does not open. Say "no" and I go on with the web alone.
+- **Kimi Code:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Sign in on the celorus-data connection, then say "done". Say "no" and I go on with the web alone.
+- **Codex, ChatGPT:**
+  > Before I start: looking for <name> in our data needs a Celorus account connected to this plugin. Connect it and say "done", or say "no" and I go on with the web alone.
+
+  Nothing more on these lanes: no link, no price, no verb that promotes.
+
+Wait for the one reply. Then:
+
+- **"done", or a yes.** The next `celorus-data` call decides, as above. Data comes back: carry on
+  in this pass and read our data in Who and in step 3. Still refused: say "Still not signed in, so
+  I go on with the web alone." and go on with the web only. Never ask a third time.
+- **"no", any other answer, or no answer.** No answer is a no, and so is a next message that goes
+  on to something else. Go on with the web only. Nothing waits on a sign-in.
+
+The ask is made at most once in a pass. When the seller was asked earlier in this session, here
+or by another Celorus skill, and did not sign in, do not ask again unless they ask to connect:
+go on with the web only. With no `celorus-data` tool there is no research pack either, and
+nothing is said of one.
+
+The ask never says that our data holds, has, covers, includes or can find anything about the
+lead; it carries no count, figure or URL; and it uses none of the words *Words a person reads*
+retires. A web-only pass says nothing more of our data: no line that it was not read, no "connect
+it later", no promise of what a sign-in would add. Its brief's chips read "web" and "desk", and
+the chat says once, as its grade, "This brief is from the web." when only the web was read, or
+"This brief is from the web and your desk." when the desk's own lines were used too.
+
 ## The flow: who, the pack, the sources, the brief
 
 The steps below run together, with a desk or with no desk, and the brief is made in the same pass.
@@ -166,10 +222,11 @@ them" strip of the person part and the meeting part of the brief.
 ## Before the web register: ask for a research pack
 
 The server judges whether this seat may have a research pack; this skill never reads a plan.
-When `research_ask` is among this session's tools and the desk is a seat's graph, by the test
-*Where the desk's pages are* gives, ask it for this lead's quote before the web register: the
-call with `quote: true` and these arguments, and no others but what the `already_made` bullet
-below adds:
+A `research_ask` listed by its name only, to be loaded when it is used, is among this session's
+tools: load it before the quote. When `research_ask` is among this session's tools and the desk
+is a seat's graph, by the test *Where the desk's pages are* gives, ask it for this lead's quote
+before the web register: the call with `quote: true` and these arguments, and no others but
+what the `already_made` bullet below adds:
 
 - `about`: the stem of the lead's page on the desk, or, when the lead has no page yet, the slug
   its page would take, as the page-writing step below says.
@@ -177,8 +234,9 @@ below adds:
 - `context`: only when the person gave a note on who the lead is, and only that note, with no
   contact detail and no personal identifier in it. With no such note, leave `context` out.
 
-Send the quote only when the tool's published input lists `quote`; where it does not, offer no
-pack, say nothing of it, and run the web register and every step after it as they stand below.
+Send the quote only when the tool's published input lists `quote` (load a tool listed by its
+name only before reading its input); where it does not, offer no pack, say nothing of it, and
+run the web register and every step after it as they stand below.
 A quote asks nothing and charges nothing; it says what a pack would cost this seat now. Go by
 the quote's answer:
 
@@ -266,7 +324,7 @@ Then go by the answer's `state`, and for a refusal by its `reason`:
   in this session, `unavailable` and a state this page does not name are a tool that cannot
   run: say it, and the skill stops there, as the house rules say.
 
-No answer of `research_ask` says whether this session is signed in to the record: the record
+No answer of `research_ask` says whether this session is signed in to our data: the record
 step's own calls decide that, as that step says. Never ask `research_ask` again on your own,
 after any answer: another ask can make and charge another pack. The quote is not an ask, since
 it makes nothing and charges nothing, and the rule holds for it too: in a pass, `research_ask`
@@ -275,7 +333,7 @@ besides. After any answer to the quote but `quote`, call `research_ask` no more 
 
 ## Step 2: the web register
 
-The web register always runs: with a desk or with no desk, signed in to the record or not, with a
+The web register always runs: with a desk or with no desk, signed in to our data or not, with a
 pack asked for or not. The ask section keeps its own exceptions as it has them: after `payment_required`
 the free path runs on the person's yes, and an answer that is a tool that cannot run stops the skill,
 as the house rules say. It is part of the pass the ask starts, never a later ask.
@@ -320,7 +378,7 @@ date, and where its line came from instead.
 
 ## Step 3: the record
 
-**3b, signed in to the record** (the `celorus-data` tools are present and answer): fetch
+**3b, signed in to our data** (the `celorus-data` tools are present and answer): fetch
 the honesty rules once with
 `get_semantic_metadata(product_id="aoc4", kind="honesty_rules")` and follow them verbatim
 (a person's `clarify` that the seller's own words already answer is read as below); then
@@ -361,18 +419,16 @@ this person is there." In the same reply, name each other person on the list by 
 other" or the other's city, moves the profile to them; a word that fits several of them is asked
 about again, with their names and cities. Under `## Watch out`, write the same, the city again in
 place of "the city":
-`- You gave the city; of the people with this name, only this person is there, and this page follows them; the others by this name on the record are <list> · record · <date>`,
+`- You gave the city; of the people with this name, only this person is there, and this page follows them; the others by this name in our data are <list> · record · <date>`,
 where `<list>` names each other person by the name and city `candidates[]` returned and nothing
 else.
 
 Any other person `clarify` (a "did you mean" list of other names, a lone candidate): take
 none.
-Write no record line about the person, finish the profile from the desk and the web, say under
-"Not established" that the record did not settle which person this is, and at the profile's
-close show the candidates by the name and city `candidates[]` returned, and no city where it gave
-none, and ask in the chat, never on the page, which is the lead, if any. On the answer, read the record for that person by the
-`subject_id` its candidate carried, without asking `resolve_subject` again, and add its lines in
-place of the line under "Not established" that the record did not settle which person this is.
+Write no record line about the person, finish the profile from the desk and the web, and at the
+profile's close show the candidates by the name and city `candidates[]` returned, and no city where it gave
+none, and ask in the chat, never on the page, which is the lead, if any. On the answer, read our data for that person by the
+`subject_id` its candidate carried, without asking `resolve_subject` again, and add its lines.
 
 On a word that moves the profile to another person, research again from the start, reading the
 record for that person by the `subject_id` its candidate carried, without asking
@@ -400,9 +456,9 @@ seller; neither is a pick. Every other person `clarify` is still a question to t
 at the profile's close, in the chat, never a guess; a company `clarify` is asked straight away, as
 above.
 
-**3c, not signed in to the record:** say "The record was not asked by this name." and the
-lane's close, as *When this session is not signed in to the record* below words them, and
-nothing else from the record. Never a count, never a year, never the list itself.
+**3c, not signed in to our data:** say nothing of our data. The ask in *Before anything runs:
+our data's sign-in* above is the only line about it, and after a no the pass goes on with the
+web alone. Never a count, never a year, never the list itself.
 
 For a person, the record is read for the person's companies, not only the registry line: each
 company the person is named in, the roles over time, and the company's own values as its tool
@@ -453,8 +509,8 @@ person asks for it.
 These rules hold for every copy of the brief: the page the tool writes and the brief shown in the
 chat. Some values come from the web and the page opens in the seller's browser. Every value given to
 the tool is plain text and is never written as markup: the tool escapes it for HTML (`&`, `<`, `>`,
-`"` and `'` as entities). A chip is given as where the line came from (`record`, `desk`, or `web`
-with the site's name and its link), never as markup. A link from the web is given as it was found:
+`"` and `'` as entities). A chip is given as where the line came from (`record` for our data, `desk`, or `web`
+with the site's name and its link), never as markup; the page shows `record` as "our data". A link from the web is given as it was found:
 the tool trims it of spaces at both ends, compares it without regard to case, and puts it into an
 href only when it then begins with `https://` or `http://`. Any other link, such as `javascript:`,
 `data:` or `vbscript:`, or a link that opens with a tab or another control character, keeps its chip
@@ -482,22 +538,23 @@ carries in the template (`data-budget`):
 For a company, the person part is replaced by the people who matter here, in a paragraph, and the
 rest of the frame stands. Rules under the frame:
 
-- Each line carries a chip, small and muted: desk, record, or web with the site's name. A chip is
+- Each line carries a chip, small and muted: our data, desk, or web with the site's name. A chip is
   never a document name, a reference code or a page; the sources stay at the backend, and a company
   page, where it was written, holds them.
-- Figures come only from the record, exactly as the record gives them, and the web gives no figure.
+- Figures come only from our data, exactly as our data gives them, and the web gives no figure.
   No web figure appears in any copy of the brief, the desk's page included.
 - Give dates and values as the tools gave them; never write a span of time, an age or a tenure
   that the writer reckons from them, as the house rules say. A promise the desk's notes leave open
   is said with the date it was made and as still open, never by how long ago that was or how late
   it is.
   Rows a tool returned are given by name: say who the directors are, and never a word such as
-  sole or only about them, nor about the companies or the years the record covers.
-- The company part's tiles hold only values the record gives, each with the record chip; with none,
-  leave the tiles out and say so in a plain line. Never a web value, never a tile stamped record
-  for something the record did not give.
-- A part nothing answers says so in a plain line: never padded, never dropped, never filled from
-  general knowledge.
+  sole or only about them, nor about the companies or the years our data covers.
+- The company part's tiles hold only values our data gives, each with the our-data chip; with
+  none, leave the tiles out and add no line about them: the part's own lines say what it rests on.
+  Never a web value, never a tile stamped our data for something our data did not give.
+- A part nothing answers says what it rests on in one plain line, naming what was read for it
+  ("This part rests on the web." or "This part rests on our data and the web."): never padded,
+  never dropped, never filled from general knowledge.
 - A web match that cannot be tied to the person confirmed at the top is never merged into the
   person part. It sits apart under "be careful", in a box that says it may be a different person.
 - A path to a person is a name and a relation, never a contact detail: board colleagues, family,
@@ -528,7 +585,7 @@ alone, the meeting part holds the angle and the reply ends with the offer.
 Every research answer ends with the offer line: one line, one next step it can do now from the
 intent (a curated pitch, the mail, the meeting brief, the introduction path, whichever fits), never
 blocking and never a menu. Offer only a step that will run in this session as it stands: no record
-depth when this session is not signed in to the record, no pack where the flow says nothing of
+depth when this session is not signed in to our data, no pack where the flow says nothing of
 it and no pack without credits, and never a verb that promotes the plan. The offer never waits on a
 question: it names a step that can be taken now from what the seller has already said, and asks the
 seller for nothing but a yes, never for a date, a name or a choice.
@@ -611,10 +668,10 @@ the card itself and writes it on the firm page, making the page new when the des
 any desk but a seat's graph, write the firm page by hand before the call, as above, so the card
 lands on it. The card says the day the record was read. Show the firm page from the path the
 answer gives; never retype the card, and never add a record line of your own to it. When this
-session is not signed in to the record, make no card: nothing from the record is said then.
+session is not signed in to our data, make no card: nothing from the record is said then.
 
-For a person lead or a family lead, make no card. Say only that the record card is not
-established for a person, and nothing more: the card makes no lookup by a person's name, no list
+For a person lead or a family lead, make no card. Say only that a company card is made for a
+company lead, and nothing more: the card makes no lookup by a person's name, no list
 of candidates and no comparison of names, and it is never made for the firm a person works at in
 the person's place.
 
@@ -637,30 +694,18 @@ On a seat's graph, none of the following is written: not the research row, not t
 - Call `check_desk` with `scope` naming the pages you wrote, and say its `summary` in one line,
   as it came: never a count of your own.
 
-## When this session is not signed in to the record
+## When this session is not signed in to our data
 
-Never say what the record holds. No count, no figure, no URL, on any lane. For a company, a
-person or a family, say "The record was not asked by this name.", then close with the lane's
-own sentence:
-
-- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it: your browser
-  opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come
-  back to this chat. In Claude Code, `/mcp` shows the connection if the browser does not
-  open.
-- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
-  connection.
-- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
-  Nothing more: no link, no price, no verb that promotes.
-
-For a person or a family, never write that they are not on the record, and never put them in
-"Not established" as a record miss: the record was not asked by this name. Never compose a new promise
-about a person.
+The ask in *Before anything runs: our data's sign-in* above is the only thing said about it, once,
+before the research. Never say what our data holds, has or lacks: no count, no figure, no URL, on
+any lane. For a person or a family, never write that they are not in our data, and never put them
+in "Not established" for that reason. Never compose a new promise about a person.
 
 ## While you work
 
 The reply opens with "Milan is researching <name>.", with the name as the seller gave it.
 One plain progress line per step follows ("Reading what the desk already holds", "Checking what a
-research pack would cost", "Asking for a research pack", "Searching the web for the company", "Reading the record", "Writing the page", or on a hosted desk
+research pack would cost", "Asking for a research pack", "Searching the web for the company", "Reading our data", "Writing the page", or on a hosted desk
 "Showing the profile here"). "Checking what a research pack would cost" is the quote's line;
 "Asking for a research pack" is said only for the order, after the person says yes.
 Never name a tool, a stream or a path to the user, except the folder a research pack appears
@@ -770,4 +815,4 @@ skip it, as below. It is never a reason this skill cannot finish, and the reply 
 - Never fill from memory or general knowledge; "Not established" is the honest line.
 - Never send anything but the usage line, as *Last step: the usage line* says.
 
-**Next:** after the brief, and the reply's last line, the offer line, as *The brief* sets out, comes `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to the record, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.
+**Next:** after the brief, and the reply's last line, the offer line, as *The brief* sets out, comes `room-brief` when a meeting with this lead is on the clock and `reach-out` when the desk asks for an opener; otherwise back to `triage`'s list. When this skill is done, the lead's page exists and a research row is in the desk log; on a hosted desk, the profile was shown in the chat and not kept, and for a company lead, when this session is signed in to our data, the record card is on its firm page. When a research pack was asked for, nothing was written by hand, and the pack's page reaches the desk with the link's pull after the research run has written it.

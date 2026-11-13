@@ -34,10 +34,10 @@ binding `body`. Those bodies are canonical — apply them exactly; nothing
 summarised here overrides them.
 
 **That first call is also the sign-in test.** It is the first thing this skill asks
-of the server, so its answer is what tells you whether this session is signed in to the record at all. Data coming back is what settles it, and nothing else does. If the answer is
+of the server, so its answer is what tells you whether this session is signed in to our data at all. Data coming back is what settles it, and nothing else does. If the answer is
 not data — it asks you to sign in or to re-authorize, it refuses for want of
 authorization, it errors, it comes back empty, or you cannot read it as data — stop
-there and follow *When this session is not signed in to the record* below, which decides it under its
+there and follow *When this session is not signed in to our data* below, which decides it under its
 four outcomes: the tools being listed does not mean the account behind them is
 authorized, and every tool here sits behind the same sign-in, so calling a second
 one only spends a second refusal.
@@ -78,9 +78,15 @@ The floor is for a call that came back with data and no definitions in it. It is
 not for an answer that was not data. If the call did not come back with data — it
 asked you to sign in or to re-authorize, it refused for want of authorization, it
 errored, it came back empty, or you cannot read it as data — the floor does not
-apply: this session is not signed in to the record until a `celorus-data` call comes back with
-data, *When this session is not signed in to the record* below governs it and decides it under its
+apply: this session is not signed in to our data until a `celorus-data` call comes back with
+data, *When this session is not signed in to our data* below governs it and decides it under its
 four outcomes, and you stop there rather than carry on under the summaries.
+
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
 
 ## While you work — speak to the user, not your plumbing
 
@@ -88,7 +94,7 @@ While working you may show **one short, plain-English progress line** per step �
 describe the **outcome or the rigor**, never the mechanics. Vary them; keep each
 literally **true**.
 
-- ✅ *"Finding {Company} in the records…"*, *"Reading {Company}'s audited financials…"*, *"Tracing every figure to its source…"*, *"Compiling the report — each figure cited…"*
+- ✅ *"Finding {Company} in our data…"*, *"Reading {Company}'s audited financials…"*, *"Tracing every figure to its source…"*, *"Compiling the report — each figure cited…"*
 - ❌ *"Fetching the narrative sections and governance signals in one call"*, *"calling `get_subdomain_data`"*, or anything that names streams, subdomains, tools, `signals`, or `sections`.
 
 Never claim scope you don't have (e.g. "millions of companies"). Then present only
@@ -115,7 +121,7 @@ narrative pre-compiled and pre-cited. Every tool returns an envelope with a
 `resolve_subject`'s `data` is a **dict** (one object: `subject_id`,
 `canonical_name`, plus `candidates[]` on `clarify`). Read its fields directly.
 `canonical_name` — on a proceed and on every candidate — is `null` only when the
-entity has no name on record anywhere (rare); say "no name on record" then, never
+entity has no name on record anywhere (rare); say "name not given" then, never
 invent one.
 
 `resolve_subject`'s envelope may also carry a **top-level** `compiled_knowledge`
@@ -159,7 +165,7 @@ to another party — a holding, a directorship) carries
 `{ counterparty_subject_id, counterparty_canonical_name, rel_type, role_detail,
 valid_from, valid_to, raw_context, provenance }`. `counterparty_canonical_name`
 is `null` when the counterparty has no name on record (rare) — render it as
-"name not on record", never as a blank or a guess; on a charge row whose counterparty is the LENDER (`rel_type`
+"name not given", never as a blank or a guess; on a charge row whose counterparty is the LENDER (`rel_type`
 `CHARGE_HELD_BY`) and whose lender is disclosed, name it by `charge.holder_name`
 instead, said as printed on the charge. Both cite exactly like a
 signal or a section. **A subdomain with none of either simply carries an empty
@@ -229,7 +235,7 @@ time — do not assume a fixed catalog.
    **Acme Manufacturing Private Limited**? (yes / no)"*), proceed only on yes;
    **two or more** → present them (each has `canonical_name`, `subject_id`,
    `score`) and ask which one. Never ask a single-option question; then stop until
-   the user answers. `stop` → no such company is on record, stop — do not proceed
+   the user answers. `stop` → say "I did not find a company by that name." and stop — do not proceed
    with a guessed identity.
 
 2. **Check the compiled-knowledge offer** — if the resolve envelope carries
@@ -268,10 +274,11 @@ time — do not assume a fixed catalog.
    step 4. Where that is its only plane the entry has no years at all.
    A company whose list holds only such entries, and whose `data.filings[]`
    is empty, is registry-only: build the header from `resolve_subject`
-   (name, CIN, registry status) and say plainly that no filed document is on
-   record for it; the sections that need filed documents are "not available"
-   for that reason; the register-served rows above render from their own
-   subdomains. Otherwise read each
+   (name, CIN, registry status) and say what the page rests on: "This page is
+   from our data on the company itself: its name, status and registered
+   details." Print no "not available" line for the sections that need
+   financial statements; the page's own sections carry only what exists, and
+   the register-served rows above render from their own subdomains. Otherwise read each
    entry's `available_years` to see which report areas have data and for
    which years. `fallback` → known company, no data → render the header and
    "not available" sections.
@@ -424,7 +431,7 @@ time — do not assume a fixed catalog.
    ```json
    {
      "verdict_headline": "One punchy sentence — the overall read.",
-     "verdict_body": "2–4 sentences expanding the headline: what happened this year and the one or two things that matter most. State any data caveat here (e.g. only one year on record).",
+     "verdict_body": "2–4 sentences expanding the headline: what happened this year and the one or two things that matter most. State any data caveat here (e.g. only one year in our data).",
      "strengths": ["Short bullet", "Short bullet", "…"],
      "watch_items": ["Short bullet", "Short bullet", "…"],
      "dimensions": {
@@ -445,7 +452,7 @@ time — do not assume a fixed catalog.
      **This is the most-missed field; without it the per-dimension sections of the
      report render with no analysis at all.** Write a `commentary` for every
      dimension you can speak to; for one the data can't support, say so in one
-     honest line ("not available — no prior-year revenue on record") rather than
+     honest line ("not available — no prior-year revenue in our data") rather than
      omitting the key.
    - Keep each `commentary` to what the retrieved figures and sections support — no
      figure that isn't already in the data, no outside-knowledge claim. The same
@@ -485,7 +492,7 @@ time — do not assume a fixed catalog.
   headline figures layered on top.
 - **Empty is honest, not a gap:** empty auditor / notes / cash-flow / narrative
   sections are **honest** for XBRL or eForm-only documents whose attachments aren't
-  ingested yet — render "not available" calmly; do not flag it as a data gap or
+  read yet — render "not available" calmly; do not flag it as a data gap or
   strain to synthesize prose that isn't there.
 - **Absent ≠ zero, and a filed boolean/enum/text answer ≠ "not available"** —
   key on `value` presence and render by `value_type` (rule 1); the three hard
@@ -556,7 +563,7 @@ the honest reason in parentheses, e.g. "not available (XBRL document carries no
 narrative prose)" or "not available (no cash-flow figures in the store)". Never
 leave a number-shaped blank that a reader could mistake for zero.
 
-## When this session is not signed in to the record
+## When this session is not signed in to our data
 
 **A listed tool is not a sign-in.** The `celorus-data` tools can all be
 listed, and the panel can report the server connected, while the account behind
@@ -564,7 +571,7 @@ them is not authorized: a sign-in that has aged out leaves every tool in place a
 every call refused. Tool-list membership is therefore silent on exactly the case
 this section exists to catch, and neither it nor the word "connected" is the test. Signing in to the desk with `celorus-link`'s `sign_in` is not the test either: it does not sign this session in to the record.
 
-The test is a call. This session is signed in to the record when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
+The test is a call. This session is signed in to our data when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
 it. Its answer is binding:
 
 - **Data comes back.** The record is signed in. Carry on.
@@ -575,25 +582,33 @@ it. Its answer is binding:
   Every tool here sits behind the same sign-in, so a second call only spends a
   second refusal to learn what the first one already said.
 - **No `celorus-data` tool is there to call.** The record is not signed in either,
-  and there is nothing here to attempt.
+  and there is nothing here to attempt. A `celorus-data` tool listed by its name only, to be
+  loaded when it is used, is there to call: load it and make the call.
 - **Anything else: an error, an empty answer, or a reply you cannot read as one of
   the three above.** It settles nothing, and it is not a sign-in; do not read it as one. Make one more `celorus-data` call and let its answer decide, under these
   same four outcomes. That is the last call: if the second answer is also
-  unreadable, treat this session as not signed in to the record, stop there, and do not
+  unreadable, treat this session as not signed in to our data, stop there, and do not
   attempt the report or the answer.
 
 Never fill what you could not read from memory or the web; a web answer is
 `research-lead`'s job and it carries the web register's label.
 
-Never say what the record holds. No count, no figure, no URL, on any lane. For a company, a
-person or a family, say "The record was not asked by this name.", then close with the lane's
-own sentence:
+Never say what our data holds, has or lacks: no count, no figure, no URL, on any lane. Ask
+for the sign-in once, in one message on its own, with the name as the person gave it, in the
+lane's words, and wait for the one reply:
 
-- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it: your browser
-  opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come
-  back to this chat. In Claude Code, `/mcp` shows the connection if the browser does not
-  open.
-- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
-  connection.
-- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
-  Nothing more: no link, no price, no verb that promotes.
+- **Claude Code, Cowork, Claude Desktop:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Connect Celorus: your browser opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come back to this chat and say "done". In Claude Code, /mcp shows the connection if the browser does not open. Say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+- **Kimi Code:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Sign in on the celorus-data connection, then say "done". Say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+- **Codex, ChatGPT:**
+  > Before I start: looking for <name> in our data needs a Celorus account connected to this plugin. Connect it and say "done", or say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+
+  Nothing more on these lanes: no link, no price, no verb that promotes.
+
+On "done" or a yes, make one `celorus-data` call: data comes back, carry on; still refused, say
+"Still not signed in." and stop. Never ask a third time. On "no", any other answer or no answer,
+stop here. The ask never says that our data holds, has, covers, includes or can find anything.
+
+When the person was asked earlier in this session, here or by another Celorus skill, and did
+not sign in, do not ask again unless they ask to connect: say "Still not signed in." and stop.

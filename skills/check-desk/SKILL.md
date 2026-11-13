@@ -35,6 +35,12 @@ there.
 These hold over every section of this skill, the walk and the merge included. Where a section
 below seems to ask for something they forbid, they win.
 
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
+
 ## Find the desk
 
 The check finds the desk: the folder named by `CELORUS_DESK`, or else the first folder found
@@ -336,7 +342,7 @@ naming what was already changed; say it as it came. It marks the record
 `* <time> · <handle> · check-desk · undid the merge of <other> into <kept> · yours`.
 Say which pages it put back, from its answer's `restored`.
 
-## A record card read more than 30 days ago
+## A company card read more than 30 days ago
 
 A firm page may carry the record's card: a block under `## On the record`, and in its header
 `record_card_on`, the day the desk server read the record for it. The card says what the record
@@ -344,7 +350,7 @@ held on that day, and nothing reads it again by itself. After a whole-desk check
 `record_card_on` in the header of each firm page (a page of `firms/`, read as "Where the desk's
 pages are" says), and pass over a page without it. For each page whose day is more than 30 days
 before today, say one line: the page's title, the day its card was read, and that the card can
-be made again from the record, by `research-lead` for a company lead. On a seat's graph, a page
+be made again from our data, by `research-lead` for a company lead. On a seat's graph, a page
 read from `celorus/team/` is another seat's, and only the graph job writes it: say instead that
 the card is that seat's to make again. Name each such page, and never count them. This is not one of the check's rules: it is never a finding, never a row of
 needs-attention, and no page is changed for it.
@@ -363,7 +369,7 @@ write desk.md yourself.
 After a path: the first path in words, who knows whom and how we know it, and where the page
 is. Never read out a named-only person's contact details.
 
-After a whole-desk check, end with each record card read more than 30 days ago, as the section
+After a whole-desk check, end with each company card read more than 30 days ago, as the section
 above says.
 
 ## When the desk tools cannot run

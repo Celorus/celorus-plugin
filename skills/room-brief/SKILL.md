@@ -66,7 +66,7 @@ they forbid, they win.
    "Wealth and where it came from", "What matters to this family", "Other associations",
    "What to bring", "What not to say". Two to three pages. Every fact comes from the facts or a
    conversation page, with where it came from in plain words ("on the call of 21 Sep", "from
-   the register"). Where the desk does not know, write "Not known yet." No figure about their
+   our data"). Where the desk does not know, write "Not known yet." No figure about their
    wealth.
 4. Through `make`, `write_brief(at=<now, with its offset>, seat=..., family=..., kind="room", sections=[{"heading": ..., "paragraphs": [...]}], meeting_on=<YYYY-MM-DD>)`.
    A brief this seat already made today is rewritten only when the person asks for it again.

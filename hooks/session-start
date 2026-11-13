@@ -126,7 +126,7 @@ misnamed_said() {
   local walked=""
   case "$2" in "the first "*) walked=", and the walk stops there: no desk above it is used" ;; esac
   if [ "${3:-0}" -eq 3 ]; then
-    printf '%s/ cannot be looked inside: this machine gives no permission to search it, so the desk tools cannot tell whether it holds an index.md, and they read a desk only from a folder named exactly celorus/, so %s is no desk the tools can read%s. Give %s/ back its permissions, or rename it to celorus/ if it holds a desk'"'"'s record, then ask again. Nothing was changed.' \
+    printf '%s/ cannot be looked inside: this machine gives no permission to search it, so the desk tools cannot tell whether it holds an index.md, and they read a desk only from a folder named exactly celorus/, so %s is no desk the tools can read%s. Give %s/ back its permissions, or rename it to celorus/ if it holds a desk, then ask again. Nothing was changed.' \
       "$1" "$2" "$walked" "$1"
     return 0
   fi
@@ -312,7 +312,7 @@ node_missing_or_old() {
 # The assistant's name the start line opens with, the engine's default (lib/persona.js
 # DEFAULT_NAME), and the line every start line ends with.
 NAME="Milan"
-RECORD_LINE="To read the record, sign in to celorus-data under /mcp if you have not."
+RECORD_LINE="To read from our data, sign in to celorus-data under /mcp if you have not."
 # DESK-384: what Milan does and how to start, shown to the person (a top-level systemMessage, which
 # the app shows; additionalContext reaches only the model). hooks.json runs the hook with the word
 # startup on a start and with none on a clear or a compact, so only a start says it.
@@ -481,7 +481,7 @@ found=0
 desk="$(find_desk)" || found=$?
 node_note=""
 if node_missing_or_old; then
-  node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start, and the plugin's guard refuses the use of every other connector (mail, calendar, any connector but the Celorus record server's own tools) until it is installed; offer to install it now with the install-desk skill, and install it only if the person says yes."
+  node_note=" Node.js 18 or newer is missing or too old on this computer, so the desk tools and the sign-in cannot start, and the plugin's guard refuses the use of every other connector (mail, calendar, any connector but the Celorus data server's own tools) until it is installed; offer to install it now with the install-desk skill, and install it only if the person says yes."
 fi
 # A copy the conversion left, cut short before its celorus/index.md, is no desk the walk can read: its
 # name is looked at first, the folder CELORUS_DESK names or else the working folder, and the copy's

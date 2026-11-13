@@ -49,7 +49,8 @@ const SLASHES = "/".repeat(2);
 const SCHEMES = ["https:", "http:"];
 // A space or a control character anywhere in a link, the line and paragraph separators among them.
 const UNSAFE_IN_LINK = /[\x00-\x20\x7f-\x9f\u2028\u2029]/u;
-const NO_FIGURE = "The record gives no figure for this company.";
+// The chip a person reads for a line or a figure from our data; the argument stays `from: record`.
+const OUR_DATA = "our data";
 
 const FOLDER_SAID =
   "Research briefs are kept in ~/.celorus/briefs/, and ~/.celorus or its briefs folder is a link " +
@@ -122,7 +123,7 @@ function chip(value, where) {
     if (given.site !== undefined || given.link !== undefined) {
       throw new Refusal(`\`${where}\` names a site or a link only when it is from the web.`);
     }
-    return `<span class="src">${given.from}</span>`;
+    return `<span class="src">${given.from === "record" ? OUR_DATA : "desk"}</span>`;
   }
   if (given.from !== "web") throw new Refusal(`\`${where}.from\` is one of record, desk, web.`);
   const site = text(given.site, `${where}.site`, { required: true });
@@ -154,7 +155,7 @@ function lines(given, where, most, { dated = false } = {}) {
   const rows = list(given.lines, `${where}.lines`, most).map((row, at) => (dated ? datedLine(row, `${where}.lines[${at}]`) : line(row, `${where}.lines[${at}]`)));
   const empty = text(given.empty, `${where}.empty`);
   if (rows.length === 0 && empty === null) {
-    throw new Refusal(`\`${where}\` has no lines: give its one plain line in \`${where}.empty\`, which says nothing answered it.`);
+    throw new Refusal(`\`${where}\` has no lines: give its one plain line in \`${where}.empty\`, which says what the part rests on.`);
   }
   if (rows.length === 0) return `<ul class="lines">${emptyLine(empty, `${where}.empty`)}</ul>`;
   return `<ul class="lines${dated ? " dated" : ""}">${rows.join("")}</ul>`;
@@ -248,18 +249,19 @@ function people(args) {
 
 function company(args) {
   const given = object(args.company, "company", ["headline", "why_this", "lines", "empty", "figures"]);
-  if (given === null) throw new Refusal(`${TOOL} needs \`company\`: headline, why_this, lines or empty, and figures from the record.`);
+  if (given === null) throw new Refusal(`${TOOL} needs \`company\`: headline, why_this, lines or empty, and figures from our data.`);
   const why = text(given.why_this, "company.why_this");
   const figures = list(given.figures, "company.figures", BUDGET.figures).map((value, at) => {
     const where = `company.figures[${at}]`;
     const fig = object(value, where, ["label", "value"]);
-    if (fig === null) throw new Refusal(`\`${where}\` is a figure from the record: { label, value }.`);
+    if (fig === null) throw new Refusal(`\`${where}\` is a figure from our data: { label, value }.`);
     return (
       `<div class="fig"><div class="fig-head"><span class="k">${esc(text(fig.label, `${where}.label`, { required: true }))}</span>` +
-      `<span class="src">record</span></div><div class="v">${esc(text(fig.value, `${where}.value`, { required: true }))}</div></div>`
+      `<span class="src">${OUR_DATA}</span></div><div class="v">${esc(text(fig.value, `${where}.value`, { required: true }))}</div></div>`
     );
   });
-  const tiles = figures.length ? `<div class="figs">${figures.join("")}</div>` : `<ul class="lines"><li class="empty"><span class="t">${NO_FIGURE}</span></li></ul>`;
+  // No figure: no tiles and no line in their place. The part's own lines, or its empty line, say what it rests on.
+  const tiles = figures.length ? `<div class="figs">${figures.join("")}</div>` : "";
   return (
     `<section class="part" data-part="company"><div class="eyebrow"><span class="n">2</span> The company that matters here</div>` +
     `<h2>${esc(text(given.headline, "company.headline", { required: true }))}</h2>` +

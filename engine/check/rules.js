@@ -181,7 +181,7 @@ function gapsOf(page) {
     if (typeof row.record !== "string" || strip(row.record) !== "dry" || since === null || daysFrom(since, runOn) < DRY_MORNINGS - 1) continue;
     out.push(
       `Persona ${ordinal(row.persona)} of version ${version} (${tier}): every run since ${dayWords(since)}, under this version or an earlier one, ` +
-        `found our record dry for persona ${ordinal(row.persona)}, over seven days or more. ` +
+        `found no new leads in our data for persona ${ordinal(row.persona)}, over seven days or more. ` +
         "The next revision of your ideal client profile can widen its lines or its geography line.",
     );
   }

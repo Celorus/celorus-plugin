@@ -31,11 +31,11 @@ is this sentence, and the skill stops:
 Never call another tool in their place, never draft a profile from this skill's text or from
 general knowledge, and never say when they will be on.
 
-## When this session is not signed in to the record
+## When this session is not signed in to our data
 
 The profile tools read the person's sign-in on every call. When a profile tool answers `refused`
 with the reason `no_account`, or the call asks you to sign in or to re-authorize, or refuses for
-want of authorization, this session is not signed in to the record. Say the tool's `message`
+want of authorization, this session is not signed in to our data. Say the tool's `message`
 when it gives it, call nothing else, and stop. Never try another tool to see whether that works,
 and never draft a profile in its place. When a profile tool's call errors, or its answer cannot
 be read, do not keep trying: say that the profile tools could not be reached just now, and stop.
@@ -49,7 +49,7 @@ forbid, the rules win.
 
 - The draft is ours, not the firm's. Say the `heading` that `icp_start` returns above the
   personas, and call the profile the firm's own only after `icp_make_yours` answers `ratified`.
-- The people a preview shows are people on our record who would match. They are never the
+- The people a preview shows are people in our data who would match. They are never the
   firm's leads and never its clients. Show them under the `samples_heading` the tool returns,
   and show only the people it returns: the tool caps them, and you never add anyone.
 - For each persona, say only what the tool's own fields hold, as given, and nothing made from
@@ -70,6 +70,12 @@ forbid, the rules win.
 - When a write answers `unconfirmed`, do not try again on your own: say the `message`, and ask
   the person before trying again.
 
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
+
 ## The walk
 
 Where the desk gave the assistant another name, say that name where this skill says Milan.
@@ -89,7 +95,7 @@ head asks for a new draft.
 - `drafted`: say the `heading`, the `website` line, the personas with their lines under the
   `groups` headings, the `pack_words_missing` line when the tool gives it, and the `erase` line.
   Then say the `choices` line, and keep the `version_id`. Then offer the next step in this
-  line: "Milan can preview the people on our record who would match these personas, if you want
+  line: "Milan can preview the people in our data who would match these personas, if you want
   that next."
 - `no_draft`: say the `ask` question. When the `reason` is `no_country`, the answer carries
   `countries`, the codes the draft takes: check the head's country against them, and call again

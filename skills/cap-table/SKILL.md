@@ -39,10 +39,10 @@ binding `body`. Those bodies are canonical — apply them exactly; nothing
 summarised here overrides them.
 
 **That first call is also the sign-in test.** It is the first thing this skill asks
-of the server, so its answer is what tells you whether this session is signed in to the record at all. Data coming back is what settles it, and nothing else does. If the answer is
+of the server, so its answer is what tells you whether this session is signed in to our data at all. Data coming back is what settles it, and nothing else does. If the answer is
 not data — it asks you to sign in or to re-authorize, it refuses for want of
 authorization, it errors, it comes back empty, or you cannot read it as data — stop
-there and follow *When this session is not signed in to the record* below, which decides it under its
+there and follow *When this session is not signed in to our data* below, which decides it under its
 four outcomes: the tools being listed does not mean the account behind them is
 authorized, and every tool here sits behind the same sign-in, so calling a second
 one only spends a second refusal.
@@ -99,7 +99,7 @@ In brief:
    printed on them are missing from the list you were given. Serve every
    holder returned **and** say the list is incomplete — never present it as
    the whole register, never describe the missing holders as "not filed" or
-   "not on record", and never reason from the totals (counts, percentages,
+   "not available", and never reason from the totals (counts, percentages,
    "the largest holder is…") as though the list were complete.
 10. **Registers never sum across documents.** Each annual register
    is a snapshot of the whole shareholder register at its own date; two
@@ -111,8 +111,8 @@ In brief:
    is present (inside the ownership view, a block's `warnings` carry the code
    `holder_register_superseded_snapshots` instead), superseded (or undatable)
    register documents exist and are
-   deliberately excluded — say the figures describe the latest-filed register
-   available to serve, name when it was filed from the envelope message, and
+   deliberately excluded — say the figures describe the latest-filed list we
+   could serve, with its date from the envelope message, and
    never present the excluded documents' holders as current ownership or
    recompute totals across documents. Latest-
    filed is a claim about when it was filed, not a financial-year claim; and "available to
@@ -207,9 +207,15 @@ The floor is for a call that came back with data and no definitions in it. It is
 not for an answer that was not data. If the call did not come back with data — it
 asked you to sign in or to re-authorize, it refused for want of authorization, it
 errored, it came back empty, or you cannot read it as data — the floor does not
-apply: this session is not signed in to the record until a `celorus-data` call comes back with
-data, *When this session is not signed in to the record* below governs it and decides it under its
+apply: this session is not signed in to our data until a `celorus-data` call comes back with
+data, *When this session is not signed in to our data* below governs it and decides it under its
 four outcomes, and you stop there rather than carry on under the summaries.
+
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
 
 ## While you work — speak to the user, not your plumbing
 
@@ -217,7 +223,7 @@ While working you may show **one short, plain-English progress line** per
 step — describe the **outcome or the rigor**, never the mechanics. Vary them;
 keep each literally **true**.
 
-- ✅ *"Finding {Company} in the records…"*, *"Reading {Company}'s share
+- ✅ *"Finding {Company} in our data…"*, *"Reading {Company}'s share
   allotments and capital structure…"*, *"Tracing every round and shareholder
   to its source…"*, *"Compiling the cap table — each figure cited…"*
 - ❌ *"Fetching the round ledger and preference-stack views"*, *"calling
@@ -240,7 +246,7 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
   sentence into it, near the affected section; never drop it and never
   downgrade the report to "not available" because of it,
 - **`fallback`** (known company, but no live **filed** cap-table content —
-  e.g. no share-allotment documents ingested yet, or only stub views apply.
+  e.g. no share-allotment documents read yet, or only stub views apply.
   It speaks about the filed views, never about the record: the registry
   capital view can be live underneath it, and the envelope's `message` says
   which case this is — reproduce it),
@@ -250,7 +256,7 @@ order: `resolve_subject` → `get_captable`. Both return an envelope with a
 `resolve_subject`'s `data` is a **dict**: `subject_id`, `canonical_name`, plus
 `candidates[]` on `clarify`. `canonical_name` — on a proceed and on every
 candidate — is `null` only when the entity has no name on record anywhere (rare);
-say "no name on record" then, never invent one. Use the `subject_id` for the next call.
+say "name not given" then, never invent one. Use the `subject_id` for the next call.
 
 `get_captable(subject_id, view="all")` returns `data` as a **list of view
 objects**, one per view, each self-describing its own `view` id and `status`
@@ -336,7 +342,7 @@ through `provenance_ref` into that response's top-level pool.) The views:
 - **Registry capital** (`view: "registry_capital"`) — the company register's
   own authorised / subscribed / paid-up capital, served as the last element of
   `data` on a `view="all"` call and selectable on its own. These are rule 15's
-  "(registry)" rows: a second record beside the filed figures, never a
+  "(registry)" rows: a second source beside the filed figures, never a
   restatement of them and never cap-table coverage — no share classes,
   allotments, holders or rounds stand behind them. Every row carries its own
   citation inline and its own capture date; cite them "per registry master
@@ -356,7 +362,7 @@ The API is **read-only** — nothing you do can change the data.
 1. **Resolve** — `resolve_subject(query)`. `proceed` → take `data.subject_id`
    + `data.canonical_name`. `clarify` → confirm before proceeding (rule 3):
    **one** candidate → yes/no confirm; **two or more** → present them and ask
-   which. `stop` → no such company is on record — stop.
+   which. `stop` → say "I did not find a company by that name." and stop.
 2. **Fetch** — `get_captable(subject_id, view="all")`. `fallback` → known
    company, no filed cap-table content — render the header; then, if the
    registry capital view is live, its rows as rule 15's "(registry)" lines
@@ -445,7 +451,7 @@ whose printed column headings could not be mapped); a plain dash — a column
 this document's layout does not carry. Never swap one for another: each makes a
 different claim about the source.
 
-## When this session is not signed in to the record
+## When this session is not signed in to our data
 
 **A listed tool is not a sign-in.** The `celorus-data` tools can all be
 listed, and the panel can report the server connected, while the account behind
@@ -453,7 +459,7 @@ them is not authorized: a sign-in that has aged out leaves every tool in place a
 every call refused. Tool-list membership is therefore silent on exactly the case
 this section exists to catch, and neither it nor the word "connected" is the test. Signing in to the desk with `celorus-link`'s `sign_in` is not the test either: it does not sign this session in to the record.
 
-The test is a call. This session is signed in to the record when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
+The test is a call. This session is signed in to our data when a `celorus-data` call comes back with data, and not before, so the first call this skill makes is what settles
 it. Its answer is binding:
 
 - **Data comes back.** The record is signed in. Carry on.
@@ -464,25 +470,33 @@ it. Its answer is binding:
   Every tool here sits behind the same sign-in, so a second call only spends a
   second refusal to learn what the first one already said.
 - **No `celorus-data` tool is there to call.** The record is not signed in either,
-  and there is nothing here to attempt.
+  and there is nothing here to attempt. A `celorus-data` tool listed by its name only, to be
+  loaded when it is used, is there to call: load it and make the call.
 - **Anything else: an error, an empty answer, or a reply you cannot read as one of
   the three above.** It settles nothing, and it is not a sign-in; do not read it as one. Make one more `celorus-data` call and let its answer decide, under these
   same four outcomes. That is the last call: if the second answer is also
-  unreadable, treat this session as not signed in to the record, stop there, and do not
+  unreadable, treat this session as not signed in to our data, stop there, and do not
   attempt the report or the answer.
 
 Never fill what you could not read from memory or the web; a web answer is
 `research-lead`'s job and it carries the web register's label.
 
-Never say what the record holds. No count, no figure, no URL, on any lane. For a company, a
-person or a family, say "The record was not asked by this name.", then close with the lane's
-own sentence:
+Never say what our data holds, has or lacks: no count, no figure, no URL, on any lane. Ask
+for the sign-in once, in one message on its own, with the name as the person gave it, in the
+lane's words, and wait for the one reply:
 
-- **Claude Code, Cowork, Claude Desktop:** Connect Celorus to read it: your browser
-  opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come
-  back to this chat. In Claude Code, `/mcp` shows the connection if the browser does not
-  open.
-- **Kimi Code:** Connect Celorus to read it. The sign-in step is the celorus-data
-  connection.
-- **Codex, ChatGPT:** Reading it needs a Celorus account connected to this plugin.
-  Nothing more: no link, no price, no verb that promotes.
+- **Claude Code, Cowork, Claude Desktop:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Connect Celorus: your browser opens the Celorus sign-in. If it asks to open the Claude app, choose Open, then come back to this chat and say "done". In Claude Code, /mcp shows the connection if the browser does not open. Say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+- **Kimi Code:**
+  > Before I start: I can look for <name> in our data too, once you are signed in to Celorus. Sign in on the celorus-data connection, then say "done". Say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+- **Codex, ChatGPT:**
+  > Before I start: looking for <name> in our data needs a Celorus account connected to this plugin. Connect it and say "done", or say "no" and this one waits; a research ask ("Milan, research <name>") goes on from the web alone.
+
+  Nothing more on these lanes: no link, no price, no verb that promotes.
+
+On "done" or a yes, make one `celorus-data` call: data comes back, carry on; still refused, say
+"Still not signed in." and stop. Never ask a third time. On "no", any other answer or no answer,
+stop here. The ask never says that our data holds, has, covers, includes or can find anything.
+
+When the person was asked earlier in this session, here or by another Celorus skill, and did
+not sign in, do not ask again unless they ask to connect: say "Still not signed in." and stop.

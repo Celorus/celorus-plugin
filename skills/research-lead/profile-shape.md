@@ -87,7 +87,7 @@ As of the day researched.
 
 ## The door
 
-- From your desk: ask "who can introduce me to <name>?" for the paths over your own pages. Through the record: not computed; that route needs the people plane and your book.
+- From your desk: ask "who can introduce me to <name>?" for the paths over your own pages. Through our data: not shown here; that route needs your book.
 
 ## Watch out
 
@@ -95,7 +95,7 @@ As of the day researched.
 
 ## Not established
 
-- <what the web could not establish and the record was not read for, by name>
+- <what the web could not establish, by name>
 
 ## Provenance
 

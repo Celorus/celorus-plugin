@@ -26,6 +26,12 @@ black box.
 These hold over every section of this skill. Where a section below seems to ask for something
 they forbid, they win.
 
+## Words a person reads
+
+What the person reads names where a line came from in two words: "from our data" or "from the web".
+In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
+A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
+
 ## The tools this skill calls
 
 - `book_query`, for the book moments of families on the desk: `owner` the seat's handle,
@@ -181,7 +187,7 @@ lead's page sits under `people/`, `families/` or `firms/`.
 
 - "No calls today: your desk has no leads yet. To start:"
 - "Draft your firm's profile: say "draft my firm's profile". Milan drafts the kinds of people
-  your firm sells to and shows who on our record would match."
+  your firm sells to and shows who in our data would match."
 - "Add a lead you know: say "research" and their name. Milan writes their brief."
 
 Give the firm-profile line only when the profile tools, whose names begin `icp_`, are among this

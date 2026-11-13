@@ -216,7 +216,7 @@ const misnamedFault = ({ name, denied }) =>
     : `${name}/ holds an index.md, but the desk tools read a desk only from a folder named exactly celorus/`;
 const renameIt = ({ name, denied }) =>
   denied
-    ? `Give ${name}/ back its permissions, or rename it to celorus/ if it holds a desk's record, then ask again. ${LINKED_NOTHING}`
+    ? `Give ${name}/ back its permissions, or rename it to celorus/ if it holds a desk, then ask again. ${LINKED_NOTHING}`
     : `Rename ${name}/ to celorus/, then ask again. ${LINKED_NOTHING}`;
 
 // The desk at `folder`, reached by the walk or by CELORUS_DESK (`named`, as set; undefined for the
