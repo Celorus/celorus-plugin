@@ -8,8 +8,9 @@
 # Never fails the session: every branch exits 0.
 # Speaks as Milan (DESK-262): every start line opens with "Milan here.", names the next step, and
 # ends with the line on signing in to the record, which this hook cannot see (it makes no network
-# call), so it says it every time. Milan is the engine's default name for the assistant
-# (engine/lib/persona.js DEFAULT_NAME, the one reader of a desk's own name): a desk whose desk.md
+# call), so it says it every time, except the no-desk, no-sign-in line, which asks itself. Milan
+# is the engine's default name for the assistant (engine/lib/persona.js DEFAULT_NAME, the one
+# reader of a desk's own name): a desk whose desk.md
 # sets its own assistant_name is greeted with no name, and this hook never reads or says that name.
 # With no desk here, the next step depends on whether the link keeps a sign-in on this machine,
 # its token file under ~/.celorus/link/, which is looked at and never opened. The seat's workflow
@@ -310,7 +311,8 @@ node_missing_or_old() {
 }
 
 # The assistant's name the start line opens with, the engine's default (lib/persona.js
-# DEFAULT_NAME), and the line every start line ends with.
+# DEFAULT_NAME), and the line every start line ends with, except the no-desk, no-sign-in line,
+# which asks itself.
 NAME="Milan"
 RECORD_LINE="To read from our data, sign in to celorus-data under /mcp if you have not."
 # DESK-384: what Milan does and how to start, shown to the person (a top-level systemMessage, which
@@ -508,8 +510,9 @@ elif [ "$found" -ne 0 ]; then
     emit "${NAME} here. Say '${NAME}, open my day' to set up your desk and start, or '${NAME}, what can you do?' first.${node_note}
 ${RECORD_LINE}"
   else
-    emit "${NAME} here. Celorus is installed. Sign in (it is free) and say '${NAME}, set up my desk'.${node_note}
-${RECORD_LINE}"
+    # The opening line already asks to sign in, so RECORD_LINE is not added: one sign-in ask on a
+    # fresh machine (the user-testing walk's check 1 found two on 0.23.53).
+    emit "${NAME} here. Celorus is installed. Sign in (it is free) and say '${NAME}, set up my desk'.${node_note}"
   fi
   exit 0
 fi
