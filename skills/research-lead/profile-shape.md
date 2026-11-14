@@ -12,7 +12,7 @@ present.
 type: person                                       # person · family · firm
 title: <canonical name>
 description: <one line: level, function, employer; the freshest event>
-resource: https://app.celorus.com/subject/<id>     # only when the record holds the subject
+resource: https://app.celorus.com/subject/<id>     # only when Celorus has a page for the subject
 tags: [supplied-l1, band-D]
 timestamp: <now, ISO 8601 with offset>
 standing: researched                               # person only: in-conversation · researched · named-only
@@ -22,7 +22,7 @@ worked_at: "[[<firm slug>]]"                       # person only, a firm they ha
 role_title: <title>                                # person only
 not_same_as: [<file name without .md>]             # plain file names, never links; see "same person?" in the skill
 member_of: "[[<family slug>]]"                     # person only, on a wealth desk or a desk with no pack
-segments: []                                       # the segments the record or the web support
+segments: []                                       # the segments our data or the web support
 band: D                                            # a band, never a point estimate; absent when unknown
 clock: money-in-motion                             # money-in-motion · reason-to-call · handle-with-care
 source_list: supplied-l1                           # or book · follow-up · inbound
@@ -30,7 +30,7 @@ registers_used: [record, web, yours]
 last_touch: <date>
 as_of: <date>
 provenance: on-request
-sources:                                           # record register only; never rendered in the body, except at the end of a record proof line
+sources:                                           # facts from our data only; never rendered in the body, except at the end of a proof line
   - {resource: <the citation the tool returned>, claim: <short key>, as_of: <date>}
 ---
 ```

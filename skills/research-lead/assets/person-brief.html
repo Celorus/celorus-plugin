@@ -32,10 +32,10 @@
 <style>
 /* PERSON BRIEF LAYER
    Sits on the foundation block and collateral.css above it. Tokens only.
-   One sheet, read top to bottom: the top, In one breath, the person, the
-   company, what is happening, your meeting, Milan's offer, the footer.
-   Source chips are small and pale and live in the right-hand column, out
-   of the reading line. */
+   One sheet, read top to bottom: the top, In one breath, the person (or who
+   matters here), the company, what is happening, your meeting, Milan's offer,
+   the foot. A fact line ends in a small number; the foot says where each
+   number comes from, in blocks by kind. */
 :root{
   --pb-sheet: 820px;
   --pb-pad: 60px;
@@ -47,7 +47,7 @@
   --pb-fs-fig: 32px;
   --pb-fs-quote: 21px;
   --pb-fs-small: 13.5px;
-  --pb-fs-chip: 11px;
+  --pb-fs-mark: 11px;
   --pb-part-gap: 52px;
 }
 body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-strong);font-size:var(--pb-fs-body)}
@@ -87,9 +87,7 @@ body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-st
   font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
   color:var(--semantic-color-block-muted-fg);margin-bottom:14px;
 }
-.breath dl{display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:20px;row-gap:12px}
-.breath dt{font-size:14px;font-weight:600;color:var(--semantic-color-block-muted-fg);padding-top:4px;line-height:1.3}
-.breath dd{font-family:var(--semantic-font-heading);font-size:var(--pb-fs-breath);line-height:1.38;color:var(--semantic-color-fg-strong);max-width:46ch}
+.breath p{margin:0;font-family:var(--semantic-font-heading);font-size:var(--pb-fs-breath);line-height:1.45;color:var(--semantic-color-fg-strong);max-width:56ch}
 
 /* A part */
 .part{margin-top:var(--pb-part-gap);break-inside:avoid;page-break-inside:avoid}
@@ -97,11 +95,11 @@ body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-st
 .part h2{font-size:var(--pb-fs-h2);line-height:1.22;color:var(--semantic-color-fg-strong);margin:0 0 6px;max-width:44ch;text-wrap:balance;break-after:avoid}
 .part .why-this{font-size:15px;color:var(--semantic-color-fg-muted);margin:0 0 4px;max-width:64ch;line-height:1.5}
 
-/* Lines: one idea each, the chip in the right column */
+/* Lines: one idea each, a small number at the end of the line */
 .lines{list-style:none;margin:16px 0 0;padding:0}
 .lines > li{
-  position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px;
-  align-items:baseline;padding:7px 0 7px 22px;
+  position:relative;display:block;
+  padding:7px 0 7px 22px;
   font-size:var(--pb-fs-body);line-height:1.5;color:var(--semantic-color-fg-default);
 }
 .lines > li::before{
@@ -114,23 +112,18 @@ body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-st
 .lines > li.empty::before{background:transparent;border:1.5px solid var(--semantic-color-fg-faint);width:7px;height:7px;box-sizing:border-box}
 
 /* Dated lines (what is happening) */
-.lines.dated > li{grid-template-columns:104px minmax(0,1fr) auto;padding-left:0}
+.lines.dated > li{display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:16px;padding-left:0}
 .lines.dated > li::before{display:none}
 .lines.dated .when-k{font-size:14px;font-weight:600;color:var(--semantic-color-accent-default);font-variant-numeric:tabular-nums;white-space:nowrap}
 .lines.dated > li + li{border-top:1px solid var(--semantic-color-border-default)}
 .lines.dated > li{padding:11px 0}
 
-/* Source chip: small, pale, out of the way */
-.src{
-  justify-self:end;align-self:baseline;display:inline-block;white-space:nowrap;
-  font-family:var(--semantic-font-body);font-size:var(--pb-fs-chip);font-weight:500;letter-spacing:.02em;line-height:1.5;
-  color:var(--semantic-color-fg-muted);background:transparent;
-  border:1px solid var(--semantic-color-border-default);border-radius:var(--semantic-radius-pill);
-  padding:0 8px;text-decoration:none;
+/* The number at the end of a line: small, muted, joined to the last word */
+.m{
+  display:inline-block;margin-left:0;vertical-align:.35em;
+  font-family:var(--semantic-font-body);font-size:var(--pb-fs-mark);font-weight:600;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--semantic-color-accent-default);
 }
-a.src{transition:color var(--semantic-motion-duration-quick) var(--semantic-motion-easing-standard),border-color var(--semantic-motion-duration-quick) var(--semantic-motion-easing-standard)}
-a.src:hover{color:var(--semantic-color-accent-default);border-color:var(--semantic-color-accent-soft-border)}
-a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);outline-offset:2px}
 
 /* You and them: the seller's own history, from the desk */
 .desk{
@@ -155,7 +148,6 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
   font-family:var(--semantic-font-heading);font-size:var(--pb-fs-fig);font-weight:600;line-height:1.15;
   color:var(--semantic-color-fg-strong);font-variant-numeric:tabular-nums;margin-top:6px;white-space:nowrap;
 }
-.fig .src{border-color:var(--semantic-color-border-strong)}
 
 /* Your meeting */
 .why-you{font-size:17px;line-height:1.55;color:var(--semantic-color-fg-default);margin:12px 0 0;max-width:62ch}
@@ -193,12 +185,32 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
 }
 .offer .who{font-family:var(--semantic-font-body);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--semantic-color-fg-muted)}
 
-/* Footer: one line on what this was built from */
+/* Who matters here: a short table, the deciders first */
+.people{width:100%;border-collapse:collapse;margin-top:16px;font-size:15.5px;line-height:1.45}
+.people th{text-align:left;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--semantic-color-fg-muted);padding:0 12px 6px 0;border-bottom:1px solid var(--semantic-color-border-strong)}
+.people td{padding:8px 12px 8px 0;border-bottom:1px solid var(--semantic-color-border-default);vertical-align:top;color:var(--semantic-color-fg-default)}
+.people td:first-child{font-weight:600;color:var(--semantic-color-fg-strong)}
+.people td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
+.ask-for,.rest{margin:12px 0 0;font-size:15px;line-height:1.5;color:var(--semantic-color-fg-default);max-width:64ch}
+.ask-for b{color:var(--semantic-color-fg-strong);margin-right:.5em}
+.rest{color:var(--semantic-color-fg-muted)}
+
+/* The foot: where each number comes from, one row for each kind */
 .foot{
   margin-top:40px;padding-top:14px;border-top:1px solid var(--semantic-color-border-default);
   font-size:12.5px;line-height:1.55;color:var(--semantic-color-fg-muted);
 }
-.foot b{color:var(--semantic-color-fg-default);font-weight:600}
+.foot .k-title{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--semantic-color-fg-default);margin:0 0 8px}
+.foot .srcgrp{display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:16px;row-gap:6px;margin:0}
+.foot .srcgrp > div{display:contents}
+.foot dt{font-weight:600;color:var(--semantic-color-fg-default)}
+.foot dd{margin:0}
+.foot dd .m{margin-left:0;margin-right:.35em;vertical-align:baseline}
+.foot dd .sep{margin:0 .35em;color:var(--semantic-color-fg-faint)}
+.foot dd a{color:var(--semantic-color-accent-default);text-decoration:none}
+.foot dd a:hover{text-decoration:underline}
+.foot dd a:focus-visible{outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);outline-offset:2px}
+.foot .prov{margin:12px 0 0}
 
 /* Narrow screens: one column, 16px gutter */
 @media (max-width:820px){
@@ -212,12 +224,9 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
   .breath{padding:20px 18px}
   .top .when{flex-direction:column}
   .top .when .dot{display:none}
-  .breath dl{grid-template-columns:1fr;row-gap:2px}
-  .breath dd{margin-bottom:10px}
-  .lines > li{grid-template-columns:minmax(0,1fr)}
-  .lines > li .src{justify-self:start;margin-top:4px}
+  .foot .srcgrp{grid-template-columns:1fr;row-gap:0}
+  .foot dd{margin-bottom:8px}
   .lines.dated > li{grid-template-columns:minmax(0,1fr)}
-  .lines.dated > li .src{justify-self:start}
   .figs{grid-template-columns:1fr}
   .plan{grid-template-columns:1fr;gap:24px}
 }
@@ -234,7 +243,7 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
 @media print{
   :root{
     --pb-fs-body:10.5pt;--pb-fs-h1:25pt;--pb-fs-role:12pt;--pb-fs-h2:15pt;--pb-fs-breath:11.5pt;
-    --pb-fs-fig:18pt;--pb-fs-quote:12.5pt;--pb-fs-small:9pt;--pb-fs-chip:7.5pt;--pb-part-gap:16pt;
+    --pb-fs-fig:18pt;--pb-fs-quote:12.5pt;--pb-fs-small:9pt;--pb-fs-mark:7.5pt;--pb-part-gap:16pt;
   }
   html,body{background:var(--primitive-color-cream-0) !important}
   .sheet{max-width:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent}
@@ -252,16 +261,14 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
   .top .when{margin-top:6pt;font-size:10pt}
   .breath{margin-top:13pt;padding:10pt 16pt 10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .breath .k-title{font-size:8pt;margin-bottom:7pt}
-  .breath dl{grid-template-columns:66pt minmax(0,1fr);row-gap:5pt;column-gap:12pt}
-  .breath dt{font-size:9.5pt;padding-top:2pt}
-  .breath dd{max-width:none}
+  .breath p{max-width:none}
   .part h2{max-width:none}
   .part > .eyebrow{margin-bottom:5pt}
   .part .why-this{font-size:10pt}
   .lines{margin-top:7pt}
-  .lines > li{padding:2.5pt 0 2.5pt 14pt;column-gap:14pt}
+  .lines > li{padding:2.5pt 0 2.5pt 14pt}
   .lines > li::before{top:calc(2.5pt + .62em);width:5pt;height:5pt;left:2pt}
-  .lines.dated > li{grid-template-columns:62pt minmax(0,1fr) auto;padding:5pt 0}
+  .lines.dated > li{grid-template-columns:62pt minmax(0,1fr);padding:5pt 0}
   .lines.dated .when-k{font-size:9.5pt}
   .desk{margin-top:8pt;padding:7pt 12pt 6pt}
   .desk-head .k,.small-k{font-size:8pt}
@@ -281,9 +288,11 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
   .ask p{font-size:13pt}
   .offer{margin-top:14pt;font-size:12.5pt}
   .offer .who{font-size:8pt}
+  .people{font-size:10pt;margin-top:7pt}
   .foot{margin-top:16pt;padding-top:7pt;font-size:8.5pt}
+  .foot .srcgrp{grid-template-columns:62pt minmax(0,1fr)}
   .foot .gen{display:none}
-  a.src{color:var(--semantic-color-fg-muted)}
+  .foot dd a{color:var(--semantic-color-fg-muted)}
 }
 
 </style>
@@ -292,30 +301,42 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
 <!--
   PERSON BRIEF TEMPLATE
   Who reads it: a salesperson, in the minute before a meeting, a pitch or a call.
-  Reading order: the top, In one breath, 1 the person, 2 the company that matters here,
-  3 what is happening, 4 your meeting, Milan's one offer, the footer line.
+  Reading order: the top, In one breath, 1 the person (a company's brief: who matters here),
+  2 the company that matters here, 3 what is happening, 4 your meeting, Milan's one offer,
+  the foot, "Where this comes from".
 
   RULES FOR FILLING IT
   - Plain words, short lines, one idea per line, start with the fact or the verb. No em dashes, no arrows.
-  - Figures come only from our data, exactly as it gives them. Never a web figure,
-    never recomputed or reformatted. Two or three figures in the whole brief, no more.
+  - Figures come only from our data, exactly as it gives them, or from a tool's estimate (said "our estimate",
+    numbered in the estimate block, never in a tile). Never a web figure,
+    never recomputed or reformatted. Two or three figures in the whole brief, no more. A figure of money or a
+    share stands only in a numbered line with its source, never in the breath, a headline or the meeting part.
   - People are named with their relation only. Never a phone number or an address.
   - Nothing names a Celorus report or product. Milan takes no pronoun, and no label assumes a gender:
     a label uses the person's name or "they".
-  - A part with nothing to say keeps its heading and says what it rests on in one plain muted line (li.empty, no chip).
+  - A part with nothing to say keeps its heading and says what it rests on in one plain muted line (li.empty, no number).
     Never padded, never dropped, never filled from general knowledge.
   - A web mention that cannot be tied to the person at the top never goes in the person part. It goes in the
     "Maybe not" box under Be careful, which says plainly that it may be a different person.
     Leave the box out when there is no such mention.
 
-  SOURCE CHIPS: one per line, as the line's last cell. Exactly one of:
-    <span class="src">our data</span>
-    <span class="src">desk</span>
-    <a class="src" href="{{web_url}}">web · {{web_site_name}}</a>
-    <span class="src">web · {{web_site_name}}</span>   (no link: for a web link that does not begin with https:// or http://)
-  No document names, form numbers, page numbers or dates read on the page: the sources are not on it.
+  THE NUMBER: every fact line ends in a small number and carries no source word:
+    <li><span class="t">{{line}}&nbsp;<span class="m">{{n}}</span></span></li>
+  The number points at its row in the foot. A line with no number, a number with no foot row and a foot row
+  with no line are each refused by the desk tool write_research_brief, and no page is written.
+  The numbers run 1, 2, 3 and on, in blocks by kind: our data first, then the web, then your desk, then
+  our estimate. An estimated figure prints only when a tool returns it as an estimate: its line says "our
+  estimate", its number is in the estimate block, never in a figure tile, and the model never works one
+  out; with no tool estimate the line is left out. A fact that is not a figure, worked out or read from
+  an indirect signal, says "worked out" or "indirect" in its words, holds no digit, no magnitude word
+  (thousand, lakh, crore, million, billion) and no money or share figure said in words, and takes its
+  number in the estimate block too, never in the other three. Any word that starts "estimat", or "est.",
+  ties a line to the estimate block. A money or share figure goes only in a numbered line with its
+  source, in any spelling: a number with a unit, a currency before or after a number, a unit joined to
+  its number by a hyphen, or "a" or "half a" before a long unit. Counts and dates are fine anywhere. For a
+  100% holding say "wholly owned", and where no figure is sourced say "a large stake".
+  No document names, form numbers, page numbers or dates read on a line: the line is clean, and the foot holds the sources.
 
-  REPEATING ROWS: a row marked "repeat" is copied once per line, up to the count in its part's data-budget.
   PRINT: A4, two pages at most. Parts never split; a part that does not fit moves whole to the next page.
 -->
 <header class="coll-topbar">
@@ -338,20 +359,15 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
   <section class="top" data-part="top" data-budget="the name; one role line of 10 words at most; one meeting line">
     <div class="eyebrow">Before you meet</div>
     <h1>{{person_name}}</h1>
-    <p class="role">{{person_role}}</p><!-- role, then the company that matters here, as the record names it -->
+    <p class="role">{{person_role}}</p><!-- role, then the company that matters here, as our data names it -->
     <p class="when"><b>{{meeting_when}}</b><span class="dot">·</span><span>{{meeting_place}}</span><span class="dot">·</span><span>{{meeting_kind}}</span></p>
     <!-- meeting_place is a company office and a city, never a home address. meeting_kind e.g. "Your first pitch meeting" -->
   </section>
 
-  <!-- Q: Can I say it in one breath? -->
-  <section class="breath" data-part="one-breath" data-budget="4 lines, one sentence each, 20 words at most">
+  <!-- Q: Can I say it in one breath? One paragraph, written from the parts below and adding no fact of its own. -->
+  <section class="breath" data-part="one-breath" data-budget="one paragraph, 60 words at most, a few short sentences">
     <div class="k-title">In one breath</div>
-    <dl>
-      <dt>Who</dt><dd>{{who_line}}</dd>
-      <dt>Why now</dt><dd>{{why_now_line}}</dd>
-      <dt>Open with</dt><dd>{{open_with_line}}</dd>
-      <dt>Ask for</dt><dd>{{ask_for_line}}</dd>
-    </dl>
+    <p class="say">{{breath_paragraph}}</p>
   </section>
 
   <!-- Q: Who is this person, and where did you leave it with them? -->
@@ -359,12 +375,13 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
     <div class="eyebrow"><span class="n">1</span> The person</div>
     <h2>{{person_headline}}</h2><!-- what the person is, as a short verdict -->
     <ul class="lines">
-      <li><span class="t">{{person_line}}</span>{{source_chip}}</li><!-- repeat -->
-      <li class="empty"><span class="t">{{person_empty_line}}</span></li><!-- only where a sub-part has nothing, one plain line, no chip -->
+      <li><span class="t">{{person_line}}&nbsp;<span class="m">{{n}}</span></span></li><!-- repeat -->
+      <li class="empty"><span class="t">{{person_empty_line}}</span></li><!-- only where a sub-part has nothing, one plain line, no number -->
     </ul>
-    <!-- When there is a desk. With no history yet, one line: "You have not met {{person_first_name}} yet." With no desk, leave the strip out. -->
+    <!-- When there is a desk. With no history yet, one line: "You have not met {{person_first_name}} yet." With no desk, leave the strip out.
+         The strip's number is a row of the foot's desk block. -->
     <div class="desk">
-      <div class="desk-head"><span class="k">You and {{person_first_name}}</span><span class="src">desk</span></div>
+      <div class="desk-head"><span class="k">You and {{person_first_name}}</span><span class="m">{{n}}</span></div>
       <ul>
         <li><b>{{desk_met_lead}}</b> {{desk_met_line}}</li><!-- e.g. "Met once," "on 14 Oct 2026, at a chamber of commerce lunch." -->
         <li><b>{{desk_said_lead}}</b> {{desk_said_line}}</li><!-- what they said that matters now -->
@@ -373,22 +390,33 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
     </div>
   </section>
 
+  <!-- A company's brief: this part is "Who matters here" in place of "The person".
+       At most five people, one to a row, the deciders first. "Since" is the date the tool gave, as it gave it, or "not given".
+       <section class="part" data-part="people">
+         <div class="eyebrow"><span class="n">1</span> Who matters here</div>
+         <h2>{{people_headline}}</h2>
+         <table class="people"><thead><tr><th>Who</th><th>Role here</th><th>Since</th></tr></thead>
+           <tbody><tr><td>{{who}}</td><td>{{role_in_a_sellers_words}}</td><td class="d">{{since}}&nbsp;<span class="m">{{n}}</span></td></tr></tbody></table>
+         <p class="ask-for"><b>Ask for</b> {{ask_for_names}}</p>
+         <p class="rest">{{others_by_name}}&nbsp;<span class="m">{{n}}</span></p>
+       </section> -->
+
   <!-- Q: What does the company do, and how is it doing? -->
   <section class="part" data-part="company" data-budget="headline of 10 words at most; one line on why this company; 2 to 3 lines of 16 words at most; 2 figures">
     <div class="eyebrow"><span class="n">2</span> The company that matters here</div>
     <h2>{{company_headline}}</h2><!-- name and a plain verdict, e.g. "Northwind Polymers: a profitable family firm, spending to grow" -->
     <p class="why-this">{{company_why_this_one}}</p><!-- why this company and not the person's others, one line -->
     <ul class="lines">
-      <li><span class="t">{{company_line}}</span>{{source_chip}}</li><!-- repeat -->
+      <li><span class="t">{{company_line}}&nbsp;<span class="m">{{n}}</span></span></li><!-- repeat -->
     </ul>
     <!-- Figures: from our data only, exactly as it gives them, with its unit. Plain label and year.
-         Each tile keeps the "our data" chip and is made only for a value our data gave.
-         Rule: never a web value, never a tile stamped "our data" for something our data did not give.
+         Each tile carries the number of a row in the foot's our data block, and is made only for a value our data gave.
+         Rule: never a web value, never a tile numbered into another block.
          Where our data gave one value, leave the other tile out. Where it gave none, leave both tiles out
          and put nothing in their place: the part's own lines say what it rests on. -->
     <div class="figs">
-      <div class="fig"><div class="fig-head"><span class="k">{{figure_1_label}}</span><span class="src">our data</span></div><div class="v">{{figure_1_value}}</div></div>
-      <div class="fig"><div class="fig-head"><span class="k">{{figure_2_label}}</span><span class="src">our data</span></div><div class="v">{{figure_2_value}}</div></div>
+      <div class="fig"><div class="fig-head"><span class="k">{{figure_1_label}}</span><span class="m">{{n}}</span></div><div class="v">{{figure_1_value}}</div></div>
+      <div class="fig"><div class="fig-head"><span class="k">{{figure_2_label}}</span><span class="m">{{n}}</span></div><div class="v">{{figure_2_value}}</div></div>
     </div>
   </section>
 
@@ -397,7 +425,7 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
     <div class="eyebrow"><span class="n">3</span> What is happening</div>
     <h2>{{event_headline}}</h2><!-- the trigger in plain words, e.g. "A second plant, a new loan and a new director" -->
     <ul class="lines dated">
-      <li><span class="when-k">{{event_when}}</span><span class="t">{{event_line}}</span>{{source_chip}}</li><!-- repeat -->
+      <li><span class="when-k">{{event_when}}</span><span class="t">{{event_line}}&nbsp;<span class="m">{{n}}</span></span></li><!-- repeat -->
     </ul>
     <!-- Nothing found: <ul class="lines"><li class="empty"><span class="t">Nothing new around this person or the company turned up in the last 90 days.</span></li></ul> -->
   </section>
@@ -423,10 +451,10 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
         <ul class="lines">
           <li><span class="t">{{careful_line}}</span></li><!-- repeat, 1 to 2 lines -->
         </ul>
-        <!-- Only when a web mention cannot be tied to the person at the top: -->
+        <!-- Only when a web mention cannot be tied to the person at the top; its number is a row of the foot's web block: -->
         <div class="apart">
-          <div class="apart-head"><span class="k">Maybe not {{person_first_name}}</span><a class="src" href="{{web_url}}">web · {{web_site_name}}</a></div>
-          <p><b>This may be a different person.</b> {{apart_line}}</p><!-- what the page says, that nothing ties it to this person, and "Do not raise it." -->
+          <div class="apart-head"><span class="k">Maybe not {{person_first_name}}</span></div>
+          <p><b>This may be a different person.</b> {{apart_line}}&nbsp;<span class="m">{{n}}</span></p><!-- what the page says, that nothing ties it to this person, and "Do not raise it." -->
         </div>
       </div>
     </div>
@@ -435,16 +463,27 @@ a.src:focus-visible{outline:var(--component-focus-ring-width) var(--component-fo
       <p>{{ask_line}}</p><!-- the most specific next step the buyer is ready to take -->
     </div>
     <!-- One line, last, one specific next step, never blocking; for a pitch: "Do you want a curated pitch?"
-         Leave this line out of the page when anything follows the brief in the chat (the "Where this
-         came from" list and the nothing-written line, or what the page-writing step says on a desk):
-         the offer is then said after it, last in the reply, as research-lead's end order says. -->
+         Leave this line out of the page when anything follows the brief in the chat (the nothing-written line,
+         or what the page-writing step says on a desk): the offer is then said after it, last in the reply,
+         as research-lead's end order says. -->
     <p class="offer" data-part="offer" data-budget="one line, last; one next step; never blocking"><span class="who">Milan</span>{{milan_offer}}</p>
   </section>
 
-  <footer class="foot"><span class="gen">Generated by Celorus · {{generated_date}}. </span>{{built_from_line}}<span class="company-page"> Full sources are on the company page.</span></footer>
-  <!-- built_from_line names what was used, e.g. "Built from our data, the web and your desk notes."
-       Rule: leave the company-page span out unless a company page was written on a desk.
-       With no desk the sources follow in the chat, never on this page. -->
+  <!-- The foot: one row for each kind that has a number, in this order: Our data, The web, Your desk, Our estimate.
+       Each row holds its numbers and short source names. A web number links to its page and gives the day the page was read.
+       An estimate row names a tool's answer as its source, and may say, in a short word, that its fact is worked out
+       or read from an indirect signal (a fact that is not a figure). -->
+  <footer class="foot">
+    <p class="k-title">Where this comes from</p>
+    <dl class="srcgrp">
+      <div><dt>Our data</dt><dd><span class="m">{{n}}</span>{{our_data_source}} <span class="sep">·</span> <span class="m">{{n}}</span>{{our_data_source}}</dd></div>
+      <div><dt>The web</dt><dd><span class="m">{{n}}</span><a href="{{web_url}}">{{web_site_name}}</a>, read {{day_read}}</dd></div>
+      <div><dt>Your desk</dt><dd><span class="m">{{n}}</span>{{desk_source}}</dd></div>
+      <div><dt>Our estimate</dt><dd><span class="m">{{n}}</span>{{estimate_source}}</dd></div>
+    </dl>
+    <p class="prov"><span class="gen">Generated by Celorus · {{generated_date}}.</span><span class="company-page"> Full sources are on the company page.</span></p>
+    <!-- Rule: leave the company-page span out unless a company page was written on a desk. -->
+  </footer>
 </main>
 </body>
 </html>

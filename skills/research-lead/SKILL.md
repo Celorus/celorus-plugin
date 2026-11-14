@@ -9,8 +9,8 @@ description: >-
   named company is `ask-company`'s, a full financial report is `financial-analysis`'s, and a cap
   table is `cap-table`'s, even when the ask says research or find out about. Where the server
   offers a research pack, asks for one instead; otherwise runs the web register on the harness's
-  own search, reads the record when this session is signed in to it, and returns the brief, a
-  profile page on a desk too, each line labelled by its class of truth. Free: the web register
+  own search, reads the record when this session is signed in to it, and returns the brief, its
+  lines numbered to their sources, a profile page on a desk too. Free: the web register
   needs no sign-in, and writing the page asks for a free Celorus sign-in; a research pack is
   paid in credits.
 ---
@@ -20,7 +20,7 @@ description: >-
 The manual digging each lead takes is the drudgery this skill removes.
 You produce one page the day can reuse, in the house format, with every line carrying
 its register: `record`, `web` or `yours`. What the web could not confirm about the lead is
-listed at the end, plainly, as the honest close; that list never says what our data holds or lacks.
+listed at the end, plainly, as the honest close; that list never says what Celorus has or lacks on the lead.
 
 ## House rules
 
@@ -51,6 +51,8 @@ Celorus, as *Signing in* below says.
 What the person reads names where a line came from in two words: "from our data" or "from the web".
 In your own words, never write or say record, filing, filings, register, ingested or loaded, whatever a tool's answer calls things. The key `record`, given to a tool or written as the source on a desk line, is not your own words: write it where a tool or a page shape asks for it.
 A sentence a tool supplies is said as it was served. A company or a person our data does not cover is never a gap: say what the line rests on.
+
+The same holds for every word you write in the brief, its title and headings included, and in the chat around it: no em dash (use a comma, a colon or a full stop); never `on record`, `the record`, `per the official record` or `records`; never `in our data`, `our data holds` or `we have no`, with one exception: the sign-in ask in *Before anything runs: our data's sign-in* is said in the words given there; and never the name of a document a company files, of the body it files with, or of a form. Say a missing figure in plain words, such as "not available yet", and never say what it was missing from or that something was unreadable.
 
 ## The tools this skill calls
 
@@ -158,8 +160,8 @@ nothing is said of one.
 The ask never says that our data holds, has, covers, includes or can find anything about the
 lead; it carries no count, figure or URL; and it uses none of the words *Words a person reads*
 retires. A web-only pass says nothing more of our data: no line that it was not read, no "connect
-it later", no promise of what a sign-in would add. Its brief's chips read "web" and "desk", and
-the chat says once, as its grade, "This brief is from the web." when only the web was read, or
+it later", no promise of what a sign-in would add. Its brief's foot has the rows The web and Your
+desk only, and the chat says once, as its grade, "This brief is from the web." when only the web was read, or
 "This brief is from the web and your desk." when the desk's own lines were used too.
 
 ## The flow: who, the pack, the sources, the brief
@@ -189,7 +191,7 @@ The steps below run together, with a desk or with no desk, and the brief is made
   that carries only an intent word runs the free flow, the web register, the record and the brief, and
   says nothing of the pack. It never holds the brief.
 - **The sources, all of them.** The desk's own pages when there is a desk; the record, for the
-  person's companies, read and not only the registry line; the web register; the pack's page when
+  person's companies, read and not only the line that names each one; the web register; the pack's page when
   it has arrived. The web register always runs; its own step names the exceptions.
 - **The brief,** as *The brief* below says. On a desk, the brief is also written as the lead's
   page, as the page-writing step below says, and what the desk holds feeds the brief and never
@@ -206,7 +208,7 @@ The person asking sells, and the lead is someone they may sell to. Read every as
   in those words.
 - Never ask how the seller knows the lead, why they are asking, or what the lead would do for
   them. The ask is the reason to research; the page shows what fits the seller's work.
-- A name the desk's own records do not hold is not a reason to stop or to ask. Go on to the web
+- A name the desk's own pages do not hold is not a reason to stop or to ask. Go on to the web
   register straight away, and search a name that may be misspelt as the web register says,
   before anything is asked.
 
@@ -353,7 +355,9 @@ ladder is exhausted. Every web line reads:
 Two independent sources or the line ends `· medium confidence`. One aggregator is never
 enough for a title or a role. A profile page that will not fetch is used only through
 the search summary, and says so. A figure from the web carries its URL and date in the long profile or is not
-written at all, and the brief holds none.
+written at all, and the brief holds none. These lines are the notes the brief is made from: the
+brief's own lines never carry this tail. A web fact in the brief ends in its number, and its page
+and the day it was read go in the foot's row headed The web.
 
 When the web finds nobody by the name as the ask spelt it, or nobody by it who fits the firm,
 the city or the role the ask or the desk gave, the name may be misspelt. Search again straight
@@ -419,7 +423,7 @@ this person is there." In the same reply, name each other person on the list by 
 other" or the other's city, moves the profile to them; a word that fits several of them is asked
 about again, with their names and cities. Under `## Watch out`, write the same, the city again in
 place of "the city":
-`- You gave the city; of the people with this name, only this person is there, and this page follows them; the others by this name in our data are <list> · record · <date>`,
+`- You gave the city; of the people with this name, only this person is there, and this page follows them; the others by this name that I found are <list> · record · <date>`,
 where `<list>` names each other person by the name and city `candidates[]` returned and nothing
 else.
 
@@ -460,10 +464,11 @@ above.
 our data's sign-in* above is the only line about it, and after a no the pass goes on with the
 web alone. Never a count, never a year, never the list itself.
 
-For a person, the record is read for the person's companies, not only the registry line: each
+For a person, the record is read for the person's companies, not only the line that names each one: each
 company the person is named in, the roles over time, and the company's own values as its tool
-returns them. The person's companies are listed from the record and the web together, each line
-with its chip, and the values stay the record's.
+returns them. The person's companies are listed from our data and the web together, each on a
+numbered line whose source sits in its own block of the foot, and the values stay as our data
+gives them.
 
 ## The brief
 
@@ -478,7 +483,11 @@ kept on this computer in `~/.celorus/briefs/`, outside every desk; the same lead
 replaces its page.
 
 Give `write_research_brief` the brief's parts as its fields, each value as plain text, and never
-write the page, fill the template or load a design skill yourself. The tool brings that skill's
+write the page, fill the template or load a design skill yourself. The fields are the one brief's:
+`breath` is one paragraph, each fact line is `{ text, n }`, a company's `people` is `rows`, and
+`foot` gives each number its source, by kind. A call in the old shape (a chip on a line, `breath`
+as four labelled lines, `people` as a paragraph, `built_from`) is refused whole and writes no page:
+give it again in the new shape. The tool brings that skill's
 fonts and tokens into the template's empty style tags and its wordmarks into the page. When the
 mark's bytes cannot be read from the `celorus-design` skill's assets, leave the mark out and never
 draw an approximation. Then show the page, in this order:
@@ -495,13 +504,17 @@ draw an approximation. Then show the page, in this order:
 - Never open the page through the app's own browser pane or the Chrome extension: neither can open
   a file on this computer, and the person would see the open fail.
 - Never draw the brief as an artifact or as markup in the chat: the page is the tool's file alone.
-- In the chat, give the brief's summary lines as text: the part under the top card (who, why now,
-  open with, ask for), not the meeting part's opener and ask. The reply then stands where the page
-  does not open.
+- In the chat, give In one breath, the paragraph under the top card, as text, not the meeting
+  part's opener and ask. The reply then stands where the page does not open.
 
 When `write_research_brief` is not among this session's tools, cannot run, or refuses in words the
 call cannot be corrected by, make the brief from the frame below as text in the chat, and say in a
-line that its page could not be made, with the tool's own words where it gave any. On a seat's
+line that its page could not be made, with the tool's own words where it gave any. That chat copy
+has the page's shape, whole: In one breath first, each fact line ending in its number in square
+brackets (for example `[3]`) with no source word, no link and no date read on the line, who matters
+here as a table of at most five people for a company, and the foot, "Where this comes from", after
+the parts, with one row for each kind: Our data, The web, Your desk, Our estimate. Never the old tail
+on a line (a source, "unverified", a link and a date read), whatever step 2's notes look like. On a seat's
 graph, where the page-writing step below writes no page of the desk's, the brief and its page are
 what the person gets, and the long profile that step describes is added beside them only when the
 person asks for it.
@@ -509,11 +522,12 @@ person asks for it.
 These rules hold for every copy of the brief: the page the tool writes and the brief shown in the
 chat. Some values come from the web and the page opens in the seller's browser. Every value given to
 the tool is plain text and is never written as markup: the tool escapes it for HTML (`&`, `<`, `>`,
-`"` and `'` as entities). A chip is given as where the line came from (`record` for our data, `desk`, or `web`
-with the site's name and its link), never as markup; the page shows `record` as "our data". A link from the web is given as it was found:
+`"` and `'` as entities). A source is given as a row of the foot, never as markup: our data and your
+desk by a short name, the web by the site's name, its link and the day the page was read (as
+`YYYY-MM-DD`). A link from the web is given as it was found:
 the tool trims it of spaces at both ends, compares it without regard to case, and puts it into an
 href only when it then begins with `https://` or `http://`. Any other link, such as `javascript:`,
-`data:` or `vbscript:`, or a link that opens with a tab or another control character, keeps its chip
+`data:` or `vbscript:`, or a link that opens with a tab or another control character, keeps its name
 with no link. Web text never goes inside a tag, an attribute other than that href, a style or a
 script. The page runs no script and loads nothing from outside it: its policy allows neither, and
 each mark is the file's own bytes. In the chat, a value from the web is said as text, never as
@@ -525,8 +539,8 @@ time. The parts, in this order, each answering a question and holding to the bud
 carries in the template (`data-budget`):
 
 - **Top card:** who am I meeting, and when and where.
-- **In one breath:** who, why now, open with, ask for; written from the parts below and from nothing
-  else.
+- **In one breath:** one short paragraph, 60 words at most: who they are, why now, what to open with
+  and what to ask for; written from the parts below and from nothing else.
 - **The person:** who they are and where you left it; on a desk, the "you and them" strip: met when,
   what they said, what is still open.
 - **The company that matters here:** why this company, what it does, how it is doing.
@@ -535,31 +549,62 @@ carries in the template (`data-budget`):
 - **Milan's offer:** what Milan can do next, in a line of its own, the reply's last line as the end order below says,
   and left off the page when anything follows the brief in the chat.
 
-For a company, the person part is replaced by the people who matter here, in a paragraph, and the
-rest of the frame stands. Rules under the frame:
+For a company, the person part is replaced by "Who matters here": a short table of at most five
+people, one to a row (who, their role in a seller's words, since when as the tool gave it, or "not
+given"), the deciders first, then one line saying who to ask for, and the rest of the frame stands.
+A person is never a row because of a guess, and the rest of a board goes on one line by name. Rules
+under the frame:
 
-- Each line carries a chip, small and muted: our data, desk, or web with the site's name. A chip is
-  never a document name, a reference code or a page; the sources stay at the backend, and a company
-  page, where it was written, holds them.
-- Figures come only from our data, exactly as our data gives them, and the web gives no figure.
-  No web figure appears in any copy of the brief, the desk's page included.
+- Each fact line ends in a small number and carries no source word: no "web", no "desk", no "our
+  data", no link and no date read on the line. The number points at its row in the foot, "Where
+  this comes from". The numbers run 1, 2, 3 and on, in blocks by kind: our data first, then the
+  web, then your desk, then our estimate. The foot has one row for each kind that has a number,
+  named Our data, The web, Your desk and Our estimate, each with its numbers and short source
+  names; a web number links to its page and gives the day the page was read. A source name is never a
+  document name, a reference code or a page. A line with no number, a number with no foot row and
+  a foot row with no line are each refused.
+- An estimated figure prints only when a tool returns it as an estimate: its line says "our
+  estimate", its number is in the Our estimate block, never in a figure tile, and its foot row
+  names that tool's answer as its source. Never work a figure out, and with no tool estimate the
+  line is left out. The tool checks each line's words against the row of its number: a worked out
+  line says "worked out", an indirect line says "indirect", an estimate line says "our estimate";
+  any word that starts "estimat", or "est.", ties a line to the Our estimate block, so a line under
+  Our data, The web or Your desk never holds such a word. "Worked out" and "indirect" are for a fact
+  that is not a figure, for example who likely decides: its line says "worked out" or "indirect" in
+  its words and holds no digit, no magnitude word (thousand, lakh, crore, million, billion) and no
+  money or share figure said in words, and its number is in the Our estimate block too. Such a fact is never numbered under Our data or The
+  web, which hold only what the source stated. What is not known is a plain sentence in its part
+  with no number.
+- Figures come only from our data, exactly as our data gives them, or from a tool's estimate as
+  said above, and the web gives no figure. No web figure appears in any copy of the brief, the
+  desk's page included. A money or share figure goes only in a numbered line, with its source, in
+  any spelling: a number with a unit (crore, lakh, million, per cent, basis points, a per cent
+  sign), a currency before or after a number, a unit joined to its number by a hyphen, or "a" or
+  "half a" before a long unit. Such a figure is never in the breath, a headline, the meeting part, a
+  date or a start year. Counts ("two
+  meetings", "100 people", "tens of managers") and dates ("since 2019", "in FY24", "Met on 14 Nov
+  2026") are fine anywhere. For a 100% holding say "wholly owned", and where no figure is sourced
+  say "a large stake".
 - Give dates and values as the tools gave them; never write a span of time, an age or a tenure
   that the writer reckons from them, as the house rules say. A promise the desk's notes leave open
   is said with the date it was made and as still open, never by how long ago that was or how late
   it is.
   Rows a tool returned are given by name: say who the directors are, and never a word such as
   sole or only about them, nor about the companies or the years our data covers.
-- The company part's tiles hold only values our data gives, each with the our-data chip; with
-  none, leave the tiles out and add no line about them: the part's own lines say what it rests on.
-  Never a web value, never a tile stamped our data for something our data did not give.
+- The company part's tiles hold only values our data gives, each numbered into the Our data block;
+  with none, leave the tiles out and add no line about them: the part's own lines say what it rests
+  on. Never a web value, never a tile numbered into another block.
 - A part nothing answers says what it rests on in one plain line, naming what was read for it
   ("This part rests on the web." or "This part rests on our data and the web."): never padded,
   never dropped, never filled from general knowledge.
 - A web match that cannot be tied to the person confirmed at the top is never merged into the
-  person part. It sits apart under "be careful", in a box that says it may be a different person.
+  person part. It sits apart under "be careful", in a box that says it may be a different person,
+  its number in the block headed The web.
 - A path to a person is a name and a relation, never a contact detail: board colleagues, family,
-  advisors, past companies and schools, each line with its chip. Contact details stay walled.
-- The meeting part and the breath cite only what the parts above hold; they never introduce a fact.
+  advisors, past companies and schools, each line with its number. Contact details stay walled.
+- The meeting part and the breath cite only what the parts above hold; they never introduce a fact,
+  and they carry no price, no revenue and no rate: such a value goes in a numbered line with its
+  source, or is left out. The tool refuses it in any text that is not a fact line, a headline included.
 - A lead whose clock is handle-with-care (the lead's page says it in `clock`, and the desk's clocks
   are listed in `motion-spec.md`, which is where triage reads it) gets the person, company and event
   parts only: no opener, no ask and no pitch, no offer of a pitch, a draft or an opener, and a plain
@@ -567,14 +612,14 @@ rest of the frame stands. Rules under the frame:
 - A "Handle with care" line the pack itself carries also shows on triage's row for the lead, as the
   pack wrote it, but only the lead's newest pack is read: an older pack's line shows nothing. It does
   not make the lead a handle-with-care row: that stays `clock`'s alone.
-- The footer says what the brief was built from. It names the company page only where it was
-  written, on a desk. With no desk, the sources are given in the chat as a short list under
-  "Where this came from", never on the page, in the place the end order below gives it, before the
-  offer line.
+- The foot, "Where this comes from", is part of the brief, on the page and in the chat copy alike.
+  It names the company page only where it was written, on a desk.
+- Every line of the brief and of the chat around it keeps to *Words a person reads*, its plain
+  words for a missing figure included.
 - The page names no report and no product, and gives Milan no pronoun.
 - The template holds the frame to what fits the page: add no part, go past no part's budget, and
   keep depth off the page: it stays behind the company page on a desk; with no desk it is left out
-  of the page, and its sources are named in the "Where this came from" list.
+  of the page, and its sources are named in the foot.
 
 A pitch ask (or an ask for the mail, the call opener or the meeting brief) returns the brief and the
 pitch in the same pass, with no later ask. The pitch is a piece beside the brief, a page at most; it
@@ -593,14 +638,14 @@ The offer line names Milan and reads "Milan can <the action>, if you want that n
 named in the reply's opening line and in the offer line, not on every line. Where the desk gave the
 assistant another name, say that name where this skill says Milan.
 
-The end order is set here and nowhere else. The reply shows the brief; then, with no desk or when
-the desk tools cannot run, the "Where this came from" list and the line that nothing was written to
+The end order is set here and nowhere else. The reply shows the brief, its foot included; then, with no desk or when
+the desk tools cannot run, the line that nothing was written to
 the desk, whose invitation to set up a desk stays inside that line and is not another offer; then
-the offer line, last, and not repeated. Where anything follows the brief in the chat (that list and line, or what the page-writing step
+the offer line, last, and not repeated. Where anything follows the brief in the chat (that line, or what the page-writing step
 says on a desk), the offer line is said after it, last, and not inside the brief's page. For a handle-with-care lead the pitch
 above is not written and the offer line offers none of it, as the rule under the frame says.
 Showing the brief is the page opened, the line that says where it is, and the brief's summary
-lines, as *The brief* sets out; all of them come before the "Where this came from" list
+lines, as *The brief* sets out; all of them come before the nothing-written line
 and the offer line.
 
 ## Step 4: write the page
