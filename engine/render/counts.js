@@ -2320,12 +2320,41 @@ module.exports = {
   FUNNEL_KEYS,
 };
 
-// A list line of a research page that opens with the words "handle with care", in any letter case,
-// after a list marker (`-`, `*`, `+`, `1.` or `1)`) and, where the line has one, a bold mark (`**`
-// or `__`): followed by the end of the line, a space, ":" or the closing bold mark. A line that only
-// mentions the words later, that runs them into a longer word, or that is no list line, is not one.
-// The shown text is the line from the bold mark or the words on, as written.
-const CARE_LINE = /^\s*(?:[-*+]|\d+[.)])\s+((?:\*\*|__)?handle\s+with\s+care(?=$|[\s:]|\*\*|__).*)$/iu;
+// A list line of a research page: a list marker (`-`, `*`, `+`, `1.` or `1)`), a space, and the
+// rest of the line as written, which is the text a care line shows.
+const LIST_LINE = /^\s*(?:[-*+]|\d+[.)])\s+(.*)$/su;
+// The rest of a list line, read on its plain copy (carePlain), that opens with the words "handle
+// with care": past any lead-in of characters that are no letter (bold marks, a quote mark, a number
+// such as "1 - "), each word whole, with a run of at least one character that is no letter between
+// them ("Handle-with-care", "Handle. With. Care"; never "Handlewithcare", a name glued together
+// that carries no finding) and no letter after "care". DESK-503: the words and gaps as
+// research/steps.py `_CARE_WORDS` states them (tests/test_w2_care_pin.py holds the two alike),
+// read as `_CHIP` reads them, whose kept chip keeps its lead-in as the cut wrote it
+// (`_plain_opening`), so the desk shows every chip the pack keeps. A hidden character is a NUL on
+// the plain copy, and a NUL may stand inside a word, as a gap on its own, or before a
+// character that is no letter after "care", never before a letter (the `\x00*` of the pattern;
+// the text is the server's `_CHIP` pattern, which tests/test_w2_care_pin.py holds equal). A lead-in with a
+// letter ("Not", "a)", "iv."), words later in the line ("handle the renewal with care") or inside
+// a longer word ("careful", "Panhandle") are not one.
+const CARE_LINE = /^[^a-z]*h\x00*a\x00*n\x00*d\x00*l\x00*e[^a-z]+w\x00*i\x00*t\x00*h[^a-z]+c\x00*a\x00*r\x00*e(?!\x00*[a-z])/iu;
+// The characters of category C that read as they are, not as hidden: a tab and the line breaks
+// (research/steps.py `_PLAIN_CONTROLS`). Each is no letter, so a gap.
+const PLAIN_CONTROLS = new Set(["\t", "\n", "\v", "\f", "\r", "\x1c", "\x1d", "\x1e", "\x85"]);
+// A text's plain copy, as DESK-502 reads a chip on the server (research/steps.py `_is_chip`, then
+// research/screen.py `fold` and research/steps.py `_plain`): every hidden character (Unicode's
+// category C, such as a zero-width space, a soft hyphen or a control character) marked as a NUL,
+// which it keeps as a gap and does not delete; NFKC; the format characters and combining marks
+// that are left taken off; NFKD with the accents taken off; lower case. The server also writes
+// dashes, odd spaces and digits as plain ones; each is no letter either way, so CARE_LINE reads
+// them the same. Three steps change nothing, so removing any one alone leaves every test green:
+// NFKD repeats NFKC's compatibility mapping, CARE_LINE's `i` flag repeats the lower-case step,
+// and the `\p{Cf}` of the removal can no longer fire, as the marking before it has already turned
+// every format character (category Cf, a subset of category C) into a NUL. They stay as the
+// server's reading has them.
+function carePlain(text) {
+  const marked = text.replace(/\p{C}/gu, (hidden) => (PLAIN_CONTROLS.has(hidden) ? hidden : "\0"));
+  return marked.normalize("NFKC").replace(/[\p{Cf}\p{Mn}\p{Me}]/gu, "").normalize("NFKD").replace(/[\p{Mn}\p{Me}]/gu, "").toLowerCase();
+}
 // the line that opens or closes a fenced block of a page
 const FENCE = "\u0060\u0060\u0060";
 
@@ -2363,8 +2392,8 @@ function careLineOf(body) {
       fenced = !fenced;
       continue;
     }
-    const found = fenced ? null : CARE_LINE.exec(line);
-    if (found) return found[1].trim();
+    const listed = fenced ? null : LIST_LINE.exec(line);
+    if (listed && CARE_LINE.test(carePlain(listed[1]))) return listed[1].trim();
   }
   return null;
 }

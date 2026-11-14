@@ -149,8 +149,9 @@ pulse: on
 # Motion spec
 
 A lead here is a person or family who fits the firm's ideal client profile: who the firm
-serves, in its own words. The three clocks order the day: money in motion first, then a reason to call; handle with care
-is listed last and never gets a pitch. Caps are the desk's own. Role profiles name where
+serves, in its own words. The three clocks order the day: money in motion first, then a reason to call; handle with care,
+the rows the desk itself has stopped (a never-say line names the lead, or the desk's person said so),
+is listed last and never gets a pitch, and a research care line never puts a row there. Caps are the desk's own. Role profiles name where
 each role's day starts. Edit this file by hand or refresh it from the desk bundle.
 ```
 

@@ -24,7 +24,7 @@ not_same_as: [<file name without .md>]             # plain file names, never lin
 member_of: "[[<family slug>]]"                     # person only, on a wealth desk or a desk with no pack
 segments: []                                       # the segments our data or the web support
 band: D                                            # a band, never a point estimate; absent when unknown
-clock: money-in-motion                             # money-in-motion · reason-to-call · handle-with-care
+clock: money-in-motion                             # money-in-motion · reason-to-call · handle-with-care; handle-with-care only when the desk's person says it in words for this lead, never from a finding (the skill says when)
 source_list: supplied-l1                           # or book · follow-up · inbound
 registers_used: [record, web, yours]
 last_touch: <date>

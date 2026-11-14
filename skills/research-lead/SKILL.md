@@ -216,10 +216,14 @@ The person asking sells, and the lead is someone they may sell to. Read every as
 
 Read the existing page if there is one, the queue row, the CRM export's row for this name
 in `celorus/crm/` (name, employer, stage, owner, last touch; nothing else), and
-`celorus/context/notes.md`. Every line from here is labelled `yours · <where it came from>
-· <date>`. It is the desk's knowledge, never a fact about the subject. With no desk there is
-nothing to read here and nothing to ask: go on. On a desk, what this step reads feeds the "you and
-them" strip of the person part and the meeting part of the brief.
+`celorus/context/notes.md`. Read `celorus/context/never-say.md` too, to see whether a line there
+names the lead, which holds back the pitch under the guard below (a line names the lead when it holds
+the lead's page title, any of its aliases, its slug as written ([[ab-family]]), or its slug's words in
+that order with only spaces between, as the whole name, with no letter or digit either side, in any letter case), and
+so that the opener and any pitch follow its other lines too, as reach-out and room-brief do; nothing in it is written into the page or the brief. Every line from here is
+labelled `yours · <where it came from> · <date>`. It is the desk's knowledge, never a fact about
+the subject. With no desk there is nothing to read here and nothing to ask: go on. On a desk, what this step reads, never-say.md
+apart, feeds the "you and them" strip of the person part and the meeting part of the brief.
 
 ## Before the web register: ask for a research pack
 
@@ -606,12 +610,25 @@ under the frame:
   and they carry no price, no revenue and no rate: such a value goes in a numbered line with its
   source, or is left out. The tool refuses it in any text that is not a fact line, a headline included.
 - A lead whose clock is handle-with-care (the lead's page says it in `clock`, and the desk's clocks
-  are listed in `motion-spec.md`, which is where triage reads it) gets the person, company and event
-  parts only: no opener, no ask and no pitch, no offer of a pitch, a draft or an opener, and a plain
-  line saying the lead is a handle-with-care row and so is not pitched.
+  are listed in `motion-spec.md`, which is where triage reads it), or whom a line in
+  `celorus/context/never-say.md` names (the desk's own stop), gets the person,
+  company and event parts only: no opener, no ask and no pitch, no offer of a pitch, a draft or an opener, and a plain
+  line saying the desk itself has stopped this lead, so it is not pitched. Here, a line names the
+  lead when it holds the lead's page title, any of its aliases, its slug as written ([[ab-family]]),
+  or its slug's words in that order with only spaces between, as the whole name, with no letter or
+  digit either side, in any letter case.
+- A finding never sets or changes a page's `clock`, whether it comes from this research or from a
+  pack (distress, an adverse matter, an order, a default). It gives only the "Handle with care"
+  line, and the page's clock is chosen from the rest of the page as if there were no finding: an
+  adverse or distress event never raises urgency. Only the desk's person, saying it in words for
+  that lead, writes handle-with-care in `clock`, and only the desk's person lifts it: a later run never
+  changes or clears a clock the person set. A line in `never-say.md` that names the lead holds the
+  row back on its own, since triage reads that file each day, and is never copied into the clock.
+  A finding is never written into `never-say.md` either.
 - A "Handle with care" line the pack itself carries also shows on triage's row for the lead, as the
   pack wrote it, but only the lead's newest pack is read: an older pack's line shows nothing. It does
-  not make the lead a handle-with-care row: that stays `clock`'s alone.
+  not make the lead a handle-with-care row: that stays the desk's own stop's alone, the page's
+  `clock` or a never-say line that names the lead.
 - The foot, "Where this comes from", is part of the brief, on the page and in the chat copy alike.
   It names the company page only where it was written, on a desk.
 - Every line of the brief and of the chat around it keeps to *Words a person reads*, its plain
@@ -642,7 +659,7 @@ The end order is set here and nowhere else. The reply shows the brief, its foot 
 the desk tools cannot run, the line that nothing was written to
 the desk, whose invitation to set up a desk stays inside that line and is not another offer; then
 the offer line, last, and not repeated. Where anything follows the brief in the chat (that line, or what the page-writing step
-says on a desk), the offer line is said after it, last, and not inside the brief's page. For a handle-with-care lead the pitch
+says on a desk), the offer line is said after it, last, and not inside the brief's page. For a lead the desk itself has stopped, the pitch
 above is not written and the offer line offers none of it, as the rule under the frame says.
 Showing the brief is the page opened, the line that says where it is, and the brief's summary
 lines, as *The brief* sets out; all of them come before the nothing-written line

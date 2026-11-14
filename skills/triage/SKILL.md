@@ -4,7 +4,9 @@ description: >-
   Order today's calls from the desk's queues: names supplied, follow-ups due, book
   moments. Use when someone says "who do I call first", "order my calls", "what's my
   list", "today's calls", or right after the day is opened. Every row carries its reason
-  in words and its clock; handle-with-care rows are listed last and never get a pitch.
+  in words and its clock; rows the desk itself has stopped (a never-say line names the lead, or
+  the desk's person said so) are listed last and never get a pitch, and a research care line
+  only shows on its row.
   Free; each change it makes to the desk asks for a free Celorus sign-in before it is made.
 ---
 
@@ -125,8 +127,9 @@ and the seat's handle as `seat`, and no `view`. It answers the day's calls under
 order, the rows past the desk's cap under `later_today`, in order, and the handle-with-care
 rows under `handle_with_care`. Write `today` from the top as it came. Below it write
 `later_today`, under a line saying these rows are past the day's cap. Write
-`handle_with_care` last, each row with its reason: no pitch, no draft, no opener, and the
-row says what care means.
+`handle_with_care` last: these are the rows the desk itself has stopped (a never-say line names
+the lead, or the desk's person said so), each with its reason: no pitch, no draft, no opener, and
+the row says what care means. A research care line never puts a row here.
 
 Each row is a lead with every reason it has. Write the row from its fields and from nothing
 else: the name from `title`; the clock from `clock`; what happened from `what_just_happened`
@@ -175,8 +178,8 @@ read a list there, `no_clocks` holds a sentence: say that sentence as it came.
 
 Where `no_seat` holds rows, write them after the rest, under a line saying these rows are
 nobody's yet: no seat is named for them, so they are on no seat's day. Write each from its
-fields as any other row. A row there whose clock is handle-with-care gets no pitch, no draft
-and no opener.
+fields as any other row. A row there whose clock is handle-with-care (the desk itself stopped
+it) gets no pitch, no draft and no opener; a research care line on a row only shows.
 
 ## A desk with no leads
 
