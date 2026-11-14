@@ -314,7 +314,7 @@ node_missing_or_old() {
 # DEFAULT_NAME), and the line every start line ends with, except the no-desk, no-sign-in line,
 # which asks itself.
 NAME="Milan"
-RECORD_LINE="To read from our data, sign in to celorus-data under /mcp if you have not."
+RECORD_LINE="To read from our data, sign in to Celorus if you have not: in the Claude app, connect Celorus and your browser opens the Celorus sign-in, and in Claude Code, sign in to celorus-data under /mcp."
 # DESK-384: what Milan does and how to start, shown to the person (a top-level systemMessage, which
 # the app shows; additionalContext reaches only the model). hooks.json runs the hook with the word
 # startup on a start and with none on a clear or a compact, so only a start says it.

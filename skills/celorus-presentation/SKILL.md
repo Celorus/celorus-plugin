@@ -43,9 +43,9 @@ Then, with the spine in hand:
    no brand marks ship). On a floor-only surface (artifacts don't render), OMIT
    `include_html` — you will build the markdown floor from `presentation` anyway,
    and the ~20 KB of brand SVG would be paid and discarded. It returns, server-side:
-   - `html_fragment` — a ready-made, **brand-locked** dashboard (petrol header, bone
-     surface, Source Serif / IBM Plex, KFI tiles, ▲▼ markers, status pills, cited
-     sources).
+   - `html_fragment` — a ready-made, **brand-locked** dashboard (a petrol header
+     holding the Celorus favicon tile and the white v1 wordmark, bone surface,
+     Source Serif / IBM Plex, KFI tiles, ▲▼ markers, status pills, cited sources).
    - `presentation` — the same content as structured data: each KFI figure with its
      `display` string, `available`, `cite_url`, and `marker`, plus `ratios`,
      `dimensions`, and `sources`.
