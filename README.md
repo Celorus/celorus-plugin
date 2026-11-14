@@ -15,7 +15,7 @@ Built for SDRs, enterprise AEs, account managers, sales leaders and sales ops, o
 management, institutional sales, investment banking, cloud service provider and GTM tech
 desks. The record covers India today, and more countries are being added.
 
-Not sure where to start? Ask what Celorus can do.
+Not sure where to start? Ask what Celorus can do, or see [celorus.com](https://celorus.com/?utm_source=github&utm_medium=plugin-readme&utm_campaign=plugin-page).
 
 ## The agents, by job
 
