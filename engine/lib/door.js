@@ -83,8 +83,8 @@ function deskStartsAt(text, bare, at) {
 const HELD =
   "carries a path that is not under the desk as it was given, and an answer carries a path only " +
   "under that desk. The door passed none of that answer on, and the door itself writes nothing. Whether " +
-  "the tool wrote to the desk before it answered is not the door's to say: the desk holds the record of any " +
-  "write, so look at the desk and its log.md before asking again.";
+  "the tool wrote to the desk before it answered is not the door's to say: any write shows in the desk " +
+  "and its log.md, so look there before asking again.";
 const heldWords = (field) => `The door held back this answer: its field ${field} (the tool, then the field) ${HELD}`;
 
 // Brackets group (R143): within a place, an opening round, square or curly bracket raises a depth

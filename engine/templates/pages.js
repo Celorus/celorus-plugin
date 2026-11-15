@@ -86,7 +86,7 @@ function reachOutCard(v, prose, ctx) {
         '<article class="card is-warm">\n' +
         `<div class="top"><span class="kind">${e(kind(r))}</span>${r.proof ? `<span class="tag">${e(r.proof)}</span>` : ""}<span class="age">${e(W.shortWords(r.date))}</span></div>\n` +
         `<p class="how">${ctx.delink(r.how)}</p>\n` +
-        '<div class="foot"><span class="src">From your own records</span></div>\n' +
+        '<div class="foot"><span class="src">From your own desk</span></div>\n' +
         `${i === 0 ? '<p class="say">Somebody here already knows them. Open with this one.</p>' : ""}</article>\n`;
     });
     c += "</div>\n";
@@ -100,7 +100,7 @@ function reachOutCard(v, prose, ctx) {
         c +=
           `<li><div><span class="kind">${e(kind(r))}</span><span class="how">${ctx.delink(r.how)}</span></div>` +
           `<span class="src">${r.proof ? `<span class="tag">${e(r.proof)}</span>` : ""}` +
-          `<span>${r.register === "yours" ? "your own records" : "the public record"}</span><span class="d">${e(W.shortWords(r.date))}</span></span></li>\n`;
+          `<span>${e(W.sourceLabel(r.register))}</span><span class="d">${e(W.shortWords(r.date))}</span></span></li>\n`;
       }
     }
     c += "</ul>\n";

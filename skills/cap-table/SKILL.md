@@ -111,7 +111,7 @@ In brief:
    is present (inside the ownership view, a block's `warnings` carry the code
    `holder_register_superseded_snapshots` instead), superseded (or undatable)
    register documents exist and are
-   deliberately excluded — say the figures describe the latest-filed list we
+   deliberately excluded: say the figures describe the latest-filed list we
    could serve, with its date from the envelope message, and
    never present the excluded documents' holders as current ownership or
    recompute totals across documents. Latest-
@@ -164,15 +164,16 @@ In brief:
    stated", never "not available". The two field families never merge in
    either direction.
 15. **Registry capital sits beside filed capital — a second record, never a
-   restatement.** The company register's own authorised / paid-up /
-   subscribed capital serve on the cap-table door alongside the filed
-   figures, as their own rows labelled "(registry)" and cited "per registry master
-   data, captured <date>". Report each on its own line. Never merge, average
+   restatement.** The authorised / subscribed / paid-up capital from the
+   company's details serve on the cap-table door alongside the filed
+   figures, as their own rows labelled "(registry)" and cited "from our data,
+   captured <date>". Report each on its own line. Never merge, average
    or sum a registry figure with a filed one, never present one as
    superseding the other, and never call a difference between them a
-   reconciliation break or a fault in the record — the register's authorised
-   and subscribed capital cover every class of share while the filed ones on
-   record are equity only, so the register's figure is routinely the larger.
+   reconciliation break or a fault: for authorised and subscribed capital,
+   the figure labelled "(registry)" covers every class of share while the
+   figure from the documents the company submitted covers equity only, so
+   the figure labelled "(registry)" is often the larger.
    Registry and filed paid-up capital are both company-level totals: a
    difference there is a difference of date, so say which is as at when.
 
@@ -196,7 +197,7 @@ In brief:
    give that status with the name and do not say the company currently holds or
    owes the charge — an amalgamated, dissolved, struck-off or liquidating
    company held it in its time. Test for "not active" rather than matching a
-   list of words, since the register's wording is open; but do not read a
+   list of words, since the status wording is open; but do not read a
    non-active status as "defunct" either — some values describe a live company,
    so report the status and drop the present-tense claim, not the reverse.
 
@@ -339,16 +340,16 @@ through `provenance_ref` into that response's top-level pool.) The views:
   `status: "not_available"` with its `reason` and `available_when` — render
   "not available (reason)", never a fabricated empty table, and never build
   it yourself by summing a holder's round positions.
-- **Registry capital** (`view: "registry_capital"`) — the company register's
-  own authorised / subscribed / paid-up capital, served as the last element of
+- **Registry capital** (`view: "registry_capital"`): the authorised /
+  subscribed / paid-up capital from the company's details, served as the last element of
   `data` on a `view="all"` call and selectable on its own. These are rule 15's
   "(registry)" rows: a second source beside the filed figures, never a
-  restatement of them and never cap-table coverage — no share classes,
-  allotments, holders or rounds stand behind them. Every row carries its own
-  citation inline and its own capture date; cite them "per registry master
-  data, captured <date>"; where a row carries no capture date the whole clause
-  becomes "per registry master data, capture date unknown" — never "captured
-  null", never an empty date. Take each row's display name from
+  restatement of them. They are the company's capital figures alone: on their
+  own they are not a cap table. Every row carries its own
+  citation inline and its own capture date; cite them "from our data,
+  captured <date>"; where a row carries no capture date the whole clause
+  becomes "from our data, capture date unknown", never "captured null", never
+  an empty date. Take each row's display name from
   the envelope's `fact_key_labels` (e.g. "Authorised capital (registry)") —
   never name one yourself. This view can be live while every filed view is
   `not_available` and the envelope state is `fallback`. That state means no
@@ -366,7 +367,7 @@ The API is **read-only** — nothing you do can change the data.
 2. **Fetch** — `get_captable(subject_id, view="all")`. `fallback` → known
    company, no filed cap-table content — render the header; then, if the
    registry capital view is live, its rows as rule 15's "(registry)" lines
-   cited "per registry master data, captured <date>"; then "not available"
+   cited "from our data, captured <date>"; then "not available"
    for every filed section, with that view's own `reason` where it carries
    one; reproduce the
    envelope's `message` — it says which case this is. `proceed` → every

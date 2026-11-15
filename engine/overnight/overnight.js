@@ -188,8 +188,8 @@ function addMergeRow(plan, run, row) {
     // The demo's desk made this page at set-up and its run failed without it; the engine makes
     // it on the first run that merges a conversation.
     text = P.tablePage(
-      { type: "merge-record", title: "Merge record", timestamp: T.stamp(run.at.iso), generated_by: ctx.generatedBy },
-      "Merge record",
+      { type: "merge-record", title: "Merged conversations", timestamp: T.stamp(run.at.iso), generated_by: ctx.generatedBy },
+      "Merged conversations",
       "Which conversations the overnight run has merged into the shared pages.",
       MERGE_COLUMNS,
       ctx.footer,
@@ -633,8 +633,8 @@ function overnightReconcile(ctx, args, env = process.env) {
     const register = R.readRegister(ctx.celorus);
     if (register.rows === null || !register.rows.some((row) => R.ownScript(row.routine, row.skill_file))) {
       refuse(
-        "No routine is on the desk's register, so this unattended run is one taking the desk out could not " +
-          `name: record the routine that runs it with register_routine first. ${NOTHING}`,
+        "No routine is on \"What was scheduled\", so this unattended run is one taking the desk out could not " +
+          `name: note the routine that runs it with register_routine first. ${NOTHING}`,
       );
     }
   }

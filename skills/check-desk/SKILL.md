@@ -229,7 +229,7 @@ A refusal names what it takes. Where two pages share the name, the refusal lists
 names: ask which one, and call again with that file name as `to`. Where the desk's model cannot
 be read, say the refusal, write nothing, and stop.
 
-When someone asks which introductions a firm's conversations offered, call `introductions_from` with `firm`, the firm page's file name: it writes nothing and answers each `knows` or `introduced_by` line, shown or said, from that firm's conversations or record with the `page` holding it, so say each line as it came with its page, where `introductions` is empty say its `none` as it came, and whenever `not_read` is not empty say its `summary` as it came.
+When someone asks which introductions a firm's conversations offered, call `introductions_from` with `firm`, the firm page's file name: it writes nothing and answers each `knows` or `introduced_by` line, shown or said, from that firm's conversations or files with the `page` holding it, so say each line as it came with its page, where `introductions` is empty say its `none` as it came, and whenever `not_read` is not empty say its `summary` as it came.
 
 The tool writes only its own page, and never through a link. Where `celorus`, `celorus/views` or
 the page's path is a link, a folder or another kind of file, or a page already there was not
@@ -288,16 +288,16 @@ It refuses, and changes nothing, when the two are one page, when they are of dif
 when either names the other in `not_same_as`, when two pages share a file name it was given,
 when a page it needs is on the desk but its header cannot be used, and when a merge of this pair
 was cut before its last step. A refusal says which: for a page it cannot use, where the page is
-and the mend that fits its state; for a cut merge, the record to undo first. Say it as it came,
-and stop. When the other page is not on the desk and a standing record under `celorus/merges/`
+and the mend that fits its state; for a cut merge, the merge note to undo first. Say it as it came,
+and stop. When the other page is not on the desk and a standing merge note under `celorus/merges/`
 names it as merged, the answer's `already_merged` is true and nothing changed: say it was merged
 already.
 
-When it merges, it writes the record `celorus/merges/<date>-<kept>-<other>/merge.md` first, with
+When it merges, it writes the merge note `celorus/merges/<date>-<kept>-<other>/merge.md` first, with
 a copy of every page it changes under `before/` and under `after/`, then writes the kept page,
 every page whose links to the other page it pointed at the kept page, and every page whose
 generated sent list the merge changes, and deletes the other page last, so a merge cut short at
-any point leaves a record to undo it from, and its undo puts back every page it changed. The kept page keeps
+any point leaves a merge note to undo it from, and its undo puts back every page it changed. The kept page keeps
 every header line it had and gains the other page's title in `aliases`, each detail it lacked,
 and the other page's lines under its own `## Connections` and `## Coordinates`; the rest of the
 other page goes under `## From the merged page <title>`, a value the two disagree on first. It
@@ -326,17 +326,17 @@ answer's `views_not_rebuilt` is a sentence, say it.
 
 On "undo the merge of <other> into <kept>", or "undo that merge", call `undo_merge` through
 `make`, with the seat's `handle` and one of: `kept` and `merged`, the pair's file names, for that pair's newest
-standing record; `record`, the record's folder name under `celorus/merges/`; or neither, for the
-newest standing record of all. It checks every path the record names before it puts one back,
+standing merge note; `record`, the merge note's folder name under `celorus/merges/`; or neither, for the
+newest standing merge note of all. It checks every path the merge note names before it puts one back,
 and when a page changed since the merge, or a path is not one it may write, it names it and
-changes nothing. Otherwise it puts back every page the record names from `before/`, and nothing
-else. `celorus/log.md` is the desk's history, so the undo never holds it to the record: it puts
+changes nothing. Otherwise it puts back every page the merge note names from `before/`, and nothing
+else. `celorus/log.md` is the desk's history, so the undo never holds it to the merge note: it puts
 back only the log lines the merge rewrote, matched one line at a time, and keeps every other line,
 including lines logged since. A rewritten line whose place is in doubt (its day holds more or
 fewer lines that read the same than the merge left) is not put back: the
 answer's `log_not_put_back` names it by path and time, and its `summary` says what happened to
 `celorus/log.md`; say it. A folder swapped for a link during the undo stops it at that write,
-naming what was already changed; say it as it came. It marks the record
+naming what was already changed; say it as it came. It marks the merge note
 `undone:` with the moment, rebuilds the views and ends the change with one line in
 `celorus/log.md`:
 `* <time> · <handle> · check-desk · undid the merge of <other> into <kept> · yours`.
@@ -344,7 +344,7 @@ Say which pages it put back, from its answer's `restored`.
 
 ## A company card read more than 30 days ago
 
-A firm page may carry the record's card: a block under `## On the record`, and in its header
+A firm page may carry the record's card: a block under `## From our data` (a page made before may head it `## On the record`), and in its header
 `record_card_on`, the day the desk server read the record for it. The card says what the record
 held on that day, and nothing reads it again by itself. After a whole-desk check, read
 `record_card_on` in the header of each firm page (a page of `firms/`, read as "Where the desk's

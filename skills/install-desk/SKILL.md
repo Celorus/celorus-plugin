@@ -390,16 +390,16 @@ this order. Say it as this list, in these words:
 2. The folder's settings, covering every server the desk will use, so no permission prompt
    appears. A connection added later without its entry is a prompt in front of whoever is
    watching.
-3. The record, signed in before it is needed. Nobody should watch a sign-in.
+3. Our data, once this session is signed in. Nobody should watch a sign-in.
 4. The transcript tool, connected, and its tools added to the same settings.
 5. The calendar, connected, with the working rule that comes with it: every meeting goes on
-   the calendar, because nothing off the calendar can be recorded.
+   the calendar, because nothing off the calendar gets a recording.
 6. The routines, made by hand in the app. Nothing of ours creates a routine: a person sets
    it up once, and it runs itself afterwards. Local or cloud is the firm's choice, against
    its own plan. Our person sits through the first run and grants what it asks, because a
    routine runs unattended only after that.
 7. The vault: what stays out of the sidebar, and the colours.
-8. What was scheduled, written down on the desk's register, one row for each routine, so
+8. What was scheduled, written down on a page of its own, one row for each routine, so
    it can be found and removed later.
 
 Taking the desk out is `remove-desk`: it lists what to remove, in order, and removes

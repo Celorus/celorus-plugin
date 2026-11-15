@@ -139,7 +139,7 @@ the resolve envelope offers the compiled-knowledge path (step 1), in which case
   `{ counterparty_subject_id, counterparty_canonical_name, rel_type,
   role_detail, valid_from, valid_to, raw_context, provenance }`.
   `counterparty_canonical_name` is `null` when the counterparty has no name in
-  our data (rare) — render it as "name not given", never as a blank or a guess; on a charge row whose counterparty is the LENDER (`rel_type`
+  our data (rare): render it as "name not given", never as a blank or a guess; on a charge row whose counterparty is the LENDER (`rel_type`
   `CHARGE_HELD_BY`) and whose lender is disclosed, name it by `charge.holder_name`
   instead, said as printed on the charge. Each row's
   `provenance` is `{ doc_id, srn, section_kind, section_id, page_start,
@@ -292,12 +292,12 @@ question nothing served answers, and without it that part comes back as silence 
 | The question is about… | Read from the bundle |
 | --- | --- |
 | A figure / filed fact (revenue, PAT, a governance flag, …) | the relevant subdomain's `signals[]` (fetch `streams=["signals"]` — see step 3) — render by `value_type` (numeric → `normalized_value` + `unit`; boolean → Yes/No from `value`; enum/text → `value` verbatim); flag a row's `low_confidence` beside the answer |
-| Authorised / paid-up / subscribed share capital | the share-capital & ownership subdomain's `signals[]` (its id comes back in `list_available_subdomains.data.subdomains[]`) — filed rows and "(registry)" rows both, kept apart per rule 15: the register's figures are a second source beside the filed ones, never a restatement and never merged with them. The registry rows serve **only** on a call without `fy` — pass a year and they drop out. Name each by its label in `fact_key_labels` and cite it "per registry master data, captured <date>" |
+| Authorised / paid-up / subscribed share capital | the share-capital & ownership subdomain's `signals[]` (its id comes back in `list_available_subdomains.data.subdomains[]`): filed rows and "(registry)" rows both, kept apart per rule 15: the figures labelled "(registry)" are a second source beside the ones from the documents the company submitted, never a restatement and never merged with them. The "(registry)" rows serve **only** on a call without `fy`: pass a year and they drop out. Name each by its label in `fact_key_labels` and cite it "from our data, captured <date>" |
 | A narrative — auditor / directors' / notes / statement faces | the subdomain's `sections[]` `content_markdown` — summarise faithfully |
 | Which years / what was filed / which form / is it covered | `list_available_subdomains.data.filings[]` (+ `subdomains[].available_years`). `subdomains[]` lists every askable id, each with its own `served_from`; a registry-only company lists master-data-served ids only and its `data.filings[]` is empty; then say what the answer rests on, as financial-analysis does: "This answer is from our data on the company itself: its name, status and registered details." Never say it has no documents, and never that it is not covered |
-| A notable event (an allotment, an officer change) | the subdomain's `events[]` (fetch `streams=["events"]`) — a plain-language answer, cited; if empty, say our data shows no event of that kind for this company |
+| A notable event (an allotment, an officer change) | the subdomain's `events[]` (fetch `streams=["events"]`): a plain-language answer, cited; if empty, say our data shows no event of that kind for this company |
 | Something reported in the news | the same `events[]` (fetch `streams=["events"]`), the rows carrying `status` — always labelled as reported, never as fact; give the `corroboration_count` and cite `sources` |
-| A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` (fetch `streams=["relationships"]`) — a plain-language answer, cited; if empty, say our data shows no such connection |
+| A connection to another party (a holding, a directorship) | the subdomain's `relationships[]` (fetch `streams=["relationships"]`): a plain-language answer, cited; if empty, say our data shows no such connection |
 | A secured loan / charge / who has lent to this company | the lender & charge-holder subdomain's `relationships[]` (fetch `streams=["relationships"]`; its id comes back in `list_available_subdomains.data.master_data.charges.subdomains`) — one row per charge, NOT `events[]`. Each row carries a `charge` block (amount, status, the three lifecycle dates). **Never total the amounts** — a charge amount is the secured limit the charge is registered against, not drawn debt. Where `lender_disclosed` is false, say "lender not disclosed", never "Others" |
 | A cross-company screen ("companies that…") or a full relationship graph | not available — refuse plainly, don't improvise from a single subject's `relationships[]` |
 

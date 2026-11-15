@@ -94,7 +94,7 @@ While working you may show **one short, plain-English progress line** per step �
 describe the **outcome or the rigor**, never the mechanics. Vary them; keep each
 literally **true**.
 
-- ✅ *"Finding {Company} in our data…"*, *"Reading {Company}'s audited financials…"*, *"Tracing every figure to its source…"*, *"Compiling the report — each figure cited…"*
+- ✅ *"Finding {Company} in our data…"*, *"Reading {Company}'s audited financials…"*, *"Tracing every figure to its source…"*, *"Compiling the report, each figure cited…"*
 - ❌ *"Fetching the narrative sections and governance signals in one call"*, *"calling `get_subdomain_data`"*, or anything that names streams, subdomains, tools, `signals`, or `sections`.
 
 Never claim scope you don't have (e.g. "millions of companies"). Then present only
@@ -235,7 +235,7 @@ time — do not assume a fixed catalog.
    **Acme Manufacturing Private Limited**? (yes / no)"*), proceed only on yes;
    **two or more** → present them (each has `canonical_name`, `subject_id`,
    `score`) and ask which one. Never ask a single-option question; then stop until
-   the user answers. `stop` → say "I did not find a company by that name." and stop — do not proceed
+   the user answers. `stop` → say "I did not find a company by that name." and stop; do not proceed
    with a guessed identity.
 
 2. **Check the compiled-knowledge offer** — if the resolve envelope carries
@@ -452,7 +452,7 @@ time — do not assume a fixed catalog.
      **This is the most-missed field; without it the per-dimension sections of the
      report render with no analysis at all.** Write a `commentary` for every
      dimension you can speak to; for one the data can't support, say so in one
-     honest line ("not available — no prior-year revenue in our data") rather than
+     honest line ("not available, no prior-year revenue in our data") rather than
      omitting the key.
    - Keep each `commentary` to what the retrieved figures and sections support — no
      figure that isn't already in the data, no outside-knowledge claim. The same
@@ -492,7 +492,7 @@ time — do not assume a fixed catalog.
   headline figures layered on top.
 - **Empty is honest, not a gap:** empty auditor / notes / cash-flow / narrative
   sections are **honest** for XBRL or eForm-only documents whose attachments aren't
-  read yet — render "not available" calmly; do not flag it as a data gap or
+  read yet: render "not available" calmly; do not flag it as a data gap or
   strain to synthesize prose that isn't there.
 - **Absent ≠ zero, and a filed boolean/enum/text answer ≠ "not available"** —
   key on `value` presence and render by `value_type` (rule 1); the three hard

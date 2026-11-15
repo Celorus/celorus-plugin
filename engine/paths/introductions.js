@@ -103,7 +103,7 @@ function introductionsOf(read, firm) {
   let none = null;
   if (!introductions.length) {
     if (inThread > 0 || about.size > 0) {
-      none = `${lines(inThread)} from ${firm}'s conversations or record, and none is a knows or introduced_by line that is shown or said.`;
+      none = `${lines(inThread)} from ${firm}'s conversations or files, and none is a knows or introduced_by line that is shown or said.`;
     } else if (!pages.some((page) => page.stem === firm)) {
       none = `No page on the desk is named ${firm}, and the tool found no knows or introduced_by line citing a file under ${record}.`;
     } else {
@@ -136,7 +136,7 @@ function introductionsFrom(args = {}) {
       none !== null
         ? none
         : `${introductions.length} ${introductions.length === 1 ? "introduction" : "introductions"} from ${firm}'s ` +
-          `conversations and record, on ${pagesWord(pages)}.${unread}`,
+          `conversations and files, on ${pagesWord(pages)}.${unread}`,
   };
 }
 

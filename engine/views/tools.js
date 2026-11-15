@@ -473,7 +473,7 @@ function mergePagesTool(args = {}) {
       tool: "merge_pages",
       root: c.shown.root,
       already_merged: true,
-      summary: `${args.merge} was merged already, as a record under merges/ says. ${H.NOTHING}`,
+      summary: `${args.merge} was merged already, as a merge note under merges/ says. ${H.NOTHING}`,
     };
   }
   const [views, logged] = guarded(
@@ -499,7 +499,7 @@ function mergePagesTool(args = {}) {
     logged,
     summary:
       `Merged ${require("../render/screen.js").pathsSaid(args.merge)} into ${require("../render/screen.js").pathsSaid(args.keep)}: ${plural(done.changed.length, "page changed", "pages changed")}, ` +
-      `${done.removed} removed, the record at ${done.record}. ` +
+      `${done.removed} removed, the merge note at ${done.record}. ` +
       // A seat's graph is one seat's: the merge changes its pages alone (slice E6b-2b, T13).
       (c.read.layout === L.LAYOUT ? `Links to ${require("../render/screen.js").pathsSaid(args.merge)} in the firm's common space and in other seats' graphs are not re-pointed. ` : "") +
       (done.keptPart === L.PERSONAL ? `Nor are the links to it that shared/ pages hold in their own words, as ${require("../render/screen.js").pathsSaid(args.keep)} is in personal/: still_named says where. ` : "") +

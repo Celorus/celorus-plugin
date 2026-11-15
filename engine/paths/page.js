@@ -76,7 +76,7 @@ const BOTH = {
   member_of: "are members of",
 };
 // Where a line stands, by its register.
-const REGISTER = { yours: "in our own record", web: "in public research", record: "in the record" };
+const REGISTER = { yours: "on our own desk", web: "on the web", record: "in our data" };
 
 const words = (conn) => WORDS[conn] || conn.replace(/_/g, " ");
 const both = (conn) => BOTH[conn] || conn.replace(/_/g, " ");

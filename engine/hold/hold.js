@@ -223,9 +223,9 @@ function recordHold(root, hold, now) {
   try {
     const at = fs.lstatSync(folder, { throwIfNoEntry: false });
     if (at === undefined) fs.mkdirSync(folder);
-    else if (!at.isDirectory()) throw new Refusal(`The desk's ${SCRATCH}/ is not a folder of its own, so the hold cannot be recorded for the calendar guard. ${NOTHING}`);
+    else if (!at.isDirectory()) throw new Refusal(`The desk's ${SCRATCH}/ is not a folder of its own, so the hold cannot be saved for the calendar guard. ${NOTHING}`);
     const was = fs.lstatSync(file, { throwIfNoEntry: false });
-    if (was !== undefined && !was.isFile()) throw new Refusal(`The desk's ${SCRATCH}/${RECORD} is not a plain file, so the hold cannot be recorded for the calendar guard. ${NOTHING}`);
+    if (was !== undefined && !was.isFile()) throw new Refusal(`The desk's ${SCRATCH}/${RECORD} is not a plain file, so the hold cannot be saved for the calendar guard. ${NOTHING}`);
     if (was !== undefined) {
       let held = null;
       try {
@@ -242,7 +242,7 @@ function recordHold(root, hold, now) {
     fs.renameSync(writing, file);
   } catch (err) {
     if (err instanceof Refusal) throw err;
-    throw new Refusal(`The hold could not be recorded in the desk's ${SCRATCH}/ (${err && err.code ? err.code : "an error with no code"}), so the calendar guard would refuse the event. ${NOTHING}`);
+    throw new Refusal(`The hold could not be saved in the desk's ${SCRATCH}/ (${err && err.code ? err.code : "an error with no code"}), so the calendar guard would refuse the event. ${NOTHING}`);
   }
 }
 

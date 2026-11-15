@@ -127,7 +127,7 @@ written. Say that as it came, and stop.
    the update never writes one.
 10. **Stamping the versions.** Set `model_version`, and `pack` and `pack_version` when there
     is a pack, in `desk.md`.
-11. **Recording none on this desk.** Only for the roles passed as `none_on_this_desk`, each one
+11. **Noting none on this desk.** Only for the roles passed as `none_on_this_desk`, each one
     the person said the firm has none of when asked before the preview. In the systems table at
     the end of `desk.md`, each such row's `state` becomes `none on this desk`; its role and its
     blank connector stay, and nothing else in the page changes. Each role must be one the
@@ -146,7 +146,7 @@ written. Say that as it came, and stop.
 14. **Logging the update.** Only if something changed: one line under today's heading,
     `* <time> · <handle> · install-desk · updated the desk to model version <N> · yours`.
     When step 11 recorded a role, the line names it:
-    `* <time> · <handle> · install-desk · updated the desk to model version <N>, recording none on this desk: <roles> · yours`.
+    `* <time> · <handle> · install-desk · updated the desk to model version <N>, noting none on this desk: <roles> · yours`.
 
 ## After
 

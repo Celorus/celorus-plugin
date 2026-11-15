@@ -206,7 +206,7 @@ The table is what the set-up recorded; afterwards the update changes only a row'
 Read it for the source's role (`calendar`, `mail`, `crm` or `chat`):
 
 - A row that names a connector, `connected` or `still to connect`: the source is present but
-  unreadable, in these words: "recorded at set-up as <its name>, no tool in this session reads
+  unreadable, in these words: "noted at set-up as <its name>, no tool in this session reads
   it", with the name as the row gives it.
 - A row whose `connector` is `·` and whose `state` is `still to connect`: the desk has none.
 - A row whose `state` is `none on this desk`: the desk has none, said in its role's words alone:
@@ -226,7 +226,7 @@ setup" to see it listed as connected."
 
 When the table's row for the role has `·` as its `connector` and `still to connect` as its
 `state`, that sentence is followed by this sentence, as it is: "If the firm has none, say
-"update my desk" to record that." It follows no other case: not a role with no row, not a desk
+"update my desk" to note that." It follows no other case: not a role with no row, not a desk
 with no systems table, and never a row recorded `none on this desk`.
 
 So every source is in the state that fits it, and in no other: read; none on this desk; or
@@ -283,7 +283,7 @@ sources_missing: [mail]
 
 - <Name> replied on <date>: <subject line>. · yours · <date>
 - New names on list <list id> (<date>): <each name, in the list's order>.
-- Nothing read: mail present but unreadable: recorded at set-up as <its name>, no tool in this session reads it.   (when the desk has it and it cannot be read)
+- Nothing read: mail present but unreadable: noted at set-up as <its name>, no tool in this session reads it.   (when the desk has it and it cannot be read)
 - Nothing read: no mail on this desk.   (when the desk has none)
 
 ## Due today
@@ -298,7 +298,7 @@ sources_missing: [mail]
 ## Sources
 
 - Calendar: read.
-- Mail: present but unreadable: recorded at set-up as <its name>, no tool in this session reads it.
+- Mail: present but unreadable: noted at set-up as <its name>, no tool in this session reads it.
 - CRM: no CRM on this desk. If the desk has such a system, connect it in your account's connectors; then say "check my desk setup" to see it listed as connected.
 - Chat: read.
 

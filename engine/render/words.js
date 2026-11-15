@@ -305,7 +305,21 @@ function e(value) {
   return value instanceof Html ? value.text : escape(value);
 }
 
+// Where a line on the desk comes from, as a person reads it. A line's source is written as a key
+// (`yours`, `record`, `web`) and shown as a label: this is the one map, used by the who-knows-whom
+// view and by the two cards that say where a route in comes from.
+const SOURCE_LABELS = { yours: "your own desk", record: "our data", web: "the web" };
+
+// The label for a source key. A source that is none of the three keys is shown as written, never
+// as one of them.
+function sourceLabel(source) {
+  const key = source === null || source === undefined ? "" : String(source);
+  return Object.hasOwn(SOURCE_LABELS, key) ? SOURCE_LABELS[key] : key;
+}
+
 module.exports = {
+  SOURCE_LABELS,
+  sourceLabel,
   asDate,
   daysBetween,
   addDays,

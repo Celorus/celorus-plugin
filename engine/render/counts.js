@@ -55,7 +55,7 @@ const DESK_FOLDER = "celorus";
 // morning brief draws a figure in one of these holes as the hole, never as 0.
 const NOT_HANDED_OVER = {
   crm:
-    "The CRM's rows were not handed over, so nothing the CRM holds is read: no record, phone or " +
+    "The CRM's rows were not handed over, so nothing the CRM holds is read: no CRM record, phone or " +
     "logged touch, no family reads as in the CRM, and every call and meeting reads as not in it.",
   calendar: "The calendar's rows were not handed over, so no meeting, event or proposed meeting is counted.",
   mail: "The mailbox's threads were not handed over, so no thread is counted, critical or quiet.",

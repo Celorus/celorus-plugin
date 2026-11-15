@@ -65,7 +65,7 @@ const STEP_NAMES = [
   "renaming words",
   "writing the model pages and settings",
   "stamping the versions",
-  "recording none on this desk",
+  "noting none on this desk",
   "adding the lead id column",
   "rebuilding the views",
   "logging the update",
@@ -777,7 +777,7 @@ function fill(template, values) {
   let text = template;
   for (const [key, value] of Object.entries(values)) text = text.split(`{{${key}}}`).join(value);
   const left = PLACEHOLDER.exec(text);
-  if (left) throw new UpdateFault(`the template needs ${left[0]}, which the desk does not record`);
+  if (left) throw new UpdateFault(`the template needs ${left[0]}, which the desk does not hold`);
   return text;
 }
 
@@ -1564,7 +1564,7 @@ function stampVersions(run, target, packDir) {
   run.notes.push(`The desk moves to model version ${target}.`);
 }
 
-// ---- recording none on this desk ----
+// ---- noting none on this desk ----
 
 // The roles of the systems table's rows recorded still to connect with no connector named, in
 // the table's order: the rows the update asks about (update.md), and the only rows it records
@@ -1597,7 +1597,7 @@ function askAbout(desk) {
 }
 
 function notStill(role) {
-  return new UpdateFault(`${role} is not recorded still to connect with no connector named, so it is not recorded as none on this desk`);
+  return new UpdateFault(`${role} is not marked still to connect with no connector named, so it is not noted as none on this desk`);
 }
 
 // Before any write: each role passed must be recorded in desk.md's systems table still to connect
@@ -1607,7 +1607,7 @@ function checkNone(run, roles) {
   if (!wanted.length) return [];
   const text = isFile(path.join(run.root, "desk.md")) ? run.read("celorus/desk.md") : null;
   const systems = text === null ? null : S.readTables(text.slice(bodyStart(text))).systems;
-  if (systems === null) throw new UpdateFault("desk.md holds no systems table, so no role is recorded as none on this desk");
+  if (systems === null) throw new UpdateFault("desk.md holds no systems table, so no role is noted as none on this desk");
   const asked = askable(systems.rows);
   for (const role of wanted) {
     if (!asked.includes(role)) {
@@ -1662,7 +1662,7 @@ function recordNone(run, roles) {
     lines[at] = stateMadeNone(lines[at]);
   }
   run.write("celorus/desk.md", text.slice(0, start) + lines.join("\n"));
-  run.notes.push(`None on this desk, recorded in the systems table: ${roles.join(", ")}.`);
+  run.notes.push(`None on this desk, noted in the systems table: ${roles.join(", ")}.`);
 }
 
 // The views, the sent lists and every path page, as render_views rebuilds them, from the desk as
@@ -1732,7 +1732,7 @@ function retold(run, err) {
 // The line names step 11's roles when it recorded any.
 function logUpdate(run, target, time, handle, recorded) {
   const text = run.read("celorus/log.md");
-  const none = recorded.length ? `, recording none on this desk: ${recorded.join(", ")}` : "";
+  const none = recorded.length ? `, noting none on this desk: ${recorded.join(", ")}` : "";
   const entry = logEntry(time, handle, "install-desk", `updated the desk to model version ${target}${none}`);
   run.write("celorus/log.md", withLogEntry(text, run.today, entry));
 }
@@ -1939,7 +1939,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
   });
   const changesList = step("renaming words", () => pending(modelDir, have, target));
   const drawn = step("flattening headers", () => drawnKinds(modelView(modelDir, packDir, run.workingLeft)));
-  const recording = step("recording none on this desk", () => checkNone(run, roles));
+  const recording = step("noting none on this desk", () => checkNone(run, roles));
   step("adding the lead id column", () => suppliedTable(run));
   // Last before the first write, so a check above that stops leaves nothing it made.
   const aheadMade = upFront === null ? [] : checkAhead(run, upFront);
@@ -1955,7 +1955,7 @@ function updateOn(run, { modelDir = PLUGIN_MODEL, packDir = null, today, now, ti
     step("renaming words", () => renameWords(run, modelDir, changesList));
     step("writing the model pages and settings", () => writeModelPagesAndSettings(run, modelDir, packDir));
     step("stamping the versions", () => stampVersions(run, target, packDir));
-    step("recording none on this desk", () => recordNone(run, recording));
+    step("noting none on this desk", () => recordNone(run, recording));
     step("adding the lead id column", () => addLeadIdColumn(run));
     if (run.touched().length) {
       step("rebuilding the views", () => rebuildViews(run));

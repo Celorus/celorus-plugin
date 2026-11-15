@@ -21,6 +21,7 @@ const { RULES, checkDesk, checkPages } = require("../check/rules.js");
 const { loadDeskModel, isKind } = require("../check/model.js");
 const { linkSpans, linkName, linksIn, proofMatch, sectionOf, Page, LINK_BRACKETS } = require("../check/text.js");
 const V = require("../check/values.js");
+const { sourceLabel } = require("../render/words.js");
 const { checkCitations, notCheckedSaid } = require("../cite/cite.js");
 const { dumpLines } = require("../update/yaml.js");
 const { rstrip } = require("../update/history.js");
@@ -222,7 +223,7 @@ function whoKnowsWhom(model, pages, onDesk, now) {
       if (where === null && m.proof === "shown") where = parts.map(aPlace).find((c) => c !== null) ?? null;
       lines.push(
         `| ${pageLink(page)} | ${m.conn} | ${cell(plain(m.target, onDesk))} | ` +
-          `${m.proof} | ${m.register} | ${m.date} | ${cell(plain(where || DOT, onDesk))} |`,
+          `${m.proof} | ${cell(sourceLabel(m.register))} | ${m.date} | ${cell(plain(where || DOT, onDesk))} |`,
       );
     }
   }
@@ -232,7 +233,7 @@ function whoKnowsWhom(model, pages, onDesk, now) {
     "One hop: every connection on the desk's pages, with how we know it.",
     `A guess draws no line; guesses are listed apart for someone to confirm. ${EDIT_PAGES}`,
     "",
-    "| from | connection | to | proof | register | date | where |",
+    "| from | connection | to | proof | source | date | where |",
     "|---|---|---|---|---|---|---|",
     ...lines.sort(byText),
     "",

@@ -33,7 +33,7 @@ Identity + subject ID. Note that this report covers share-allotment events
 and the latest post-allotment capital structure; year-end annual positions
 are a separate, not-yet-available layer (see §6).
 
-### 1. Ownership — who holds the company (latest-filed shareholder list)
+### 1. Ownership: who holds the company (latest-filed shareholder list)
 
 From the `ownership` view — **this section, not §2's per-round lists, answers
 "who owns this company"** (rule 6). If the view's `status` is
@@ -157,24 +157,24 @@ The most recent post-allotment capital structure, as of {as_of_srn}.
 price, latest post-money valuation — each with its `formula_id` or "not
 available".
 
-**Registry capital** — the company's own registered authorised / subscribed /
-paid-up capital: a second source, kept apart from the statement figures above (rule 15),
+**Registry capital**: the authorised, subscribed and paid-up capital from the
+company's details, naming only the figures we hold: a second source, kept apart from the figures above (rule 15),
 never a restatement of them, never merged, averaged or summed with them, and
 never presented as superseding them. Render this block only when the registry
 capital view is live; omit it entirely when it is not.
 
 | Figure | Amount | Captured | Provenance |
 | --- | --- | --- | --- |
-| {label from `fact_key_labels`, e.g. "Authorised capital (registry)"} | {the row's served value} | {`provenance.captured_at`, else "not dated"} | per registry master data, captured {`provenance.captured_at`} |
+| {label from `fact_key_labels`, e.g. "Authorised capital (registry)"} | {the row's served value} | {`provenance.captured_at`, else "not dated"} | from our data, captured {`provenance.captured_at`} |
 
 Date each row from its **own** `provenance.captured_at`, never from a date the
 view carries as a whole. Where it is absent, write "not dated" in the Captured
-cell **and** change the whole citation clause to "per registry master data,
-capture date unknown" — never "captured null", never the word "null" in either
+cell **and** change the whole citation clause to "from our data,
+capture date unknown", never "captured null", never the word "null" in either
 cell, never an empty cell.
 
 When these are the only capital figures the door served, say so in one line:
-"This cap table rests on the company's registered capital figures."
+"This cap table rests on the company's capital figures shown above."
 
 ### 4. As-converted / fully-diluted view
 

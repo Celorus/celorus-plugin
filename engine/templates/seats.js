@@ -632,7 +632,9 @@ function summaryCard(v, prose, ctx) {
   if (lead && W.truthy(lead.phone)) {
     contact = `<span class="n">${e(lead.phone)}</span><span class="sub">${e(lead.name)}'s number</span>`;
   } else if (route) {
-    contact = `${ctx.delink(route.how)}<span class="sub">${route.register === "yours" ? "From your own records" : "From the public record"}</span>`;
+    // A route line with no source says none: never a bare "From", never one of the three labels.
+    const from = W.sourceLabel(route.register);
+    contact = `${ctx.delink(route.how)}${from ? `<span class="sub">From ${e(from)}</span>` : ""}`;
   } else {
     contact = `<span class="nil">No contact held yet. Ask ${e(ctx.persona.name)} to look for one.</span>`;
   }

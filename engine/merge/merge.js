@@ -422,8 +422,8 @@ function ownFolders(root, shown, words) {
 // Who reads a file, and why, as the guarded reader's refusal says it: the tool, what it reads,
 // and what to do about each kind it meets (a link, another kind of file, a file it cannot read).
 const RECORD_MENDS = {
-  link: "Put the record's own file back in its place",
-  kind: "Put the record's own file back in its place",
+  link: "Put the merge note's own file back in its place",
+  kind: "Put the merge note's own file back in its place",
   unread: "Restore it as the merge wrote it",
 };
 const MERGE_PAGE = {
@@ -435,13 +435,13 @@ const MERGE_PAGE = {
 };
 const UNDO_PAGE = {
   who: "this undo",
-  reads: "an undo reads every page its record names",
+  reads: "an undo reads every page its merge note names",
   link: "Put the page itself in its place",
   kind: "Put the page itself in its place",
   unread: "Restore the page",
 };
-const MERGE_RECORD = { who: "this merge", reads: "a merge reads the records under merges/", ...RECORD_MENDS };
-const UNDO_RECORD = { who: "this undo", reads: "an undo reads the records under merges/", ...RECORD_MENDS };
+const MERGE_RECORD = { who: "this merge", reads: "a merge reads the merge notes under merges/", ...RECORD_MENDS };
+const UNDO_RECORD = { who: "this undo", reads: "an undo reads the merge notes under merges/", ...RECORD_MENDS };
 // A tool's words for a page of the desk, then for a record's file.
 const WORDS = { merge: [MERGE_PAGE, MERGE_RECORD], undo: [UNDO_PAGE, UNDO_RECORD] };
 
@@ -501,7 +501,7 @@ function recordCopy(note, side, rel, words, need = false) {
   const shown = `merges/${note.name}/${side}/${rel}`;
   ownFolders(path.dirname(path.dirname(note.folder)), shown, words);
   const missing =
-    `${shown} is not there, and the record needs it, so ${words.who} cannot read it: ${words.reads}. ` +
+    `${shown} is not there, and the merge note needs it, so ${words.who} cannot read it: ${words.reads}. ` +
     `${words.unread}, then say this again. ${NOTHING}`;
   return readGuarded(note.folder, `${side}/${rel}`, words, { shown, need, missing });
 }
@@ -564,7 +564,7 @@ function recordRead(root, note, tool = "merge") {
   const page = pageFromBytes(note.rel, bytes);
   if (page.problem && page.problem !== NO_HEADER) {
     refuse(
-      `${shown} cannot be read, so the desk cannot tell what it recorded; put its header back as it was, then say ` +
+      `${shown} cannot be read, so the desk cannot tell what it noted; put its header back as it was, then say ` +
         "this again",
     );
   }
@@ -575,7 +575,7 @@ function recordRead(root, note, tool = "merge") {
     refuse(
       `${shown} names a page outside celorus/ (an absolute path, one that climbs out of it, or one whose folder ` +
         `leads out of it), so ${words.who} ` +
-        `cannot read the record: ${words.reads}, and none outside celorus/. ${words.unread}, then say this again. ${NOTHING}`,
+        `cannot read the merge note: ${words.reads}, and none outside celorus/. ${words.unread}, then say this again. ${NOTHING}`,
     );
   }
   return { head, bytes };
@@ -660,7 +660,7 @@ function cutBeforePages(root, keep, merge) {
 
 function cutSaid(merge, keep, record) {
   return (
-    `a merge of ${merge} into ${keep} was cut before it finished, and its record is merges/${record}; ` +
+    `a merge of ${merge} into ${keep} was cut before it finished, and its merge note is merges/${record}; ` +
     "undo that merge first, then say this one again"
   );
 }
@@ -1030,7 +1030,7 @@ function unmake(root, made) {
 function putBackSaid(why, left) {
   if (!left.length) return `${why}. ${NOTHING}`;
   return (
-    `${why}. The record this merge had written could not all be removed, so the desk is as it ` +
+    `${why}. The merge note this merge had written could not all be removed, so the desk is as it ` +
     `was but for ${left.join(", ")}, left in place.`
   );
 }
@@ -1363,8 +1363,8 @@ function recordFor(root, { record, kept, merged }) {
       if (named || !(err instanceof MergeRefused)) throw err;
       const said = err.message.endsWith(NOTHING) ? err.message.slice(0, -NOTHING.length).trimEnd() : `${err.message}.`;
       return refuse(
-        `${said} This undo names no merge, so it reads the records under merges/, newest first, to find the one ` +
-          `that stands, and merges/${note.name}/ is one it had to read; name a record with \`record\` to undo it ` +
+        `${said} This undo names no merge, so it reads the merge notes under merges/, newest first, to find the one ` +
+          `that stands, and merges/${note.name}/ is one it had to read; name a merge note with \`record\` to undo it ` +
           `directly. ${NOTHING}`,
       );
     }

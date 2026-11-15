@@ -168,7 +168,7 @@ entirely when its layer is empty; never render "not available" here.
   allotment, an officer change — only if present}
 - **Connections** ({tag}): {one-line summary of a holding or directorship —
   only if present}
-- **Secured charges** ({tag}): {one-line summary of the charges in our data — the
+- **Secured charges** ({tag}): {one-line summary of the charges in our data, the
   count, and the open count — only if present. NEVER a total of the amounts: a
   charge amount is the secured limit, not drawn debt}
 

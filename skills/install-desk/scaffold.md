@@ -160,7 +160,7 @@ each role's day starts. Edit this file by hand or refresh it from the desk bundl
 ```markdown
 ---
 type: register
-title: Signal register
+title: Signals
 description: Signals buyers named, each with a build status and a compliance status
 timestamp: {{now}}
 ---

@@ -38,7 +38,7 @@ const STEPS = [
   "reading the desk",
   "checking the targets",
   "making the dated copy",
-  "recording the plan",
+  "saving the plan",
   "writing the graphs",
   "writing the common space",
   "checking nothing is deleted",
@@ -669,7 +669,7 @@ function derive(desk, firm, opts) {
         // kept: one by the record's name in any case of letters, as a case-blind disk folds them
         // (upper case, then lower, so a long s reads as an s), is refused, never written over it.
         if (outside && outside.rel.toUpperCase().toLowerCase() === RECORD) {
-          throw stop(step, `${rel} names ${outside.rel} in its file, which would go to ${L.SEATS}/${s}/${outside.rel}, where the seat's conversion record is kept; rename the file in the desk folder, and the file line that names it, then convert again. Nothing was written`);
+          throw stop(step, `${rel} names ${outside.rel} in its file, which would go to ${L.SEATS}/${s}/${outside.rel}, where the seat's conversion file is kept; rename the file in the desk folder, and the file line that names it, then convert again. Nothing was written`);
         }
         if (!generated) put(`${L.SEATS}/${s}/${file}`, outside ? outside.bytes : old.files.get(inside));
         if (outside || runnersOwn(inside)) ownCopied.add(`${L.SEATS}/${s}/${file}`);
@@ -842,14 +842,14 @@ function recordOf(firm, deskId) {
     } catch {
       record = null;
     }
-    if (!isMapping(record) || !isMapping(record.files)) throw stop("checking the targets", `the conversion record there, ${rel}, cannot be read, so nothing was written`);
+    if (!isMapping(record) || !isMapping(record.files)) throw stop("checking the targets", `the conversion file there, ${rel}, cannot be read, so nothing was written`);
     if (record.desk_id !== deskId) throw stop("checking the targets", "the firm folder there holds another desk's conversion, so nothing was written");
     return record;
   };
   if (fs.existsSync(path.join(firm, RECORD))) {
     const record = readRecord(RECORD);
     if (Object.keys(record.files).some((rel) => rel.startsWith(`${L.SEATS}/`))) {
-      throw stop("checking the targets", `the conversion record there, ${RECORD}, was written by an earlier converter, which kept every seat's files in one record at the firm's root; convert again from the dated copy of the desk, into a new folder. Nothing was written`);
+      throw stop("checking the targets", `the conversion file there, ${RECORD}, was written by an earlier converter, which kept every seat's files in one file at the firm's root; convert again from the dated copy of the desk, into a new folder. Nothing was written`);
     }
     Object.assign(files, record.files);
   }
@@ -863,12 +863,12 @@ function recordOf(firm, deskId) {
     const rel = `${L.SEATS}/${folder}/${RECORD}`;
     if (!fs.existsSync(path.join(firm, ...rel.split("/")))) continue;
     const record = readRecord(rel);
-    if (typeof record.seat !== "string") throw stop("checking the targets", `the conversion record there, ${rel}, cannot be read, so nothing was written`);
+    if (typeof record.seat !== "string") throw stop("checking the targets", `the conversion file there, ${rel}, cannot be read, so nothing was written`);
     if (record.seat !== folder && folders.includes(record.seat)) {
-      throw stop("checking the targets", `${L.SEATS}/${folder} holds the conversion record of seat ${record.seat}, whose graph is at ${L.SEATS}/${record.seat}: a copy, which the converter never reads; move it out of ${L.SEATS}/ to convert again. Nothing was written`);
+      throw stop("checking the targets", `${L.SEATS}/${folder} holds the conversion file of seat ${record.seat}, whose graph is at ${L.SEATS}/${record.seat}: a copy, which the converter never reads; move it out of ${L.SEATS}/ to convert again. Nothing was written`);
     }
     if (record.seat !== folder) {
-      throw stop("checking the targets", `${L.SEATS}/${folder} holds the conversion record of seat ${record.seat}: the converter finds a seat's graph under its handle, so it would build ${record.seat}'s graph again beside this one; rename it back to ${L.SEATS}/${record.seat} to convert again. Nothing was written`);
+      throw stop("checking the targets", `${L.SEATS}/${folder} holds the conversion file of seat ${record.seat}: the converter finds a seat's graph under its handle, so it would build ${record.seat}'s graph again beside this one; rename it back to ${L.SEATS}/${record.seat} to convert again. Nothing was written`);
     }
     for (const [file, hash] of Object.entries(record.files)) files[`${L.SEATS}/${folder}/${file}`] = hash;
   }
@@ -1116,13 +1116,13 @@ function prepared(desk, firm, opts) {
     lines.push(`${departed.join(", ")} ${departed.length === 1 ? "was" : "were"} converted earlier and ${departed.length === 1 ? "is" : "are"} no longer a seat of this desk, so the switch rebuilds no graph for ${departed.length === 1 ? "it" : "them"}; ${departed.length === 1 ? "its graph stays" : "their graphs stay"} as the earlier run wrote ${departed.length === 1 ? "it" : "them"}.`);
   }
   lines.push(
-    `${derived.counts.placed} pages placed (${derived.counts.placed_byte_equal} byte for byte, ${derived.counts.pages_repointed} with a pointer re-pointed, ${derived.counts.placed - derived.counts.placed_byte_equal - derived.counts.pages_repointed} changed only in their sent list; ${derived.counts.sent_lists_drawn} sent list${derived.counts.sent_lists_drawn === 1 ? "" : "s"} drawn from the graph's own sent pages); ${derived.counts.left_for_seats_not_converted} left for seats not converted, with ${derived.counts.rows_left} table row${derived.counts.rows_left === 1 ? "" : "s"}; ${derived.counts.leads_left} lead pages left for the graph job; ${derived.counts.merges_left} merge-record files left as the desk's history.`,
+    `${derived.counts.placed} pages placed (${derived.counts.placed_byte_equal} byte for byte, ${derived.counts.pages_repointed} with a pointer re-pointed, ${derived.counts.placed - derived.counts.placed_byte_equal - derived.counts.pages_repointed} changed only in their sent list; ${derived.counts.sent_lists_drawn} sent list${derived.counts.sent_lists_drawn === 1 ? "" : "s"} drawn from the graph's own sent pages); ${derived.counts.left_for_seats_not_converted} left for seats not converted, with ${derived.counts.rows_left} table row${derived.counts.rows_left === 1 ? "" : "s"}; ${derived.counts.leads_left} lead pages left for the graph job; ${derived.counts.merges_left} merge notes left as the desk's history.`,
     `Placed in a seat's graph only because a page there links them: ${derived.counts.linked_in.person} person, ${derived.counts.linked_in.family} family and ${derived.counts.linked_in.firm} firm pages.`,
   );
   const rows = derived.counts.merge_rows_carried + derived.counts.merge_rows_left;
   if (rows) {
     const { merge_rows_carried: carried, merge_rows_left: left } = derived.counts;
-    lines.push(`Of the overnight's merge record, ${carried} row${carried === 1 ? "" : "s"} carried, each into every graph that holds its conversation, and ${left} left with the desk, ${left === 1 ? "its conversation" : "their conversations"} in no graph.`);
+    lines.push(`Of the overnight's "Merged conversations" page, ${carried} row${carried === 1 ? "" : "s"} carried, each into every graph that holds its conversation, and ${left} left with the desk, ${left === 1 ? "its conversation" : "their conversations"} in no graph.`);
   }
   // The runner's own files (outside celorus/, or under it and shared by the writers' table with no
   // one): on this machine alone, so into the runner's graph alone (the base's rulings
@@ -1164,7 +1164,7 @@ function prepared(desk, firm, opts) {
     const where = f.copies.length ? `copied to ${f.copies.join(", ")}` : moved && derived.out.has(moved) ? `whole in ${moved} (${opts.handle}'s graph)` : "copied into no graph";
     lines.push(`- ${file}: ${where}${f.left.length ? `; named by a page in the graph of ${f.left.join(", ")}, not carried there` : ""}.`);
   }
-  if (derived.counts.attachments_not_carried) lines.push(`Not carried: the file ${derived.counts.attachments_not_carried} page${derived.counts.attachments_not_carried === 1 ? " names" : "s name"} in \`file\`, being under a hidden folder, outside the desk, reached through a link, not there, kept in the desk (the views, the merge records), or placed whole elsewhere by a rule of its own (the common space, the part of the graph the files no seat names go to); ${derived.counts.attachments_not_carried === 1 ? "that page is" : "those pages are"} placed without it.`);
+  if (derived.counts.attachments_not_carried) lines.push(`Not carried: the file ${derived.counts.attachments_not_carried} page${derived.counts.attachments_not_carried === 1 ? " names" : "s name"} in \`file\`, being under a hidden folder, outside the desk, reached through a link, not there, kept in the desk (the views, the merge notes), or placed whole elsewhere by a rule of its own (the common space, the part of the graph the files no seat names go to); ${derived.counts.attachments_not_carried === 1 ? "that page is" : "those pages are"} placed without it.`);
   if (opts.unsent_writes !== undefined && opts.unsent_writes !== 0) lines.push("Refused at apply: the desk has writes not yet sent to its storage.");
   const preview = {
     text: lines.join("\n"),
@@ -1228,7 +1228,7 @@ function applyConvert(desk, firm, opts) {
     fs.cpSync(derived.old.root, partial, { recursive: true, filter: (src) => path.basename(src) !== ".git", errorOnExist: true, force: false });
     fs.renameSync(partial, path.join(path.dirname(derived.old.root), copyAs));
     if (p.writes.length) {
-      where = "recording the plan";
+      where = "saving the plan";
       makeFolders(firm);
       const files = { ...derived.record.files };
       for (const rel of p.writes) files[rel] = sha(derived.out.get(rel));

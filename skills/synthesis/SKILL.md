@@ -148,7 +148,7 @@ The `celorus-data` server exposes three tools for retrieval:
   `{ counterparty_subject_id, counterparty_canonical_name, rel_type,
   role_detail, valid_from, valid_to, raw_context, provenance }`.
   `counterparty_canonical_name` is `null` when the counterparty has no name in
-  our data (rare) — render it as "name not given", never as a blank or a
+  our data (rare): render it as "name not given", never as a blank or a
   guess; on a charge row whose counterparty is the LENDER (`rel_type`
   `CHARGE_HELD_BY`) and whose lender is disclosed, name it by `charge.holder_name`
   instead, said as printed on the charge. Each row's

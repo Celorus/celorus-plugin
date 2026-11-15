@@ -209,8 +209,8 @@ function listRoutines(root) {
     unread,
     summary:
       (read.rows === null
-        ? "This desk has no register of routines, so no routine is recorded for it; any made in the app is found there by hand."
-        : `${n === 1 ? "1 routine is" : `${n} routines are`} on the desk's register; each is removed by hand, before the rest of the desk, and nothing was removed.`) + odd,
+        ? 'This desk has no "What was scheduled" page, so no routine is noted for it; any made in the app is found there by hand.'
+        : `${n === 1 ? "1 routine is" : `${n} routines are`} on "What was scheduled"; each is removed by hand, before the rest of the desk, and nothing was removed.`) + odd,
   };
 }
 
@@ -253,12 +253,12 @@ function registerRoutine(ctx, args) {
     refuse(
       "A routine runs unattended only after one attended run, and log.md holds no attended run of the " +
         "overnight: run it once with a person watching it (overnight_reconcile with attended true), then " +
-        `record the routine. ${NOTHING}`,
+        `note the routine. ${NOTHING}`,
     );
   }
   const text = plan.read(REGISTER);
   if (text !== null && P.readTable(text).some((row) => row.routine === routine)) {
-    refuse(`the routine ${routine} is on the desk's register already. ${NOTHING}`);
+    refuse(`the routine ${routine} is on "What was scheduled" already. ${NOTHING}`);
   }
   const row = {
     routine,
@@ -282,7 +282,7 @@ function registerRoutine(ctx, args) {
           ctx.footer,
         );
   plan.put(REGISTER, P.withRegisterRows(REGISTER, base, [row], ctx.generatedBy));
-  const line = T.logLine(ctx.at.clock, seat, SKILL, `registered the routine ${routine} (${runs}, ${repeats}, ${T.clean(when)})`);
+  const line = T.logLine(ctx.at.clock, seat, SKILL, `noted the routine ${routine} (${runs}, ${repeats}, ${T.clean(when)})`);
   plan.put(LOG, T.withLogLine(log, ctx.at.date, ctx.at.clock, line, ctx.footer));
   refuseLinkedFolders(ctx.celorus, [REGISTER, LOG]);
   // log.md last: the history line goes down after the page it names (house rule 5).

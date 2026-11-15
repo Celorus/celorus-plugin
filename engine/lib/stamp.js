@@ -105,7 +105,7 @@ function sameValue(a, b) {
 // scope was not applied was not narrowed, so a more basic reason a whole check would meet comes
 // first where one applies (here, and in stampCheckedWith up to the open), and then NOT_APPLIED.
 function whyNot(read, { record, scoped, applied, version }) {
-  if (!record) return "This run was read-only: only a run asked to record (record: true) writes the stamp.";
+  if (!record) return "This run was read-only: only a run asked to write the stamp (record: true) writes it.";
   // A desk whose celorus/, celorus/views/ or celorus/log.md is a link, or whose celorus/views/ is
   // not a folder: the check read it and reports as ever, and writes no stamp, in the words every
   // writer refuses it in (lib/linkedroot.js).

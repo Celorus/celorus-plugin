@@ -54,13 +54,13 @@ function recordProblems(record, read, moment, key) {
   const lines = C.deskLogRows(read, record.rows);
   if (lines.length < record.rows) {
     return [
-      `the snapshot read ${rowsSaid(record.rows)} of the desk log, and the desk log holds ${rowsSaid(lines.length)} now: a row it read has been removed since, or its record was edited`,
+      `the snapshot read ${rowsSaid(record.rows)} of the desk log, and the desk log holds ${rowsSaid(lines.length)} now: a row it read has been removed since, or the snapshot's note of the rows it read was edited`,
     ];
   }
   if (record.key_id !== undefined && !key) return [];
   if (C.recordDigest(moment, lines, key) !== record.digest) {
     return [
-      `the snapshot's digest of the desk log as it read it, ${rowsSaid(record.rows)} at ${moment.slice(11, 16)}, is not the digest of those rows now at that moment: a row it read has been changed since, or its record or its Taken-at clock was edited`,
+      `the snapshot's digest of the desk log as it read it, ${rowsSaid(record.rows)} at ${moment.slice(11, 16)}, is not the digest of those rows now at that moment: a row it read has been changed since, or its note of the rows or its Taken-at clock was edited`,
     ];
   }
   return [];
@@ -247,7 +247,7 @@ function checkReconcileTool(args = {}) {
   const moment = `${day}T${taken[1]}:${taken[2]}:00+05:30`;
   const record = recordOf(html);
   if (!record) {
-    return hole(`${rel} carries no record of the desk-log rows it read, so it cannot be drawn again as it was taken. Take it again with render_snapshot.`);
+    return hole(`${rel} carries no note of the desk-log rows it read, so it cannot be drawn again as it was taken. Take it again with render_snapshot.`);
   }
   // the desk as the snapshot read it (round 5, row A13): the desk log holds its first rows, as
   // many as the record read, and no row logged since. Only the desk log is rolled back; every

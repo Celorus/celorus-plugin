@@ -150,7 +150,7 @@ function toCalendar(ctx, rows) {
       )}</div>\n` +
       `${
         i === rows.length - 1
-          ? `<p class="say">A meeting off the calendar is never recorded. A pill copies its line for ${e(ctx.persona.name)}; with the second, add the time.</p>`
+          ? `<p class="say">A meeting off the calendar never gets a recording. A pill copies its line for ${e(ctx.persona.name)}; with the second, add the time.</p>`
           : ""
       }</article>\n`;
   });

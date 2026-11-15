@@ -52,7 +52,7 @@ const GRAPH_STAYS = Object.freeze([
 
 const LATER =
   "Disconnect, in the harness's own settings, each connection made for the desk after the " +
-  "set-up, the transcript tool among them: the systems table records the connections as they " +
+  "set-up, the transcript tool among them: the systems table shows the connections as they " +
   "were when the desk was set up.";
 
 // The desk's desk.md, read: its desk id, and both tables (null where it holds none), or why
@@ -212,7 +212,7 @@ function takeDown(desk) {
       say:
         r.state === S.CONNECTED
           ? `Disconnect ${r.connector}, the desk's ${r.role} connection, in the harness's own settings, where it was connected.`
-          : `Disconnect ${r.connector}, the desk's ${r.role} connection, in the harness's own settings, where it is connected: the set-up recorded it still to connect, and it may have been connected since.`,
+          : `Disconnect ${r.connector}, the desk's ${r.role} connection, in the harness's own settings, where it is connected: the set-up wrote it down as still to connect, and it may have been connected since.`,
     });
   }
   const notConnected = systems.filter((r) => r.state === S.STILL).map((r) => r.role);
@@ -258,7 +258,7 @@ function takeDown(desk) {
       }
     }
   } else {
-    unread.push({ row: "celorus/desk.md", why: "it records no seat pointer and holds no desk_id, so the pointer cannot be named" });
+    unread.push({ row: "celorus/desk.md", why: "it names no seat pointer and holds no desk_id, so the pointer cannot be named" });
   }
 
   add({
@@ -372,7 +372,7 @@ function takeDown(desk) {
         line_break: lineBreak,
         where: "in the desk folder",
         say: !recordReads
-          ? `Remove ${them} from the file .gitignore in the desk folder, where it holds them, by hand, last: the record does not show whether the set-up added them, so keep any the firm had before the set-up. The file itself stays.`
+          ? `Remove ${them} from the file .gitignore in the desk folder, where it holds them, by hand, last: the Set up table in desk.md does not show whether the set-up added them, so keep any the firm had before the set-up. The file itself stays.`
           : `Remove ${them} from the file .gitignore in the desk folder, where it holds them` +
             (lineBreak ? ", and, when nothing follows them, the line break at the end of the line just above them, which the set-up added," : ",") +
             " by hand, last; the file itself stays.",
@@ -391,18 +391,18 @@ function takeDown(desk) {
       say: has("celorus/")
         ? "The desk folder itself stays: it was there before the set-up."
         : !has(".")
-          ? "The desk folder itself stays: whether the set-up made it is not recorded."
+          ? "The desk folder itself stays: whether the set-up made it is not written down."
           : !recordWhole
-            ? "The desk folder itself stays: the record says the set-up made it, but a row of the record could not be read."
+            ? "The desk folder itself stays: the Set up table says the set-up made it, but a row of it could not be read."
             : `The desk folder itself stays: the set-up made it, but ${ignoreAt.at === "other" ? "what stands at its .gitignore is not the file the set-up made" : held && held.unread ? "its .gitignore cannot be read as UTF-8 text" : "its .gitignore holds lines the desk did not add"}, named in what stays.`,
     });
   }
   if (read.graph) stays.push(...GRAPH_STAYS.map((said) => ({ ...said })));
   stays.push({ what: "the desk's own history", say: HISTORY });
 
-  const noTable = read.systems === null ? " This desk records no systems table, so its connections are found in the harness's own settings." : "";
+  const noTable = read.systems === null ? " This desk holds no systems table, so its connections are found in the harness's own settings." : "";
   const noRecord =
-    read.record === null ? " This desk records no set-up record, so the list names what the desk puts in its folder, and the folder itself stays." : "";
+    read.record === null ? " This desk holds no Set up table, so the list names what the desk puts in its folder, and the folder itself stays." : "";
   const odd = unread.length ? ` ${unread.length === 1 ? "One row" : `${unread.length} rows`} could not be read; each is named in unread.` : "";
   return {
     desk_id: read.deskId,
