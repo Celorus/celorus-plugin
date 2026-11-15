@@ -208,6 +208,8 @@ body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-st
 .foot dd .m{margin-left:0;margin-right:.35em;vertical-align:baseline}
 .foot dd .sep{margin:0 .35em;color:var(--semantic-color-fg-faint)}
 .foot dd a{color:var(--semantic-color-accent-default);text-decoration:none}
+/* A web row is a .cite-web line, so print writes its address (collateral.css); on screen it reads as the rest of the foot */
+.foot dd .cite-web{font:inherit;color:inherit}
 .foot dd a:hover{text-decoration:underline}
 .foot dd a:focus-visible{outline:var(--component-focus-ring-width) var(--component-focus-ring-style) var(--component-focus-ring-color);outline-offset:2px}
 .foot .prov{margin:12px 0 0}
@@ -477,7 +479,7 @@ body{background:var(--semantic-color-bg-canvas);color:var(--semantic-color-fg-st
     <p class="k-title">Where this comes from</p>
     <dl class="srcgrp">
       <div><dt>Our data</dt><dd><span class="m">{{n}}</span>{{our_data_source}} <span class="sep">·</span> <span class="m">{{n}}</span>{{our_data_source}}</dd></div>
-      <div><dt>The web</dt><dd><span class="m">{{n}}</span><a href="{{web_url}}">{{web_site_name}}</a>, read {{day_read}}</dd></div>
+      <div><dt>The web</dt><dd><span class="m">{{n}}</span><span class="cite-web"><a href="{{web_url}}">{{web_site_name}}</a>, read {{day_read}}</span></dd></div>
       <div><dt>Your desk</dt><dd><span class="m">{{n}}</span>{{desk_source}}</dd></div>
       <div><dt>Our estimate</dt><dd><span class="m">{{n}}</span>{{estimate_source}}</dd></div>
     </dl>

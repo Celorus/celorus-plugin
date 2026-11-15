@@ -325,7 +325,13 @@ function footRow(value, where, kind) {
     const read = text(given.read, `${where}.read`, { required: true });
     if (!DAY.test(read)) throw new Refusal(`\`${where}.read\` is the day the page was read, as YYYY-MM-DD.`);
     const href = webLink(link);
-    html += `${href === null ? esc(source) : `<a href="${esc(href)}">${esc(source)}</a>`}, read ${dayAsRead(read)}`;
+    // DESK-524: a web row with a link is a `cite-web` line (the design system's web citation, which
+    // writes the link's address after its text in print), so a printed or PDF brief keeps the
+    // address beside the day read; the screen is unchanged (the brief's layer resets the class's type)
+    html +=
+      href === null
+        ? `${esc(source)}, read ${dayAsRead(read)}`
+        : `<span class="cite-web"><a href="${esc(href)}">${esc(source)}</a>, read ${dayAsRead(read)}</span>`;
   } else {
     html += `${esc(source)}${how}`;
   }
