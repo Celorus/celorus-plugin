@@ -1,6 +1,6 @@
 {
   "name": "celorus",
-  "version": "0.23.65",
+  "version": "0.23.66",
   "description": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
   "author": {
     "name": "Celorus",
@@ -10,19 +10,14 @@
   "repository": "https://github.com/Celorus/celorus-plugin",
   "keywords": [
     "india",
-    "companies",
     "people",
     "sales-intelligence",
     "sales-workday",
     "lead-research",
     "crm",
-    "company-financials",
-    "cap-table",
-    "ownership",
-    "directors",
-    "due-diligence",
-    "company-research",
     "relationship-intelligence",
+    "meeting-prep",
+    "account-management",
     "cited-data"
   ],
   "skills": "./skills/",
@@ -52,19 +47,20 @@
     "longDescription": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
     "developerName": "Celorus",
     "category": "Productivity",
-    "websiteURL": "https://github.com/Celorus/celorus-plugin",
+    "brandColor": "#155A6B",
+    "composerIcon": "./assets/celorus-icon.svg",
+    "logo": "./assets/celorus-icon.svg",
+    "websiteURL": "https://celorus.com",
     "capabilities": [
       "sales-workday",
       "lead-research",
-      "company-financials",
-      "cap-table",
-      "people-profiles",
+      "meeting-prep",
       "cited-data"
     ],
     "defaultPrompt": [
       "Milan, open my day and show what moved overnight",
       "Research this lead before I call them",
-      "What does the record hold on this company?"
+      "Brief me for my meeting with them"
     ]
   }
 }

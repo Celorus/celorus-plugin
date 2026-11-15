@@ -1,6 +1,6 @@
 {
   "name": "celorus",
-  "version": "0.23.65",
+  "version": "0.23.66",
   "description": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
   "author": {
     "name": "Celorus",
@@ -9,19 +9,14 @@
   "homepage": "https://github.com/Celorus/celorus-plugin",
   "keywords": [
     "india",
-    "companies",
     "people",
     "sales-intelligence",
     "sales-workday",
     "lead-research",
     "crm",
-    "company-financials",
-    "cap-table",
-    "ownership",
-    "directors",
-    "due-diligence",
-    "company-research",
     "relationship-intelligence",
+    "meeting-prep",
+    "account-management",
     "cited-data"
   ],
   "skills": [
@@ -54,6 +49,6 @@
     "shortDescription": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
     "longDescription": "Celorus makes Milan, the agentic workspace for GTM teams. Agents research, prepare and follow up inside the AI you already use, and every fact carries its source.",
     "developerName": "Celorus",
-    "websiteURL": "https://github.com/Celorus/celorus-plugin"
+    "websiteURL": "https://celorus.com"
   }
 }
