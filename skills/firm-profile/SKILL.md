@@ -135,6 +135,33 @@ person's `handle` as `sample` and the name as the firm gives it as `name`. Never
   `learned_from` as before, and `pick` set to that candidate's `pick`. When the firm says none
   of them, do not call again: the client was not added, and say so.
 
+### Companies in trouble: the pick on a persona
+
+For a firm whose clients are companies in trouble, such as an insolvency, recovery or legal firm.
+With it on, a company with an insolvency, a forced sale, a SARFAESI notice or a wilful-defaulter
+listing comes to that persona like any other lead, with its opening line and a "Handle with
+care" line at the top. With it off, which is how every persona starts, such companies are left
+out of that persona's leads.
+
+- Offer it only when the firm's own words say its clients are companies in trouble, or the
+  person asks for such companies. Never offer it to every firm. Never put it in the draft
+  `icp_start` makes: that draft is ours, and the door refuses it there.
+- Carry it in the person's own save: `icp_save`, with `asks_trouble` true on the persona the
+  person names, and nothing else changed on it. The personas in `serving` and `draft_waiting`
+  carry `asks_trouble`, true or false.
+- When the firm's profile is already its own and a persona has the pick on, every persona in the
+  save must state `asks_trouble`, true or false: a persona that leaves it out is refused as
+  `pick_unstated`. Pass each persona's value as `icp_profile` gives it, under `draft_waiting`
+  when a draft is waiting and under `serving` otherwise: a save built from `serving` while a
+  draft that turned a pick on is waiting drops that pick with no refusal. Pass every other
+  persona as given, and make the change on the persona the person named alone. When no persona
+  has it on, a persona that leaves it out reads as off.
+- It goes live only when the head makes the profile the firm's own (`icp_make_yours`). Where the
+  person is not the head, say that the head's step makes it live.
+- When you show a persona that has it on, say this line under it: "Asks for companies in
+  trouble. These leads come like any other lead, with a "Handle with care" line at the top."
+  Say nothing of it for a persona that has it off.
+
 ### Make it the firm's own: `icp_make_yours`
 
 When the person asks to make the profile the firm's own, call `icp_make_yours` with the
