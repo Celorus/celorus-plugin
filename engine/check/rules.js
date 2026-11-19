@@ -61,7 +61,8 @@ const PLACED_LIST = "icp-record";
 // nor a store lead id's shape, one finding per row; (b) one store lead id on rows for two or more
 // different desk pages, one finding per id; (c) a row the nightly placement made (its list
 // icp-record) whose lead_id is the blank mark: the placed row has lost its store lead id. A blank
-// lead_id on any other list's row is clean. The list's first table is read, as the writer reads it,
+// lead_id on another list is clean, as is a desk assignment of an earlier placed row for the
+// same page. The list's first table is read, as the writer reads it,
 // through the desk's one table reader (render/desk.js readTable: a blank mark is null, and so is a
 // cell a short row lacks). A list with no lead_id column has nothing to read. A finding names the row
 // and its lead, never the cell's value: the value may be anything written by hand, and an id is not
@@ -79,13 +80,18 @@ function leadIdsNotOurs(body) {
   if (!rows.length || !Object.hasOwn(rows[0], "lead_id")) return [];
   const out = [];
   const onId = new Map();
+  const placedPages = new Set();
   rows.forEach((row, i) => {
     const id = row.lead_id;
     const page = typeof row.lead === "string" ? strip(unlinkCell(row.lead)) : "";
     // the lead named as every rule names a page, by its link
     const lead = page === "" ? "no lead" : `[[${page}]]`;
+    const placed = typeof row.list === "string" && strip(row.list) === PLACED_LIST;
     if (id === null) {
-      if (typeof row.list === "string" && strip(row.list) === PLACED_LIST) {
+      const copy = ["assigned", "contacted", "met", "researched"].includes(row.state) &&
+        (!Object.hasOwn(row, "seat") || Boolean(row.seat)) &&
+        row.tier == null && row.persona == null && placedPages.has(page);
+      if (placed && !copy) {
         out.push(`row ${i + 1} (${lead}): its lead_id is the blank mark ·, and its list ${PLACED_LIST} says the lead store placed it`);
       }
       return;
@@ -94,6 +100,13 @@ function leadIdsNotOurs(body) {
       out.push(`row ${i + 1} (${lead}): its lead_id is neither the blank mark · nor a store lead id, ${STORE_ID_SAID}`);
       return;
     }
+    // assignLead supplies a destination where the column exists, with blank persona and tier.
+    const worked = row.state != null && !["new", "withdrawn"].includes(row.state);
+    const placedCells = Object.hasOwn(row, "persona") ? ordinal(row.persona) !== null :
+      row.seat === null || (!Object.hasOwn(row, "seat") && PROFILE_TIERS.includes(row.tier));
+    const original = (row.state === "new" && row.seat == null) ||
+      (worked && placedCells);
+    if (placed && original && page !== "") placedPages.add(page);
     if (!onId.has(id)) onId.set(id, { pages: new Set(), rows: [] });
     onId.get(id).rows.push(i + 1);
     if (page !== "") onId.get(id).pages.add(page);
